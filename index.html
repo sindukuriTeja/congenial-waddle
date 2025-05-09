@@ -67,7 +67,7 @@
         max-height: 85vh;
         overflow-y: auto;
     }
-    .project-updates-list { /* Kept from V2 for Investor view, but not used in V1 FarmerFunding */
+    .project-updates-list {
         max-height: 150px;
         overflow-y: auto;
         border: 1px solid #e5e7eb;
@@ -75,12 +75,12 @@
         padding: 0.75rem;
         background-color: #f9fafb;
     }
-    .project-update-item { /* Kept from V2 */
+    .project-update-item {
         padding-bottom: 0.5rem;
         margin-bottom: 0.5rem;
         border-bottom: 1px solid #f3f4f6;
     }
-    .project-update-item:last-child { /* Kept from V2 */
+    .project-update-item:last-child {
         border-bottom: none;
         margin-bottom: 0;
     }
@@ -586,7 +586,7 @@
               <option v-if="availableVideosForListing.length === 0" disabled>No unlisted videos available</option>
             </select>
              <p v-if="farmerVideos.length === 0" class="text-xs text-red-500">You need to upload a video first via PestiVid.</p>
-             <p v-if="farmerVideos.length > 0 && availableVideosForListing.length === 0" class="text-xs text-yellow-600">All your videos are already associated with listings.</p>
+             <p v-if="farmerVideos.length > 0 && availableVideosForListing.length === 0" class="text-xs text-yellow-600">All your videos are already associated with listings or not marked for sale.</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
               <div>
@@ -604,7 +604,7 @@
               <span class="ml-2 text-sm text-gray-700">Notify potential buyers about this listing</span>
             </label>
           </div>
-          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="availableVideosForListing.length === 0 || !walletAddress || !listingForm.cid">
+          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!listingForm.cid || !walletAddress"> <!-- Simplified disabled condition slightly -->
             <i class="fas fa-plus-circle mr-1"></i>Create Listing
           </button>
            <div v-if="!walletAddress" class="text-red-500 mt-3 text-sm text-center">Connect wallet to create listings.</div>
@@ -685,13 +685,13 @@
                 <label class="block text-gray-600 mb-1 text-sm">Select Video Evidence</label>
                 <select v-model="fundingForm.cid" class="w-full px-3 py-2 border rounded bg-white mb-2 text-sm" required>
                 <option value="" disabled>Select video...</option>
-                <!-- V1 iterates over all farmerVideos, not just 'available' ones -->
-                <option v-for="vid in farmerVideos" :key="vid.cid" :value="vid.cid">
+                <option v-for="vid in availableVideosForFunding" :key="vid.cid" :value="vid.cid"> <!-- Changed to availableVideosForFunding -->
                     {{ vid.crop }} ({{ vid.location }}) - {{ vid.pesticideCompany || 'N/A' }}
                 </option>
-                <option v-if="farmerVideos.length === 0" disabled>No videos uploaded yet</option>
+                <option v-if="availableVideosForFunding.length === 0" disabled>No videos suitable for funding available</option>
                 </select>
                 <p v-if="farmerVideos.length === 0" class="text-xs text-red-500">You need to upload a video first via PestiVid.</p>
+                <p v-if="farmerVideos.length > 0 && availableVideosForFunding.length === 0" class="text-xs text-yellow-600">All your videos are already used for funding or not marked for funding.</p>
             </div>
 
             <div class="mb-4">
@@ -709,15 +709,13 @@
                     <input type="number" v-model.number="fundingForm.investorShare" class="w-full px-3 py-2 border rounded text-sm" min="1" max="80" required placeholder="Percentage of harvest profit for investors">
                 </div>
             </div>
-            <!-- V1 form does not have "Notify Investors" checkbox -->
 
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="farmerVideos.length === 0 || !walletAddress || !fundingForm.cid">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!fundingForm.cid || !walletAddress"> <!-- Simplified disabled condition -->
                 <i class="fas fa-paper-plane mr-1"></i> Create Funding Request
             </button>
             <div v-if="!walletAddress" class="text-red-500 mt-3 text-sm text-center">Connect wallet to create funding requests.</div>
             </form>
 
-            <!-- V1 success message -->
             <div v-if="createdFundingRequest" class="bg-green-100 text-green-700 px-4 py-2 mt-4 rounded font-medium text-sm">
                 <i class="fas fa-check mr-1"></i> Funding request created and is now visible to investors!
             </div>
@@ -731,10 +729,8 @@
                     <h4 class="font-bold mb-2 sm:mb-0">{{ req.title }}</h4>
                     <div class="flex items-center space-x-2">
                     <span :class="{'bg-yellow-100 text-yellow-800': req.status === 'pending', 'bg-green-100 text-green-800': req.status === 'funded', 'bg-blue-100 text-blue-800': req.status === 'partially_funded'}" class="px-2 py-1 rounded text-xs font-medium">
-                        <!-- V1 status text mapping -->
                         {{ req.status === 'pending' ? 'Pending' : req.status === 'funded' ? 'Fully Funded' : (req.status === 'partially_funded' ? 'Partially Funded' : req.status) }}
                     </span>
-                    <!-- V1 list does not have "Notify Investors" button per item -->
                     </div>
                 </div>
                 <div class="p-4">
@@ -763,7 +759,7 @@
                         <div class="progress-fill bg-green-500" :style="{width: fundingProgressPercent(req) + '%'}"></div>
                     </div>
                     <div class="flex justify-between text-xs mt-1">
-                        <span>{{ req.fundedAmount || 0 }} SOL raised</span> <!-- Ensure fundedAmount exists -->
+                        <span>{{ req.fundedAmount || 0 }} SOL raised</span>
                         <span>{{ fundingProgressPercent(req) }}% Complete</span>
                     </div>
                     </div>
@@ -771,14 +767,12 @@
                     <div v-if="req.fundedAmount > 0 && req.investors && req.investors.length > 0" class="mb-4">
                         <div class="text-xs text-gray-500 mb-2">Investors ({{req.investors.length}})</div>
                         <div class="text-sm max-h-24 overflow-y-auto border rounded p-2 bg-gray-50 space-y-1">
-                            <!-- V1 displayed investor.username, adapting to investor.walletAddress -->
                             <div v-for="investor in req.investors" :key="investor.investorWallet || investor.id" class="flex justify-between items-center py-1 text-xs">
                             <span><i class="fas fa-user text-gray-400 mr-1"></i>{{ investor.investorWallet ? (investor.investorWallet.substring(0,6) + '...') : 'Investor' }}</span>
                             <span class="font-mono bg-blue-100 text-blue-800 px-1 rounded">{{ investor.amount }} SOL</span>
                             </div>
                         </div>
                     </div>
-                    <!-- V1 does not have "Post Project Update" section here -->
                     <div class="flex justify-end mt-4">
                     <button v-if="req.status !== 'funded'" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" @click="cancelFundingRequest_V1(req.id)">
                         <i class="fas fa-times mr-1"></i>Cancel Request
@@ -1086,7 +1080,7 @@
         <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
           <h3 class="text-lg font-semibold text-gray-800">Blockchain Transaction History</h3>
           <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full flex items-center">
-             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 16 15"><path d="m7.81 0-1.78 3.69L1.88 4.2l2.92 2.52L4.04 10 7.8 7.97 11.55 10l-.77-3.28 2.92 2.52-4.15-.51L7.82 0h-.01Zm0 15-1.78-3.69-4.15-.51 2.92-2.52L4.04 5 7.8 7.03 11.55 5l-.77 3.28 2.92 2.52-4.15.51L7.82 15h-.01Z"></path></svg>
+             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 16 15"><path d="m7.81 0-1.78 3.69L1.88 4.2l2.92 2.52L4.04 10 7.8 7.97 11.55 10l-.77-3.28 2.92 2.52-4.15-.51L7.82 0h-.01Zm0 15-1.78-3.69-4.15-.51 2.92-2.52L4.04 5 7.8 7.03 11.55 5l-.77 3.28 2.92 2.52-4.15-.51L7.82 15h-.01Z"></path></svg>
              Solana Network (Simulated Devnet)
           </span>
         </div>
@@ -1284,7 +1278,6 @@
                         <span class="font-mono truncate" :title="vid.cid">CID: {{ vid.cid.substring(0, 10) }}...</span>
                         <a :href="ipfsUrl(vid.cid)" target="_blank" class="text-blue-600 hover:underline">View</a>
                     </div>
-                    <!-- V1 User Profile does not show notification button for individual videos here -->
                     </div>
                 </div>
                 </div>
@@ -1307,7 +1300,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range (SOL)</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <!-- V1 User Profile does not show notify button for listings here -->
                         </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -1352,7 +1344,6 @@
                         <span :class="{'bg-yellow-100 text-yellow-800': req.status === 'pending', 'bg-green-100 text-green-800': req.status === 'funded', 'bg-blue-100 text-blue-800': req.status === 'partially_funded'}" class="px-2 py-1 rounded text-xs font-medium">
                         {{ req.status === 'pending' ? 'Pending' : req.status === 'funded' ? 'Fully Funded' : (req.status === 'partially_funded' ? 'Partially Funded' : req.status) }}
                         </span>
-                        <!-- V1 User Profile does not show notify button for funding reqs here -->
                     </div>
                     <div class="p-4 text-sm">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -1928,7 +1919,7 @@
       </div>
     </div>
 
-    <!-- Notification Toast Container (Remains V2) -->
+    <!-- Notification Toast Container -->
     <div class="notification-toast-container">
         <div v-for="n in recentNotifications" :key="n.id"
              class="notification-toast" :class="{'show': n.show}"
@@ -1940,7 +1931,7 @@
             <button @click="dismissNotification(n.id)" class="close-btn">&times;</button>
         </div>
     </div>
-    <!-- Loading/Transaction Modal (Remains V2) -->
+    <!-- Loading/Transaction Modal -->
     <div v-if="showLoadingModal" class="loading-modal">
         <div class="loading-content">
             <i class="fas fa-spinner fa-spin"></i>
@@ -1974,7 +1965,7 @@ new Vue({
     userPhoneOnboarding: '',
     farmerLocationCityOnboarding: '',
 
-    recordForm: {crop:'', pesticide:'', location:'', pesticideCompany: '', purpose: 'agristream'}, // Added purpose
+    recordForm: {crop:'', pesticide:'', location:'', pesticideCompany: '', purpose: 'agristream'},
     recordStream: null,
     recordMediaRecorder: null,
     recording: false,
@@ -1984,9 +1975,9 @@ new Vue({
     uploadCid: '',
     uploading: false,
     uploadError: '',
-    lastUploadedVideoPurpose: '', // To control PestiVid success message
+    lastUploadedVideoPurpose: '',
 
-    farmerVideos: [], // Each video object should now also store 'purpose'
+    farmerVideos: [],
     farmerListings: [],
     listingForm: {cid:'', minPrice:'', maxPrice:'', notifyBuyers: true},
     createdListingId: null,
@@ -2027,11 +2018,14 @@ new Vue({
     showFarmerProfileModal: false,
     selectedFarmerProfile: null,
 
-    pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6Ijc3Y2Q4YjVkNWQ2MTA2YTQ2NjQ0Iiwic2NvcGVkS2V5U2VjcmV0IjoiNWZmMjU0ODFjOTI5Yzk5YjNmM2M4OGI4MWRhNjcxZDNjZWJjMzAxMmU4Y2U1N2EyOTAyOGI1NTExZTc0MGM0NCIsImV4cCI6MTc3NzEwMzA1Nn0.J1xxbMyRmfT4aBxr5uJmPE0wjK3YS7n_kTCRSNel8F0', // Replace with your Pinata JWT
-    pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud', // Replace with your Pinata Gateway
+    // IMPORTANT: Replace with your ACTUAL Pinata JWT. Keep this secure.
+    pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM',
+    // IMPORTANT: Replace with your Pinata Gateway if you have a dedicated one
+    pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud', // Generic public gateway, consider your own for better performance/rate limits
 
     farmerLocationCity: '',
-    weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', // REPLACE WITH YOUR KEY
+    // IMPORTANT: Replace with your OpenWeatherMap API Key
+    weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY',
     currentWeather: null,
     forecastWeather: [],
     weatherLoading: false,
@@ -2076,11 +2070,19 @@ new Vue({
     availableVideosForListing() {
         if (!this.walletAddress) return [];
         const listedCids = new Set(this.farmerListings.map(l => l.cid));
-        // Only allow videos intended for 'sell' or general 'agristream' that are not yet listed
         return this.farmerVideos.filter(v =>
             v.farmerWallet === this.walletAddress &&
-            (v.purpose === 'sell' || v.purpose === 'agristream') &&
+            (v.purpose === 'sell' || v.purpose === 'agristream') && // Video can be general or for sale
             !listedCids.has(v.cid)
+        );
+    },
+    availableVideosForFunding() { // For the V1 style funding form's dropdown
+        if (!this.walletAddress) return [];
+        const fundingCids = new Set(this.farmerFundingRequests.map(r => r.cid));
+         return this.farmerVideos.filter(v =>
+            v.farmerWallet === this.walletAddress &&
+            (v.purpose === 'funding' || v.purpose === 'agristream') && // Video can be general or for funding
+            !fundingCids.has(v.cid)
         );
     },
     uniqueFundingCrops() {
@@ -2333,6 +2335,17 @@ new Vue({
     async startVideo() {
         if (!this.walletAddress) { alert("Please connect your wallet first."); return; }
         if (this.recording || this.uploading) return;
+
+        // HTTPS check for hosted environments
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            alert("Camera access requires a secure connection (HTTPS) when hosted. Video recording might not work. Please ensure your site is served over HTTPS.");
+            console.warn("Attempting to access camera on non-HTTPS page. This will likely fail on hosted environments unless it's localhost.");
+            // Optionally, prevent further execution if not HTTPS and not localhost
+            // this.uploadError = "Camera access requires HTTPS.";
+            // this.showLive = false; this.recording = false;
+            // return;
+        }
+
         this.recordBlob = null; this.recordBlobUrl = ''; this.uploadCid = ''; this.uploadError = '';
         this.showLive = true;
         try {
@@ -2368,13 +2381,23 @@ new Vue({
             }
             this.recordMediaRecorder.onerror = (e) => {
                 console.error("MediaRecorder error:", e);
-                this.uploadError = "Recording error occurred.";
+                this.uploadError = "Recording error occurred: " + e.name;
                 this.stopVideo();
             }
             this.recordMediaRecorder.start(1000);
         } catch (e) {
-            console.error("getUserMedia error:", e);
-            alert("Could not access camera. Please check permissions in your browser settings.");
+            console.error("getUserMedia error:", e.name, e.message, e);
+            let alertMsg = "Could not access camera. Please check permissions in your browser settings.";
+            if (e.name === 'NotAllowedError') {
+                alertMsg = "Camera access was denied. Please allow camera access in your browser settings.";
+            } else if (e.name === 'NotFoundError') {
+                alertMsg = "No camera found. Please ensure a camera is connected and enabled.";
+            } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+                alertMsg = "Camera is already in use or could not be accessed. Try closing other apps using the camera.";
+            } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                 alertMsg += " Also, camera access often requires HTTPS when hosted.";
+            }
+            alert(alertMsg);
             this.showLive = false; this.recording = false;
         }
     },
@@ -2395,13 +2418,14 @@ new Vue({
         if (!this.recordForm.crop || !this.recordForm.pesticide || !this.recordForm.location || !this.recordForm.pesticideCompany || !this.recordForm.purpose) {
             alert("Please fill in all crop, location, pesticide, pesticide company details, and select a purpose before uploading."); return;
         }
-        if (!this.pinataJwt || this.pinataJwt === 'YOUR_PINATA_JWT') {
-            alert("Pinata JWT not configured. Cannot upload.");
-            this.uploadError = "Pinata configuration missing.";
+        if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) { // Check for placeholder or empty
+            this.uploadError = "Pinata JWT not configured. Cannot upload. Please check the `pinataJwt` value in the script.";
+            console.error(this.uploadError);
+            alert(this.uploadError);
             return;
         }
         this.uploading = true; this.uploadCid = ''; this.uploadError = '';
-        this.lastUploadedVideoPurpose = ''; // Reset
+        this.lastUploadedVideoPurpose = '';
 
         const formData = new FormData();
         const fileExtension = (this.recordBlob.type.split('/')[1] || 'webm').split(';')[0];
@@ -2416,13 +2440,14 @@ new Vue({
                 pesticide: this.recordForm.pesticide.trim(),
                 location: this.recordForm.location.trim(),
                 pesticideCompany: this.recordForm.pesticideCompany.trim(),
-                purpose: this.recordForm.purpose, // STORE THE PURPOSE
+                purpose: this.recordForm.purpose,
                 uploadTimestamp: new Date().toISOString()
             }
         }));
         formData.append('pinataOptions', JSON.stringify({ cidVersion: 1 }));
 
         try {
+            console.log("Attempting Pinata upload to:", 'https://api.pinata.cloud/pinning/pinFileToIPFS');
             const resp = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
                 maxBodyLength: Infinity,
                 headers: { Authorization: `Bearer ${this.pinataJwt}`, 'Content-Type': 'multipart/form-data' }
@@ -2439,7 +2464,7 @@ new Vue({
                 pesticide: pesticide.trim(),
                 location: location.trim(),
                 pesticideCompany: pesticideCompany.trim(),
-                purpose: purpose // ADDED PURPOSE TO VIDEO DATA
+                purpose: purpose
             };
             this.farmerVideos.unshift(newVideoData);
 
@@ -2455,13 +2480,26 @@ new Vue({
             } else if (newVideoData.purpose === 'funding') {
                 this.addNotification(`Video for "${newVideoData.crop}" uploaded. Please complete the funding request details.`, 'info');
                 this.navigateToPageWithParam('farmerFunding', 'cid', uploadedCid);
-            } else { // agristream
+            } else {
                  this.addNotification(`Video for "${newVideoData.crop}" added to your AgriStream!`, 'success');
             }
 
         } catch (e) {
-            this.uploadError = "Upload failed: " + (e.response?.data?.error || e.message || "Unknown error");
-            console.error("Pinata Upload Error:", e.response || e);
+            this.uploadError = "Upload failed. ";
+            if (e.response) {
+                this.uploadError += `Server responded with ${e.response.status}. ${e.response.data?.error?.details || e.response.data?.error || e.message}`;
+                if (e.response.status === 401) {
+                    this.uploadError += " Please check your Pinata JWT in the script. It might be invalid or expired."
+                }
+                 console.error("Pinata Upload Error Response:", e.response.data, e.response.status, e.response.headers);
+            } else if (e.request) {
+                this.uploadError += "Network error or CORS issue. Check browser console (Network tab) for details. Ensure the hosting domain is allowed by Pinata if applicable, or that Pinata services are reachable.";
+                console.error("Pinata Upload Error Request:", e.request);
+            } else {
+                this.uploadError += e.message || "Unknown error";
+                 console.error("Pinata Upload Error Message:", e.message);
+            }
+            alert(this.uploadError + " Check console for more details."); // Alert user
             this.uploadCid = '';
         } finally {
             this.uploading = false;
@@ -2477,7 +2515,7 @@ new Vue({
       return this.farmerFundingRequests.some(req => req.cid === cid && req.farmerWallet === this.walletAddress);
     },
     goToListing(cid) {
-        this.listingForm.cid = cid; // This will be set for the Sell page
+        this.listingForm.cid = cid;
         this.switchPage('farmerSell');
     },
     async createListing() {
@@ -2913,12 +2951,6 @@ new Vue({
             "Passionate about connecting directly with consumers and investors through PestiVid.",
             "Committed to transparency and quality, using modern practices for optimal yield and safety, recorded on-chain (simulated)."
         ];
-        let hash = 0;
-        for (let i = 0; i < (walletWallet || '').length; i++) { // Corrected from farmerWallet to walletWallet for consistency with loop
-            hash = (hash << 5) - hash + farmerWallet.charCodeAt(i); // Should be farmerWallet.charCodeAt(i)
-            hash |= 0;
-        }
-        // Corrected the hash usage:
         let bioHash = 0;
         for (let i = 0; i < (farmerWallet || '').length; i++) {
           bioHash = (bioHash << 5) - bioHash + farmerWallet.charCodeAt(i);
@@ -2933,8 +2965,8 @@ new Vue({
             return;
         }
         if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-             this.weatherError = "Weather API key not configured.";
-             console.error("OpenWeatherMap API Key is missing.");
+             this.weatherError = "Weather API key not configured. Please replace placeholder in the script.";
+             console.error(this.weatherError);
              return;
         }
         this.weatherLoading = true;
@@ -2947,23 +2979,29 @@ new Vue({
         const units = 'metric';
 
         try {
-            const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
+            const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`;
+            console.log("Fetching current weather from:", currentWeatherUrl);
             const currentResponse = await axios.get(currentWeatherUrl);
             this.currentWeather = currentResponse.data;
 
-            const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}`;
+            const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`;
+            console.log("Fetching forecast from:", forecastUrl);
             const forecastResponse = await axios.get(forecastUrl);
             this.forecastWeather = this.processForecastData(forecastResponse.data);
 
         } catch (error) {
-            console.error("Error fetching weather data:", error.response || error.message);
-            if (error.response && error.response.status === 404) {
-                this.weatherError = `Could not find weather for "${city}". Please check the city name.`;
-            } else if (error.response && error.response.status === 401) {
-                 this.weatherError = "Invalid API key for weather service. Please check configuration.";
-            }
-             else {
-                this.weatherError = "Could not retrieve weather data. Please try again later.";
+            console.error("Error fetching weather data. Config:", error.config, "Request:", error.request, "Response:", error.response, "Message:", error.message);
+            if (error.response) {
+                this.weatherError = `Error ${error.response.status}: ${error.response.data.message || 'Could not retrieve weather data.'}`;
+                if (error.response.status === 401) {
+                     this.weatherError += " Please check your OpenWeatherMap API key.";
+                } else if (error.response.status === 404) {
+                    this.weatherError = `Could not find weather for "${city}". Please check the city name.`;
+                }
+            } else if (error.request) {
+                this.weatherError = "Could not retrieve weather data. Network error or CORS issue. Check browser console and ensure OpenWeatherMap is reachable.";
+            } else {
+                this.weatherError = "An unexpected error occurred while fetching weather data.";
             }
         } finally {
             this.weatherLoading = false;
@@ -3195,13 +3233,11 @@ new Vue({
                 this.showNextToastNotification();
            }
        } else {
-           // This is a simulation for notifying another user; in a real app, this would be a backend push.
            console.log(`(Simulated) Notification for ${recipientWalletAddress}: "${message}" by user ${this.walletAddress}`);
-           // You could also add it to a global notifications array if you want all users to see all notifications in this demo
        }
     },
     showNextToastNotification() {
-       if (this.recentNotifications.length > 0 || this.notifications.length === 0) {
+       if (this.recentNotifications.length >= 3 || this.notifications.length === 0) { // Limit concurrent toasts
            return;
        }
 
@@ -3242,27 +3278,28 @@ new Vue({
         }
     },
      notifyBuyersAboutListing(listing, markAsSent = false) {
-        if (markAsSent) listing.notificationSent = true;
-        this.addNotification(`New listing: "${listing.crop}" from ${listing.farmerWallet.substring(0,6)}... is now available!`, 'info');
-        // In a real app, you'd fetch buyer wallets interested in this crop/location
-        // and send them individual notifications (or use a pub/sub system).
-        // For this demo, we just show a general notification to the current user if they are a buyer.
+        if (markAsSent) listing.notificationSent = true; // Mark on the listing object itself
+        this.addNotification(`New listing: "${listing.crop}" from ${listing.farmerWallet.substring(0,6)}... is now available!`, 'info'); // General notification
+        // Specific notification for buyers (simulated)
         if (this.role === 'buyer' && this.walletAddress !== listing.farmerWallet) {
             this.addNotification(`Check out the new listing for "${listing.crop}"!`, 'info');
         }
+        // Simulate notifying other potential buyers (in a real app, this is backend logic)
+        console.log(`SIMULATION: Notifying all potential buyers about listing ID ${listing.id}`);
      },
      notifyInvestorsAboutFunding(request, markAsSent = false) {
-        if (markAsSent) request.notificationSent = true;
-        this.addNotification(`New funding opportunity: "${request.title}" by ${request.farmerWallet.substring(0,6)}... is seeking investors!`, 'info');
+        if (markAsSent) request.notificationSent = true; // Mark on the request object
+        this.addNotification(`New funding opportunity: "${request.title}" by ${request.farmerWallet.substring(0,6)}... is seeking investors!`, 'info'); // General notification
         if (this.role === 'investor' && this.walletAddress !== request.farmerWallet) {
             this.addNotification(`A new project "${request.title}" is looking for funding!`, 'info');
         }
+        console.log(`SIMULATION: Notifying all potential investors about funding request ID ${request.id}`);
      },
     saveDataToLocalStorage() {
         const appData = {
             allListings: this.allListings,
             allFundingRequests: this.allFundingRequests,
-            farmerVideos: this.farmerVideos, // This now includes 'purpose'
+            farmerVideos: this.farmerVideos,
             buyerPurchases: this.buyerPurchases,
             investorInvestments: this.investorInvestments,
             investorTransactions: this.investorTransactions,
@@ -3275,16 +3312,22 @@ new Vue({
     loadDataFromLocalStorage() {
         const savedData = localStorage.getItem('pestiVidAppData');
         if (savedData) {
-            const appData = JSON.parse(savedData);
-            this.allListings = appData.allListings || [];
-            this.allFundingRequests = appData.allFundingRequests || [];
-            this.farmerVideos = (appData.farmerVideos || []).map(v => ({...v, purpose: v.purpose || 'agristream'})); // Ensure purpose exists
-            this.buyerPurchases = appData.buyerPurchases || [];
-            this.investorInvestments = appData.investorInvestments || [];
-            this.investorTransactions = appData.investorTransactions || [];
-            this.messages = appData.messages || [];
-            this.conversations = appData.conversations || [];
-            console.log("App data loaded from localStorage.");
+            try {
+                const appData = JSON.parse(savedData);
+                this.allListings = appData.allListings || [];
+                this.allFundingRequests = appData.allFundingRequests || [];
+                this.farmerVideos = (appData.farmerVideos || []).map(v => ({...v, purpose: v.purpose || 'agristream'}));
+                this.buyerPurchases = appData.buyerPurchases || [];
+                this.investorInvestments = appData.investorInvestments || [];
+                this.investorTransactions = appData.investorTransactions || [];
+                this.messages = appData.messages || [];
+                this.conversations = appData.conversations || [];
+                console.log("App data loaded from localStorage.");
+            } catch (e) {
+                console.error("Error parsing data from localStorage:", e);
+                localStorage.removeItem('pestiVidAppData'); // Clear corrupted data
+                this.loadDemoDataIfNeeded();
+            }
         } else {
             this.loadDemoDataIfNeeded();
         }
@@ -3333,12 +3376,14 @@ new Vue({
             this.investorTransactions = [];
             return;
         }
-        const allData = JSON.parse(localStorage.getItem('pestiVidAppData')) || {};
+        const allDataString = localStorage.getItem('pestiVidAppData');
+        const allData = allDataString ? JSON.parse(allDataString) : {};
+
 
         if (this.role === 'farmer') {
             this.farmerVideos = (allData.farmerVideos || [])
                 .filter(v => v.farmerWallet === this.walletAddress)
-                .map(v => ({...v, purpose: v.purpose || 'agristream'})); // Ensure purpose
+                .map(v => ({...v, purpose: v.purpose || 'agristream'}));
             this.farmerListings = (allData.allListings || []).filter(l => l.farmerWallet === this.walletAddress);
             this.farmerFundingRequests = (allData.allFundingRequests || []).filter(r => r.farmerWallet === this.walletAddress);
         } else {
@@ -3365,7 +3410,9 @@ new Vue({
         this.allFundingRequests = allData.allFundingRequests || [];
     },
     loadDemoDataIfNeeded() {
-      let appData = JSON.parse(localStorage.getItem('pestiVidAppData'));
+      let appDataString = localStorage.getItem('pestiVidAppData');
+      let appData = appDataString ? JSON.parse(appDataString) : null;
+
       if (appData && appData.allFundingRequests && appData.allFundingRequests.length > 0) {
           console.log("Demo data already loaded or localStorage has data.");
           return;
@@ -3394,7 +3441,7 @@ new Vue({
        this.investorTransactions = [
            { id: 'tx_demo1', investorWallet: demoInvestor1, txHash: 'inv_sol_demo1', type: 'investment', amount: 10, date: 'February 15, 2024', projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion' },
        ];
-        this.farmerVideos = [ // Add 'purpose' to demo videos
+        this.farmerVideos = [
             { farmerWallet: demoFarmer1, cid: 'QmXyZDemoCIDListing1', crop: 'Tomatoes', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell'},
             { farmerWallet: demoFarmer1, cid: 'QmYpUkLqrn4N1YgdNvT3zJbJnbZu4wcjGbDqrXKuL71L3V', crop: 'Strawberries', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding'},
             { farmerWallet: demoFarmer2, cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', crop: 'Lettuce', pesticide: 'Nutrient Solution', location: 'Hydro Unit 1', pesticideCompany: 'HydroGrow', purpose: 'agristream'},
@@ -3417,7 +3464,7 @@ new Vue({
       this.saveDataToLocalStorage();
       this.filterDataForCurrentUser();
     },
-     scrollToAndHighlightAgriStreamVideo() { // V2 Helper, kept for potential future use
+     scrollToAndHighlightAgriStreamVideo() {
         if (!this.targetAgriStreamVideoCid) return;
         this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid;
         this.$nextTick(() => {
@@ -3426,23 +3473,34 @@ new Vue({
                 videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 setTimeout(() => {
                     this.highlightedAgriStreamVideoCid = null;
-                    this.targetAgriStreamVideoCid = null; 
-                }, 2500); 
+                    this.targetAgriStreamVideoCid = null;
+                }, 2500);
             } else {
-                this.highlightedAgriStreamVideoCid = null; 
+                this.highlightedAgriStreamVideoCid = null;
                 this.targetAgriStreamVideoCid = null;
             }
         });
     },
   },
   mounted() {
-    console.log("PestiVid Web3 App Mounted");
-    if (this.pinataJwt === 'YOUR_PINATA_JWT' || this.pinataGateway === 'YOUR_PINATA_GATEWAY.mypinata.cloud') {
-        console.warn("Pinata JWT or Gateway URL needs to be configured in the Vue data.");
-        // alert("DEMO NOTICE: Pinata (for video uploads) is not fully configured. Uploads will not persist without a valid Pinata JWT and Gateway.");
+    console.log("PestiVid Web3 App Mounted. Check console for any warnings or errors.");
+    // WARNINGS FOR HOSTED ENVIRONMENT & API KEYS
+    if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) {
+        console.warn("PESTIVID CONFIG WARNING: Pinata JWT is set to a placeholder ('YOUR_PINATA_JWT') or is empty. Video uploads to IPFS via Pinata WILL FAIL. Please replace this with your actual Pinata API Key (JWT) in the script's `data` section.");
+        // You might want to alert the user directly if this is a critical feature for your hosted demo
+        // alert("Configuration Warning: Pinata JWT is not set. Video uploads will fail. See console for details.");
     }
-     if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-        console.warn("OpenWeatherMap API Key needs to be configured in the Vue data for the weather feature.");
+    if (this.pinataGateway === 'YOUR_PINATA_GATEWAY.mypinata.cloud' || this.pinataGateway === 'gateway.pinata.cloud') {
+        console.info("PESTIVID INFO: Using Pinata gateway. If you have a dedicated gateway, update `pinataGateway` for potentially better performance.");
+    }
+     if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) {
+        console.warn("PESTIVID CONFIG WARNING: OpenWeatherMap API Key is set to a placeholder ('YOUR_OPENWEATHERMAP_API_KEY') or is empty. The weather feature WILL NOT WORK. Please replace this with your actual OpenWeatherMap API key in the script's `data` section.");
+        // alert("Configuration Warning: OpenWeatherMap API Key is not set. Weather feature will not work. See console for details.");
+    }
+    // Check for HTTPS for camera access if not on localhost
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        console.warn("PESTIVID SECURITY WARNING: The page is not served over HTTPS. Camera access (for PestiVid recording) will likely fail in most modern browsers on a hosted non-HTTPS site. Please host this page using HTTPS for full functionality.");
+        this.addNotification("Camera access requires HTTPS. Video recording might fail.", "warning");
     }
 
     this.loadDataFromLocalStorage();
