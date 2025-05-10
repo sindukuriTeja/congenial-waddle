@@ -27,6 +27,38 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.0/lib/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    // Handle Orange ID authentication redirect
+    document.addEventListener('DOMContentLoaded', function() {
+      // Parse URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const refreshToken = urlParams.get('refreshToken');
+      
+      // If tokens exist in URL, store them and initialize the app
+      if (token && refreshToken) {
+        // Store tokens in localStorage
+        localStorage.setItem('pestivid_token', token);
+        localStorage.setItem('pestivid_refresh_token', refreshToken);
+        
+        // Clean URL by removing token parameters
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        // Initialize Vue app with the token data
+        if (window.vueApp) {
+          // If Vue app is already initialized, update it
+          window.vueApp.handleOrangeIdCallback(token, refreshToken);
+        } else {
+          // Otherwise, store data to be used when Vue initializes
+          window.orangeIdAuthData = {
+            token: token,
+            refreshToken: refreshToken
+          };
+        }
+      }
+    });
+  </script>
 
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; }
@@ -270,7 +302,7 @@
     <!-- Login Choice Page -->
     <section v-if="current==='loginChoice'" class="login-page-container">
         <div class="login-panel-wrapper">
-            <div class="login-branding justify-center">
+            <div class="login-branding justify-center ">
                 <i class="fas fa-seedling logo-icon"></i>
                 <span class="app-name">PestiVid</span>
             </div>
@@ -745,7 +777,7 @@
 </div>
 
 <script>
-    new Vue({
+    const app = new Vue({
         el: "#app",
         data: {
           current: 'landing',
@@ -903,6 +935,46 @@
           },
 
           // --- Orange ID Methods ---
+          handleOrangeIdCallback(token, refreshToken) {
+            // Process the tokens
+            this.isAuthProcessing = true;
+            
+            try {
+              // Parse the JWT token to get user info
+              const tokenData = this.parseJwt(token);
+              
+              // Set user data
+              this.orangeUser = {
+                id: tokenData.sub,
+                email: tokenData.email,
+                provider: tokenData.provider
+              };
+              
+              this.loginMethod = 'orangeId';
+              this.currentUserIdentifier = tokenData.sub;
+              
+              // Check if user exists in your system
+              this.loadOrSetupPestiVidProfile();
+            } catch (error) {
+              console.error('Error processing Orange ID callback:', error);
+              this.isAuthProcessing = false;
+            }
+          },
+          
+          parseJwt(token) {
+            try {
+              const base64Url = token.split('.')[1];
+              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+              const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+              }).join(''));
+              return JSON.parse(jsonPayload);
+            } catch (e) {
+              console.error('Error parsing JWT:', e);
+              return {};
+            }
+          },
+          
           initializeOrangeIdStateListener() {
             const bedrockConfig = this.bedrockConfig; const self = this;
             function OrangeIdStateUpdater() {
@@ -959,6 +1031,7 @@
               this.isAuthProcessing = false;
           },
           renderOrangeIdLoginPanel() {
+            
               this.isOrangeIdPanelRendering = true;
               const container = document.getElementById('bedrock-login-widget-container'); 
               if (!container) { console.error("Login widget container missing."); this.isOrangeIdPanelRendering = false; return; } 
@@ -968,6 +1041,7 @@
                   this.isOrangeIdPanelRendering = false; 
                   return; 
               } 
+
               this.bedrockSDKError = false;
               const root = ReactDOM.createRoot(container);
               root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(Bedrock.LoginPanel, { 
@@ -1219,6 +1293,23 @@
           if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) { console.warn("CONFIG WARNING: Pinata JWT not set. Video uploads WILL FAIL."); alert("Config Warning: Pinata JWT not set. Video uploads will fail."); }
           if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); alert("Config Warning: OpenWeatherMap API Key not set. Weather will not work."); }
           if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
+          
+          // Check if we have stored Orange ID auth data from redirect
+          if (window.orangeIdAuthData) {
+            this.handleOrangeIdCallback(
+              window.orangeIdAuthData.token,
+              window.orangeIdAuthData.refreshToken
+            );
+            // Clear the temporary data
+            window.orangeIdAuthData = null;
+          }
+          
+          // Check localStorage for existing tokens
+          const storedToken = localStorage.getItem('pestivid_token');
+          const storedRefreshToken = localStorage.getItem('pestivid_refresh_token');
+          if (storedToken && storedRefreshToken) {
+            this.handleOrangeIdCallback(storedToken, storedRefreshToken);
+          }
       
           this.loadDataFromLocalStorage(); 
           
@@ -1278,6 +1369,9 @@
           setInterval(() => { if(this.isUserAuthenticated && this.role==='investor') this.updateInvestmentProgress(); }, 30000);
         }
       });
+    
+    // Store reference to Vue instance globally
+    window.vueApp = app;
 </script>
 </body>
 </html>
