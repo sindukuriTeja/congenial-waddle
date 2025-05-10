@@ -267,7 +267,7 @@
         </div>
     </section>
 
-    <!-- Login Choice Page - Main Authentication Hub -->
+    <!-- Login Choice Page -->
     <section v-if="current==='loginChoice'" class="login-page-container">
         <div class="login-panel-wrapper">
             <div class="login-branding justify-center">
@@ -887,16 +887,15 @@
               this.loginMethod = method;
               if (method === 'orangeId' && orangeUserDetails) {
                   this.orangeUser = orangeUserDetails;
-                  this.walletAddress = null; // Clear Solana wallet if logging in with Orange ID
+                  this.walletAddress = null; 
               } else if (method === 'solana') {
-                  this.walletAddress = identifier; // Redundant but kept for clarity in Solana specific logic
-                  this.orangeUser = null; // Clear Orange ID user
+                  this.walletAddress = identifier; 
+                  this.orangeUser = null; 
               }
               this.isAuthProcessing = false;
-              this.isOrangeIdPanelRendering = false; // Ensure this is off
+              this.isOrangeIdPanelRendering = false; 
               this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
               
-              // Clean URL from auth tokens
               if (window.location.search.includes('token=') || window.location.search.includes('refreshToken=')) {
                   window.history.replaceState({}, document.title, window.location.pathname);
               }
@@ -911,23 +910,26 @@
               const { user, isLoading, loginCallback } = Bedrock.useBedrockPassport();
               
               React.useEffect(() => { 
-                  if(self.loginMethod === 'orangeId' || (!self.loginMethod && isLoading)) { // Only let Orange ID control isAuthProcessing if it's the active method or no method yet
+                  if(self.loginMethod === 'orangeId' || (!self.loginMethod && isLoading && self.current === 'loginChoice')) { // Only let Orange ID control isAuthProcessing if it's the active method OR if no method is set yet AND user is on login choice page
                       self.isAuthProcessing = isLoading; 
                   }
                   if (!isLoading) { 
-                      if (user && (self.loginMethod === 'orangeId' || !self.loginMethod) ) {  // If Orange ID user exists and it was the intended method or no method was set
-                           self.handleAuthenticationSuccess(user.id, 'orangeId', user);
+                      if (user && (self.loginMethod === 'orangeId' || (!self.loginMethod && self.current === 'loginChoice'))) {  
+                           self.handleAuthenticationSuccess(user.id, 'orangeId', user); 
                       } else if (!user && self.loginMethod === 'orangeId') { 
                           const params = new URLSearchParams(window.location.search); 
                           if (!params.has('token') && !params.has('refreshToken')) { 
-                              self.handleOrangeIdLogout(); // This might be called if session expires externally
+                              // self.handleOrangeIdLogout(); // Potentially logout if session is lost externally
                           }
                       }
                   } 
               }, [user, isLoading]);
 
-              React.useEffect(() => { // Handles the redirect callback from Orange ID
-                  const params = new URLSearchParams(window.location.search); const token = params.get('token'); const refreshToken = params.get('refreshToken');
+              React.useEffect(() => { 
+                  const params = new URLSearchParams(window.location.search); 
+                  const token = params.get('token'); 
+                  const refreshToken = params.get('refreshToken');
+
                   if (token && refreshToken && !user && !self.showLoadingModal && self.loginMethod === 'orangeId') { 
                       self.showLoadingModal = true; self.loadingMessage = "Processing Orange ID authentication..."; self.isAuthProcessing = true;
                       async function processCallback() {
@@ -936,12 +938,12 @@
                               if (success) { 
                                   // handleAuthenticationSuccess will be called by the other useEffect when 'user' updates
                               } else { 
-                                  self.addNotification('Orange ID login failed.', 'error'); 
+                                  self.addNotification('Orange ID login failed to process callback.', 'error'); 
                                   self.handleOrangeIdLogout(); 
                               } 
                           }
-                          catch (e) { self.addNotification('Orange ID login error: ' + (e.message || 'Try again.'), 'error'); self.handleOrangeIdLogout(); }
-                          finally { self.showLoadingModal = false; self.isAuthProcessing = false; window.history.replaceState({}, document.title, window.location.pathname); }
+                          catch (e) { self.addNotification('Orange ID login error during callback: ' + (e.message || 'Try again.'), 'error'); self.handleOrangeIdLogout(); }
+                          finally { self.showLoadingModal = false; self.isAuthProcessing = false; }
                       } processCallback();
                   } else if (!token && !refreshToken && !user && isLoading === false && self.isAuthProcessing && self.loginMethod === 'orangeId') { 
                       self.isAuthProcessing = false; 
@@ -993,18 +995,15 @@
               if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); } 
               this.loginMethod = 'orangeId'; 
               this.isAuthProcessing = true; 
-              // The Bedrock.LoginPanel on the 'loginChoice' page will handle the actual SDK calls.
-              // We just ensure the user is on that page and the panel is ready.
               if(this.current !== 'loginChoice') {
                   this.switchPage('loginChoice');
               } else {
-                  this.$nextTick(() => { // Ensure panel renders if it wasn't (e.g. due to SDK load delay)
+                  this.$nextTick(() => { 
                       if (document.getElementById('bedrock-login-widget-container')) {
                            this.renderOrangeIdLoginPanel();
                       }
                   });
               }
-              // User clicks on Google/Apple button inside the rendered panel to initiate flow.
           },
       
           // --- Solana Wallet Methods ---
