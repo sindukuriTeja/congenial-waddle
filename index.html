@@ -28,36 +28,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.0/lib/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script>
-    // Handle Orange ID authentication redirect
-    document.addEventListener('DOMContentLoaded', function() {
-      // Parse URL parameters
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const refreshToken = urlParams.get('refreshToken');
-      
-      // If tokens exist in URL, store them and initialize the app
-      if (token && refreshToken) {
-        // Store tokens in localStorage
-        localStorage.setItem('pestivid_token', token);
-        localStorage.setItem('pestivid_refresh_token', refreshToken);
-        
-        // Clean URL by removing token parameters
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-        
-        // Initialize Vue app with the token data
-        if (window.vueApp) {
-          // If Vue app is already initialized, update it
-          window.vueApp.handleOrangeIdCallback(token, refreshToken);
-        } else {
-          // Otherwise, store data to be used when Vue initializes
-          window.orangeIdAuthData = {
-            token: token,
-            refreshToken: refreshToken
-          };
-        }
-      }
-    });
+    // The old DOMContentLoaded listener for Orange ID redirect has been removed.
+    // Its functionality is now handled by the initializeOrangeIdStateListener within the Vue app,
+    // which uses the Bedrock SDK's loginCallback for proper token processing.
   </script>
 
   <style>
@@ -795,8 +768,8 @@
           bedrockConfig: {
             baseUrl: 'https://api.bedrockpassport.com',
             authCallbackUrl: window.location.origin, 
-            tenantId: 'orange-zcjan3p9n2', 
-            subscriptionKey: '2c3b9cc1c8b2436e9ceae5d857bdcd8b', 
+            tenantId: 'orange-zcjan3p9n2', // Replace with your actual Tenant ID if different
+            subscriptionKey: '2c3b9cc1c8b2436e9ceae5d857bdcd8b', // Replace with your actual Subscription Key
           },
       
           // Solana Wallet Specific State
@@ -924,150 +897,161 @@
                   this.walletAddress = identifier; 
                   this.orangeUser = null; 
               }
-              this.isAuthProcessing = false;
+              this.isAuthProcessing = false; // Mark auth processing as finished
+              this.showLoadingModal = false; // Hide loading modal if it was shown
               this.isOrangeIdPanelRendering = false; 
               this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
               
+              // Clean URL if tokens were present (typically after Orange ID callback)
               if (window.location.search.includes('token=') || window.location.search.includes('refreshToken=')) {
-                  window.history.replaceState({}, document.title, window.location.pathname);
+                  const cleanUrl = window.location.origin + window.location.pathname;
+                  window.history.replaceState({}, document.title, cleanUrl);
               }
               this.loadOrSetupPestiVidProfile();
           },
-
-          // --- Orange ID Methods ---
-          handleOrangeIdCallback(token, refreshToken) {
-            // Process the tokens
-            this.isAuthProcessing = true;
-            
-            try {
-              // Parse the JWT token to get user info
-              const tokenData = this.parseJwt(token);
-              
-              // Set user data
-              this.orangeUser = {
-                id: tokenData.sub,
-                email: tokenData.email,
-                provider: tokenData.provider
-              };
-              
-              this.loginMethod = 'orangeId';
-              this.currentUserIdentifier = tokenData.sub;
-              
-              // Check if user exists in your system
-              this.loadOrSetupPestiVidProfile();
-            } catch (error) {
-              console.error('Error processing Orange ID callback:', error);
-              this.isAuthProcessing = false;
-            }
-          },
-          
-          parseJwt(token) {
-            try {
-              const base64Url = token.split('.')[1];
-              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-              const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-              }).join(''));
-              return JSON.parse(jsonPayload);
-            } catch (e) {
-              console.error('Error parsing JWT:', e);
-              return {};
-            }
-          },
           
           initializeOrangeIdStateListener() {
-            const bedrockConfig = this.bedrockConfig; const self = this;
+            const bedrockConfig = this.bedrockConfig; 
+            const self = this;
+            
             function OrangeIdStateUpdater() {
-              if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) { console.warn("Orange ID SDK not fully ready. Retrying state listener init."); setTimeout(() => self.initializeOrangeIdStateListener(), 1000); return null; }
+              if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) { 
+                console.warn("Orange ID SDK not fully ready. Retrying state listener init."); 
+                setTimeout(() => self.initializeOrangeIdStateListener(), 1000); 
+                return null; 
+              }
               const { user, isLoading, loginCallback } = Bedrock.useBedrockPassport();
               
+              // Effect to handle user state changes from SDK (login/logout/session resumption)
               React.useEffect(() => { 
-                  if(self.loginMethod === 'orangeId' || (!self.loginMethod && isLoading && self.current === 'loginChoice')) { // Only let Orange ID control isAuthProcessing if it's the active method OR if no method is set yet AND user is on login choice page
-                      self.isAuthProcessing = isLoading; 
+                  const params = new URLSearchParams(window.location.search);
+                  const isCallbackUrl = params.has('token') && params.has('refreshToken');
+
+                  // Update Vue's isAuthProcessing based on SDK's isLoading,
+                  // but only if it's an Orange ID flow or no login method is yet determined.
+                  if (self.loginMethod === 'orangeId' || !self.loginMethod) {
+                      self.isAuthProcessing = isLoading;
                   }
-                  if (!isLoading) { 
-                      if (user && (self.loginMethod === 'orangeId' || (!self.loginMethod && self.current === 'loginChoice'))) {  
-                           self.handleAuthenticationSuccess(user.id, 'orangeId', user); 
-                      } else if (!user && self.loginMethod === 'orangeId') { 
-                          const params = new URLSearchParams(window.location.search); 
-                          if (!params.has('token') && !params.has('refreshToken')) { 
-                              // self.handleOrangeIdLogout(); // Potentially logout if session is lost externally
+
+                  if (!isLoading) { // SDK is not loading
+                      if (user) { // Orange ID user exists in SDK
+                          // If Vue doesn't know about this user yet, or thought it was a different login method/user
+                          if (self.currentUserIdentifier !== user.id || self.loginMethod !== 'orangeId') {
+                             self.handleAuthenticationSuccess(user.id, 'orangeId', user);
+                          }
+                      } else { // No Orange ID user in SDK
+                          // If Vue thought we were logged in with Orange ID, it's a logout/session expiry.
+                          // Also ensure we are not in the middle of processing a callback from URL.
+                          if (self.loginMethod === 'orangeId' && !isCallbackUrl) { 
+                             self.clearUserSession(false); // Silently update Vue state
+                             self.current = 'landing'; // Go to landing if session lost
                           }
                       }
-                  } 
+                  }
               }, [user, isLoading]);
 
+              // Effect to handle the authentication callback from URL parameters
               React.useEffect(() => { 
                   const params = new URLSearchParams(window.location.search); 
                   const token = params.get('token'); 
                   const refreshToken = params.get('refreshToken');
 
-                  if (token && refreshToken && !user && !self.showLoadingModal && self.loginMethod === 'orangeId') { 
-                      self.showLoadingModal = true; self.loadingMessage = "Processing Orange ID authentication..."; self.isAuthProcessing = true;
+                  if (token && refreshToken) { 
+                      // If tokens are in URL, process them using Bedrock's loginCallback
+                      self.showLoadingModal = true; 
+                      self.loadingMessage = "Processing Orange ID authentication..."; 
+                      self.isAuthProcessing = true; 
+
                       async function processCallback() {
+                          let success = false;
                           try { 
-                              const success = await loginCallback(token, refreshToken); 
+                              success = await loginCallback(token, refreshToken); 
                               if (success) { 
-                                  // handleAuthenticationSuccess will be called by the other useEffect when 'user' updates
+                                  console.log("Orange ID loginCallback successful. User state will update via other effect.");
+                                  // Important: Do not set isAuthProcessing or showLoadingModal to false here.
+                                  // The other useEffect (listening to `user` changes) will trigger
+                                  // `handleAuthenticationSuccess`, which will correctly update these states.
+                                  // URL cleaning also happens in `handleAuthenticationSuccess`.
                               } else { 
                                   self.addNotification('Orange ID login failed to process callback.', 'error'); 
-                                  self.handleOrangeIdLogout(); 
+                                  self.isAuthProcessing = false; 
+                                  self.showLoadingModal = false;
+                                  const cleanUrl = window.location.origin + window.location.pathname;
+                                  window.history.replaceState({}, document.title, cleanUrl);
                               } 
                           }
-                          catch (e) { self.addNotification('Orange ID login error during callback: ' + (e.message || 'Try again.'), 'error'); self.handleOrangeIdLogout(); }
-                          finally { self.showLoadingModal = false; self.isAuthProcessing = false; }
-                      } processCallback();
-                  } else if (!token && !refreshToken && !user && isLoading === false && self.isAuthProcessing && self.loginMethod === 'orangeId') { 
-                      self.isAuthProcessing = false; 
+                          catch (e) { 
+                            self.addNotification('Orange ID login error during callback: ' + (e.message || 'Try again.'), 'error'); 
+                            self.isAuthProcessing = false; 
+                            self.showLoadingModal = false;
+                            const cleanUrl = window.location.origin + window.location.pathname;
+                            window.history.replaceState({}, document.title, cleanUrl);
+                          }
+                      } 
+                      processCallback();
                   } 
-              }, [loginCallback, user, isLoading]); return null;
-            }
-            const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div'); tempContainer.id = 'orange-id-state-updater-container'; if (!document.body.contains(tempContainer)) { document.body.appendChild(tempContainer); }
-            const root = ReactDOM.createRoot(tempContainer); root.render(React.createElement(Bedrock.BedrockPassportProvider, bedrockConfig, React.createElement(OrangeIdStateUpdater)));
-          },
-          handleOrangeIdLogout() { 
-              this.orangeUser = null; 
-              if (this.loginMethod === 'orangeId') this.clearUserSession(false); 
-              this.isAuthProcessing = false;
-          },
-          renderOrangeIdLoginPanel() {
-            
-              this.isOrangeIdPanelRendering = true;
-              const container = document.getElementById('bedrock-login-widget-container'); 
-              if (!container) { console.error("Login widget container missing."); this.isOrangeIdPanelRendering = false; return; } 
-              container.innerHTML = '';
-              if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) { 
-                  this.bedrockSDKError = true; 
-                  this.isOrangeIdPanelRendering = false; 
-                  return; 
-              } 
+              }, [loginCallback]); // This effect should run once on mount or if loginCallback instance changes (rare).
 
-              this.bedrockSDKError = false;
-              const root = ReactDOM.createRoot(container);
-              root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(Bedrock.LoginPanel, { 
-                  title: "", logo: "", logoAlt: "", walletButtonText: "Connect Wallet", showConnectWallet: false, separatorText: "", 
-                  features: { enableWalletConnect: false, enableAppleLogin: true, enableGoogleLogin: true, enableEmailLogin: false, }, 
-                  panelClass: "bg-transparent shadow-none p-0", titleClass: "hidden", logoClass: "hidden", headerClass: "justify-center mb-0", 
-                  buttonClass: "flex items-center justify-center p-2 border border-gray-200 rounded-md hover:border-green-400 focus:ring-1 focus:ring-green-400 w-auto min-w-[60px] h-[60px]", 
-                  separatorTextClass: "hidden", 
-                  separatorClass: "hidden", 
-              })));
-              this.isOrangeIdPanelRendering = false; 
+              return null; // This component doesn't render anything visible
+            }
+
+            const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div'); 
+            tempContainer.id = 'orange-id-state-updater-container'; 
+            if (!document.body.contains(tempContainer)) { 
+              document.body.appendChild(tempContainer); 
+            }
+            const root = ReactDOM.createRoot(tempContainer); 
+            root.render(React.createElement(Bedrock.BedrockPassportProvider, bedrockConfig, React.createElement(OrangeIdStateUpdater)));
+          },
+          
+          renderOrangeIdLoginPanel() {
+            this.isOrangeIdPanelRendering = true;
+            const container = document.getElementById('bedrock-login-widget-container'); 
+            if (!container) { console.error("Login widget container missing."); this.isOrangeIdPanelRendering = false; return; } 
+            container.innerHTML = '';
+            if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) { 
+                this.bedrockSDKError = true; 
+                this.isOrangeIdPanelRendering = false; 
+                return; 
+            } 
+            this.bedrockSDKError = false;
+            const root = ReactDOM.createRoot(container);
+            root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(Bedrock.LoginPanel, { 
+                title: "", logo: "", logoAlt: "", walletButtonText: "Connect Wallet", showConnectWallet: false, separatorText: "", 
+                features: { enableWalletConnect: false, enableAppleLogin: true, enableGoogleLogin: true, enableEmailLogin: false, }, 
+                panelClass: "bg-transparent shadow-none p-0", titleClass: "hidden", logoClass: "hidden", headerClass: "justify-center mb-0", 
+                buttonClass: "flex items-center justify-center p-2 border border-gray-200 rounded-md hover:border-green-400 focus:ring-1 focus:ring-green-400 w-auto min-w-[60px] h-[60px]", 
+                separatorTextClass: "hidden", 
+                separatorClass: "hidden", 
+            })));
+            this.isOrangeIdPanelRendering = false; 
           },
           renderOrangeIdSignOutButton(containerId) {
               const container = document.getElementById(containerId); if (!container) return; if (container.querySelector('button') || container.querySelector('i.fa-sign-out-alt')) return; container.innerHTML = '';
               if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) { console.error("Cannot render Orange ID signout, SDK missing."); return; }
               const root = ReactDOM.createRoot(container); const self = this;
               function SignOutButtonComponent() {
-                if (!Bedrock.useBedrockPassport) return null; const { user } = Bedrock.useBedrockPassport(); 
-                if (!user && self.isUserAuthenticated && self.loginMethod === 'orangeId') { self.logoutUser(); return null; } if (!user) return null;
-                return React.createElement('button', { className: 'text-gray-400 hover:text-red-500 ml-2 focus:outline-none', title: "Sign Out", onClick: () => self.logoutUser() }, React.createElement('i', {className: 'fas fa-sign-out-alt text-lg'}));
-              } root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(SignOutButtonComponent)));
+                if (!Bedrock.useBedrockPassport) return null; 
+                const { user } = Bedrock.useBedrockPassport(); 
+                
+                if (!user && self.isUserAuthenticated && self.loginMethod === 'orangeId') { 
+                     self.clearUserSession(false); 
+                     return null; 
+                } 
+                if (!user) return null;
+
+                return React.createElement('button', { 
+                    className: 'text-gray-400 hover:text-red-500 ml-2 focus:outline-none', 
+                    title: "Sign Out", 
+                    onClick: () => self.logoutUser() // Calls the main Vue logoutUser method
+                }, React.createElement('i', {className: 'fas fa-sign-out-alt text-lg'}));
+              } 
+              root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(SignOutButtonComponent)));
           },
           promptOrangeIdLogin() { 
               if (this.isUserAuthenticated && this.loginMethod === 'orangeId') { this.addNotification("Already logged in with Orange ID.", "info"); return; }
               if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); } 
-              this.loginMethod = 'orangeId'; 
+              this.loginMethod = 'orangeId'; // Tentatively set, will be confirmed by SDK
               this.isAuthProcessing = true; 
               if(this.current !== 'loginChoice') {
                   this.switchPage('loginChoice');
@@ -1163,26 +1147,42 @@
           async logoutUser(notify = true) {
               this.showLoadingModal = true;
               this.loadingMessage = "Signing out...";
-      
-              const currentLoginMethod = this.loginMethod;
+              const currentLoginMethod = this.loginMethod; // Store before clearing
               
-              if (currentLoginMethod === 'orangeId' && typeof Bedrock !== 'undefined' && Bedrock.useBedrockPassport) {
-                  try {
-                       const bedrock = Bedrock.useBedrockPassport(); 
-                       if (bedrock && bedrock.signOut) await bedrock.signOut();
-                  } catch (e) { console.error("Orange ID sign out error:", e); }
+              if (currentLoginMethod === 'orangeId') {
+                  if (typeof Bedrock !== 'undefined' && Bedrock.BedrockPassportProvider && ReactDOM.createRoot) {
+                      const tempSignOutContainer = document.createElement('div');
+                      const root = ReactDOM.createRoot(tempSignOutContainer);
+                      try {
+                          await new Promise((resolve, reject) => {
+                              function TempSignOut() {
+                                  const { signOut: bedrockSignOut, user } = Bedrock.useBedrockPassport();
+                                  React.useEffect(() => {
+                                      if (user && bedrockSignOut) {
+                                          bedrockSignOut().then(resolve).catch(reject);
+                                      } else {
+                                          resolve(); // No user to sign out, or signOut not available
+                                      }
+                                  }, [bedrockSignOut, user]);
+                                  return null;
+                              }
+                              root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(TempSignOut)));
+                          });
+                          console.log("Bedrock SDK signOut process completed.");
+                      } catch (e) {
+                          console.error("Orange ID sign out error via Bedrock SDK:", e);
+                          // Proceed with clearing local state anyway
+                      }
+                  } else {
+                      console.warn("Bedrock SDK not available for Orange ID signout.");
+                  }
               } else if (currentLoginMethod === 'solana') {
                   await this.disconnectWallet();
               }
               
               this.clearUserSession(notify); 
-              
               this.showLoadingModal = false;
-              if (currentLoginMethod === 'orangeId') {
-                  window.location.reload(); 
-              } else {
-                  this.current = 'landing';
-              }
+              this.current = 'landing';
           },
           clearUserSession(notify = true) { 
               this.currentUserIdentifier = null;
@@ -1285,7 +1285,7 @@
           },
           scrollToAndHighlightAgriStreamVideo() { if (!this.targetAgriStreamVideoCid) return; this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid; this.$nextTick(() => { const videoCardRef = this.$refs[`videoCard-${this.targetAgriStreamVideoCid}`]; if (videoCardRef && videoCardRef[0]) { videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; }, 2500); } else { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; } }); },
           getOtherParticipantInitial(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.charAt(0).toUpperCase(); if (otherP.length > 20 && otherP.includes('-')) return otherP.substring(0,1).toUpperCase(); return otherP.charAt(0).toUpperCase(); },
-          getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; if (otherP.length > 20 && otherP.includes('-')) return `${otherP.substring(0,4)}...${otherP.substring(otherP.length-4)}`; return `${otherP.substring(0,6)}...${partnerId.length-4}`; },
+          getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; if (otherP.length > 20 && otherP.includes('-')) return `${otherP.substring(0,4)}...${otherP.substring(otherP.length-4)}`; return `${otherP.substring(0,6)}...${otherP.substring(otherP.length-4)}`; },
           formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } }
         },
         mounted() {
@@ -1294,28 +1294,11 @@
           if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); alert("Config Warning: OpenWeatherMap API Key not set. Weather will not work."); }
           if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
           
-          // Check if we have stored Orange ID auth data from redirect
-          if (window.orangeIdAuthData) {
-            this.handleOrangeIdCallback(
-              window.orangeIdAuthData.token,
-              window.orangeIdAuthData.refreshToken
-            );
-            // Clear the temporary data
-            window.orangeIdAuthData = null;
-          }
-          
-          // Check localStorage for existing tokens
-          const storedToken = localStorage.getItem('pestivid_token');
-          const storedRefreshToken = localStorage.getItem('pestivid_refresh_token');
-          if (storedToken && storedRefreshToken) {
-            this.handleOrangeIdCallback(storedToken, storedRefreshToken);
-          }
-      
           this.loadDataFromLocalStorage(); 
           
           const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
-          
           let bedrockCheckCount = 0;
+          const self = this; // Make Vue instance available for timeout
           const bedrockInterval = setInterval(() => {
               bedrockCheckCount++;
               if (typeof Bedrock !== 'undefined' && typeof ReactDOM !== 'undefined' && Bedrock.BedrockPassportProvider && ReactDOM.createRoot) {
@@ -1323,41 +1306,36 @@
                   console.log("Bedrock SDK ready. Initializing Orange ID state listener.");
                   this.initializeOrangeIdStateListener(); 
                   
+                  // Attempt Solana auto-reconnect *after* Orange ID state listener is initialized
+                  // to give Orange ID session resumption priority if tokens are in URL.
                   setTimeout(() => { 
-                      if (!this.isUserAuthenticated && window.solana && window.solana.isPhantom) {
+                      if (!self.isUserAuthenticated && !self.isAuthProcessing && window.solana && window.solana.isPhantom) {
                            const lastUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
                            if (lastUserId) {
                               window.solana.request({ method: 'connect', params: { onlyIfTrusted: true } })
                                   .then(resp => {
                                       if (resp && resp.publicKey && resp.publicKey.toString() === lastUserId) {
-                                          this.walletAddress = resp.publicKey.toString();
-                                          this.currentUserIdentifier = this.walletAddress;
-                                          this.loginMethod = 'solana';
-                                          this.addNotification("Solana Wallet auto-reconnected!", 'info');
-                                          this.loadOrSetupPestiVidProfile();
+                                          self.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
                                       }
                                   })
                                   .catch(err => console.log("Solana auto-reconnect failed or not trusted:", err.message));
                            }
                       }
-                  }, 1500); 
+                  }, 2500); // Delay to allow Orange ID processing first if URL has tokens
       
-              } else if (bedrockCheckCount > 40) { 
+              } else if (bedrockCheckCount > 40) { // Approx 20 seconds
                   clearInterval(bedrockInterval);
                   console.error("Bedrock SDK (React/ReactDOM) did not load correctly. Orange ID features may not work.");
                   this.isAuthProcessing = false; this.bedrockSDKError = true;
-                  this.addNotification("Orange ID authentication service failed to load. Please refresh page.", "error");
-                  if (window.solana && window.solana.isPhantom) {
+                  this.addNotification("Orange ID authentication service failed to load. Please refresh page or check console.", "error");
+                  // Fallback to Solana auto-reconnect if Bedrock fails
+                  if (!self.isUserAuthenticated && !self.isAuthProcessing && window.solana && window.solana.isPhantom) {
                        const lastUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
                        if (lastUserId) {
                           window.solana.request({ method: 'connect', params: { onlyIfTrusted: true } })
                               .then(resp => {
                                    if (resp && resp.publicKey && resp.publicKey.toString() === lastUserId) {
-                                      this.walletAddress = resp.publicKey.toString();
-                                      this.currentUserIdentifier = this.walletAddress;
-                                      this.loginMethod = 'solana';
-                                      this.addNotification("Solana Wallet auto-reconnected!", 'info');
-                                      this.loadOrSetupPestiVidProfile();
+                                      self.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
                                   }
                               })
                               .catch(err => console.log("Solana auto-reconnect after Bedrock fail:", err.message));
@@ -1370,8 +1348,7 @@
         }
       });
     
-    // Store reference to Vue instance globally
-    window.vueApp = app;
+    window.vueApp = app; // Keep global reference if needed elsewhere, though not used by current changes.
 </script>
 </body>
 </html>
