@@ -67,7 +67,6 @@
     .login-panel-wrapper h2 { font-size: 1.5rem; font-weight: 700; color: #166534; /* green-800 */ margin-bottom: 0.5rem; }
     .login-panel-wrapper .tagline { color: #4b5563; /* gray-600 */ margin-bottom: 1.5rem; font-size: 0.9rem; }
     
-    /* Styles for Orange ID Login Panel customization */
     #bedrock-login-widget-container { margin: 0 auto; }
     #bedrock-login-widget-container > div > div { 
         display: flex !important;
@@ -268,7 +267,7 @@
         </div>
     </section>
 
-    <!-- Login Choice Page -->
+    <!-- Login Choice Page - Main Authentication Hub -->
     <section v-if="current==='loginChoice'" class="login-page-container">
         <div class="login-panel-wrapper">
             <div class="login-branding justify-center">
@@ -283,6 +282,7 @@
                 <div id="bedrock-login-widget-container" class="flex justify-center space-x-2">
                     <p v-if="isOrangeIdPanelRendering" class="text-gray-500 p-4 text-sm"> <i class="fas fa-spinner fa-spin mr-2"></i>Loading Social Logins...</p>
                     <p v-if="!isOrangeIdPanelRendering && bedrockSDKError" class="text-red-500 p-4 text-sm"> <i class="fas fa-exclamation-triangle mr-2"></i>Social login service could not load.</p>
+                    <!-- Orange ID LoginPanel (Google/Apple icons) will be rendered here by renderOrangeIdLoginPanel() -->
                 </div>
                  <p class="text-xs text-black mt-2 text-center">Powered by <a href="https://orangeid.xyz" target="_blank" class="underline hover:text-orange-500">Orange ID</a></p>
             </div>
@@ -762,7 +762,7 @@
           bedrockSDKError: false,
           bedrockConfig: {
             baseUrl: 'https://api.bedrockpassport.com',
-            authCallbackUrl: window.location.origin, // IMPORTANT: This must match your Orange ID tenant config
+            authCallbackUrl: window.location.origin, 
             tenantId: 'orange-zcjan3p9n2', 
             subscriptionKey: '2c3b9cc1c8b2436e9ceae5d857bdcd8b', 
           },
@@ -882,29 +882,51 @@
           navigateToPageWithParam(page, paramName, paramValue) { if (page === 'farmerSell' && paramName === 'cid') { this.listingForm.cid = paramValue; } else if (page === 'farmerFunding' && paramName === 'cid') { this.fundingForm.cid = paramValue; } else if (page === 'farmerAgriStream' && paramName === 'highlightCid') { this.targetAgriStreamVideoCid = paramValue; } this.switchPage(page); },
           getStarted() { if (!this.isUserAuthenticated) { this.current = 'loginChoice'; } else if (!this.role) { this.current = 'roleSelection'; } else if (this.role === 'farmer') { this.switchPage('farmerPestiVid'); } else if (this.role === 'buyer') { this.switchPage('buyerAgriSell'); } else if (this.role === 'investor') { this.switchPage('investorProjects'); } else { this.switchPage('landing'); } },
           
+          handleAuthenticationSuccess(identifier, method, orangeUserDetails = null) {
+              this.currentUserIdentifier = identifier;
+              this.loginMethod = method;
+              if (method === 'orangeId' && orangeUserDetails) {
+                  this.orangeUser = orangeUserDetails;
+                  this.walletAddress = null; // Clear Solana wallet if logging in with Orange ID
+              } else if (method === 'solana') {
+                  this.walletAddress = identifier; // Redundant but kept for clarity in Solana specific logic
+                  this.orangeUser = null; // Clear Orange ID user
+              }
+              this.isAuthProcessing = false;
+              this.isOrangeIdPanelRendering = false; // Ensure this is off
+              this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
+              
+              // Clean URL from auth tokens
+              if (window.location.search.includes('token=') || window.location.search.includes('refreshToken=')) {
+                  window.history.replaceState({}, document.title, window.location.pathname);
+              }
+              this.loadOrSetupPestiVidProfile();
+          },
+
           // --- Orange ID Methods ---
           initializeOrangeIdStateListener() {
             const bedrockConfig = this.bedrockConfig; const self = this;
             function OrangeIdStateUpdater() {
               if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) { console.warn("Orange ID SDK not fully ready. Retrying state listener init."); setTimeout(() => self.initializeOrangeIdStateListener(), 1000); return null; }
               const { user, isLoading, loginCallback } = Bedrock.useBedrockPassport();
+              
               React.useEffect(() => { 
-                  // Only set isAuthProcessing based on Orange ID loading if Orange ID is the chosen method
-                  if(self.loginMethod === 'orangeId' || (!self.loginMethod && isLoading) ) { 
+                  if(self.loginMethod === 'orangeId' || (!self.loginMethod && isLoading)) { // Only let Orange ID control isAuthProcessing if it's the active method or no method yet
                       self.isAuthProcessing = isLoading; 
                   }
                   if (!isLoading) { 
-                      if (user && self.loginMethod === 'orangeId') { 
-                           self.handleOrangeIdLoginSuccess(user); 
+                      if (user && (self.loginMethod === 'orangeId' || !self.loginMethod) ) {  // If Orange ID user exists and it was the intended method or no method was set
+                           self.handleAuthenticationSuccess(user.id, 'orangeId', user);
                       } else if (!user && self.loginMethod === 'orangeId') { 
                           const params = new URLSearchParams(window.location.search); 
                           if (!params.has('token') && !params.has('refreshToken')) { 
-                              self.handleOrangeIdLogout(); 
+                              self.handleOrangeIdLogout(); // This might be called if session expires externally
                           }
                       }
                   } 
               }, [user, isLoading]);
-              React.useEffect(() => {
+
+              React.useEffect(() => { // Handles the redirect callback from Orange ID
                   const params = new URLSearchParams(window.location.search); const token = params.get('token'); const refreshToken = params.get('refreshToken');
                   if (token && refreshToken && !user && !self.showLoadingModal && self.loginMethod === 'orangeId') { 
                       self.showLoadingModal = true; self.loadingMessage = "Processing Orange ID authentication..."; self.isAuthProcessing = true;
@@ -912,38 +934,22 @@
                           try { 
                               const success = await loginCallback(token, refreshToken); 
                               if (success) { 
-                                  window.history.replaceState({}, document.title, window.location.pathname); 
-                                  // handleOrangeIdLoginSuccess will be called by the other useEffect
+                                  // handleAuthenticationSuccess will be called by the other useEffect when 'user' updates
                               } else { 
                                   self.addNotification('Orange ID login failed.', 'error'); 
                                   self.handleOrangeIdLogout(); 
-                                  window.history.replaceState({}, document.title, window.location.pathname); 
                               } 
                           }
-                          catch (e) { self.addNotification('Orange ID login error: ' + (e.message || 'Try again.'), 'error'); self.handleOrangeIdLogout(); window.history.replaceState({}, document.title, window.location.pathname); }
-                          finally { self.showLoadingModal = false; self.isAuthProcessing = false; }
+                          catch (e) { self.addNotification('Orange ID login error: ' + (e.message || 'Try again.'), 'error'); self.handleOrangeIdLogout(); }
+                          finally { self.showLoadingModal = false; self.isAuthProcessing = false; window.history.replaceState({}, document.title, window.location.pathname); }
                       } processCallback();
-                  } else if (!token && !refreshToken && !user && isLoading === false && self.isAuthProcessing && self.loginMethod !== 'solana') { 
+                  } else if (!token && !refreshToken && !user && isLoading === false && self.isAuthProcessing && self.loginMethod === 'orangeId') { 
                       self.isAuthProcessing = false; 
                   } 
               }, [loginCallback, user, isLoading]); return null;
             }
             const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div'); tempContainer.id = 'orange-id-state-updater-container'; if (!document.body.contains(tempContainer)) { document.body.appendChild(tempContainer); }
             const root = ReactDOM.createRoot(tempContainer); root.render(React.createElement(Bedrock.BedrockPassportProvider, bedrockConfig, React.createElement(OrangeIdStateUpdater)));
-          },
-          handleOrangeIdLoginSuccess(orangeUser) {
-              if (this.currentUserIdentifier === orangeUser.id && this.role && this.current !== 'loginChoice' && this.loginMethod === 'orangeId') { 
-                  this.isAuthProcessing = false; 
-                  if (this.current === 'loginChoice') this.getStarted(); 
-                  return; 
-              }
-              this.orangeUser = orangeUser; 
-              this.currentUserIdentifier = orangeUser.id;
-              this.loginMethod = 'orangeId'; // Explicitly set here
-              this.walletAddress = null; 
-              this.isAuthProcessing = false; 
-              this.addNotification("Orange ID authentication successful!", 'success');
-              this.loadOrSetupPestiVidProfile();
           },
           handleOrangeIdLogout() { 
               this.orangeUser = null; 
@@ -987,18 +993,18 @@
               if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); } 
               this.loginMethod = 'orangeId'; 
               this.isAuthProcessing = true; 
-              // The Bedrock.LoginPanel on the 'loginChoice' page will handle the actual SDK calls when a social button is clicked.
-              // Ensure the panel is rendered if the user is on the loginChoice page.
+              // The Bedrock.LoginPanel on the 'loginChoice' page will handle the actual SDK calls.
+              // We just ensure the user is on that page and the panel is ready.
               if(this.current !== 'loginChoice') {
                   this.switchPage('loginChoice');
               } else {
-                  // If already on loginChoice, ensure panel is rendered (might have been cleared)
-                  this.$nextTick(() => {
+                  this.$nextTick(() => { // Ensure panel renders if it wasn't (e.g. due to SDK load delay)
                       if (document.getElementById('bedrock-login-widget-container')) {
                            this.renderOrangeIdLoginPanel();
                       }
                   });
               }
+              // User clicks on Google/Apple button inside the rendered panel to initiate flow.
           },
       
           // --- Solana Wallet Methods ---
@@ -1014,17 +1020,11 @@
               this.isAuthProcessing = true;
               try {
                   const resp = await window.solana.connect();
-                  this.walletAddress = resp.publicKey.toString();
-                  this.currentUserIdentifier = this.walletAddress;
-                  this.loginMethod = 'solana';
-                  this.orangeUser = null; 
-                  this.addNotification("Solana Wallet connected!", 'success');
-                  this.loadOrSetupPestiVidProfile();
+                  this.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
               } catch (err) {
                   console.error("Solana Wallet connection error:", err);
                   alert("Could not connect to Solana wallet. " + (err.message || ''));
                   this.loginMethod = null; 
-              } finally {
                   this.isAuthProcessing = false;
               }
           },
