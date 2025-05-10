@@ -69,34 +69,33 @@
     
     /* Styles for Orange ID Login Panel customization */
     #bedrock-login-widget-container { margin: 0 auto; }
-    #bedrock-login-widget-container > div > div { /* Target the inner div that likely wraps the SDK's buttons */
+    #bedrock-login-widget-container > div > div { 
         display: flex !important;
-        justify-content: center !important; /* Center buttons if they wrap */
-        gap: 1rem !important; /* Add more space between buttons */
-        flex-wrap: nowrap !important; /* Try to keep them on one line */
+        justify-content: center !important; 
+        gap: 1rem !important; 
+        flex-wrap: nowrap !important; 
     }
-    /* Specific attempt to style buttons rendered by Orange ID SDK for icon-only look */
     #bedrock-login-widget-container button {
         padding: 0.5rem !important; 
         min-width: 50px !important; 
-        width: 60px !important; /* Attempt to make squarer */
-        height: 60px !important; /* Attempt to make squarer */
+        width: 60px !important; 
+        height: 60px !important; 
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        background-color: #fff !important; /* Ensure background for visibility if SDK defaults are transparent */
-        border: 1px solid #e5e7eb !important; /* Add a light border */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* Subtle shadow */
+        background-color: #fff !important; 
+        border: 1px solid #e5e7eb !important; 
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; 
     }
     #bedrock-login-widget-container button:hover {
-        border-color: #d1d5db !important; /* Slightly darker border on hover */
+        border-color: #d1d5db !important; 
     }
-    #bedrock-login-widget-container button > svg { /* Target SVG icons directly */
-        width: 32px !important; /* Increase icon size */
+    #bedrock-login-widget-container button > svg { 
+        width: 32px !important; 
         height: 32px !important;
         margin-right: 0 !important; 
     }
-    #bedrock-login-widget-container button > span { /* Attempt to hide text */
+    #bedrock-login-widget-container button > span { 
         display: none !important; 
     }
 
@@ -746,12 +745,6 @@
 </div>
 
 <script>
-    // The JavaScript (<script> block) remains the same as the previous "complete website" response.
-    // The changes for this request were purely in the HTML structure of the `loginChoice` section
-    // and the CSS in the <style> block to attempt to achieve the icon-only look for Orange ID buttons.
-    // Please copy the JavaScript from the previous "complete website" response I provided.
-    // If you need it again, let me know.
-
     new Vue({
         el: "#app",
         data: {
@@ -769,7 +762,7 @@
           bedrockSDKError: false,
           bedrockConfig: {
             baseUrl: 'https://api.bedrockpassport.com',
-            authCallbackUrl: window.location.origin,
+            authCallbackUrl: window.location.origin, // IMPORTANT: This must match your Orange ID tenant config
             tenantId: 'orange-zcjan3p9n2', 
             subscriptionKey: '2c3b9cc1c8b2436e9ceae5d857bdcd8b', 
           },
@@ -896,7 +889,10 @@
               if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) { console.warn("Orange ID SDK not fully ready. Retrying state listener init."); setTimeout(() => self.initializeOrangeIdStateListener(), 1000); return null; }
               const { user, isLoading, loginCallback } = Bedrock.useBedrockPassport();
               React.useEffect(() => { 
-                  self.isAuthProcessing = isLoading; 
+                  // Only set isAuthProcessing based on Orange ID loading if Orange ID is the chosen method
+                  if(self.loginMethod === 'orangeId' || (!self.loginMethod && isLoading) ) { 
+                      self.isAuthProcessing = isLoading; 
+                  }
                   if (!isLoading) { 
                       if (user && self.loginMethod === 'orangeId') { 
                            self.handleOrangeIdLoginSuccess(user); 
@@ -913,11 +909,23 @@
                   if (token && refreshToken && !user && !self.showLoadingModal && self.loginMethod === 'orangeId') { 
                       self.showLoadingModal = true; self.loadingMessage = "Processing Orange ID authentication..."; self.isAuthProcessing = true;
                       async function processCallback() {
-                          try { const success = await loginCallback(token, refreshToken); if (success) { window.history.replaceState({}, document.title, window.location.pathname); } else { self.addNotification('Orange ID login failed.', 'error'); self.handleOrangeIdLogout(); window.history.replaceState({}, document.title, window.location.pathname); } }
+                          try { 
+                              const success = await loginCallback(token, refreshToken); 
+                              if (success) { 
+                                  window.history.replaceState({}, document.title, window.location.pathname); 
+                                  // handleOrangeIdLoginSuccess will be called by the other useEffect
+                              } else { 
+                                  self.addNotification('Orange ID login failed.', 'error'); 
+                                  self.handleOrangeIdLogout(); 
+                                  window.history.replaceState({}, document.title, window.location.pathname); 
+                              } 
+                          }
                           catch (e) { self.addNotification('Orange ID login error: ' + (e.message || 'Try again.'), 'error'); self.handleOrangeIdLogout(); window.history.replaceState({}, document.title, window.location.pathname); }
                           finally { self.showLoadingModal = false; self.isAuthProcessing = false; }
                       } processCallback();
-                  } else if (!token && !refreshToken && !user && isLoading === false && self.isAuthProcessing && self.loginMethod !== 'solana') { self.isAuthProcessing = false; } 
+                  } else if (!token && !refreshToken && !user && isLoading === false && self.isAuthProcessing && self.loginMethod !== 'solana') { 
+                      self.isAuthProcessing = false; 
+                  } 
               }, [loginCallback, user, isLoading]); return null;
             }
             const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div'); tempContainer.id = 'orange-id-state-updater-container'; if (!document.body.contains(tempContainer)) { document.body.appendChild(tempContainer); }
@@ -931,7 +939,7 @@
               }
               this.orangeUser = orangeUser; 
               this.currentUserIdentifier = orangeUser.id;
-              this.loginMethod = 'orangeId';
+              this.loginMethod = 'orangeId'; // Explicitly set here
               this.walletAddress = null; 
               this.isAuthProcessing = false; 
               this.addNotification("Orange ID authentication successful!", 'success');
@@ -979,12 +987,18 @@
               if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); } 
               this.loginMethod = 'orangeId'; 
               this.isAuthProcessing = true; 
-              if(this.current !== 'loginChoice') this.current = 'loginChoice';
-              this.$nextTick(() => {
-                  if (document.getElementById('bedrock-login-widget-container')) {
-                       this.renderOrangeIdLoginPanel();
-                  }
-              });
+              // The Bedrock.LoginPanel on the 'loginChoice' page will handle the actual SDK calls when a social button is clicked.
+              // Ensure the panel is rendered if the user is on the loginChoice page.
+              if(this.current !== 'loginChoice') {
+                  this.switchPage('loginChoice');
+              } else {
+                  // If already on loginChoice, ensure panel is rendered (might have been cleared)
+                  this.$nextTick(() => {
+                      if (document.getElementById('bedrock-login-widget-container')) {
+                           this.renderOrangeIdLoginPanel();
+                      }
+                  });
+              }
           },
       
           // --- Solana Wallet Methods ---
@@ -1198,7 +1212,7 @@
           },
           scrollToAndHighlightAgriStreamVideo() { if (!this.targetAgriStreamVideoCid) return; this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid; this.$nextTick(() => { const videoCardRef = this.$refs[`videoCard-${this.targetAgriStreamVideoCid}`]; if (videoCardRef && videoCardRef[0]) { videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; }, 2500); } else { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; } }); },
           getOtherParticipantInitial(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.charAt(0).toUpperCase(); if (otherP.length > 20 && otherP.includes('-')) return otherP.substring(0,1).toUpperCase(); return otherP.charAt(0).toUpperCase(); },
-          getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; if (otherP.length > 20 && otherP.includes('-')) return `${otherP.substring(0,4)}...${otherP.substring(otherP.length-4)}`; return `${otherP.substring(0,6)}...${otherP.substring(partnerId.length-4)}`; },
+          getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; if (otherP.length > 20 && otherP.includes('-')) return `${otherP.substring(0,4)}...${otherP.substring(otherP.length-4)}`; return `${otherP.substring(0,6)}...${partnerId.length-4}`; },
           formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } }
         },
         mounted() {
