@@ -518,7 +518,7 @@
       </div>
     </section>
 
-    <!-- Farmer: AgriStream (My Uploads) Section - REVERTED TO V1 -->
+    <!-- Farmer: AgriStream (My Uploads) Section -->
     <section v-if="current==='farmerAgriStream'" class="max-w-4xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-5"><i class="fas fa-stream mr-2"></i>AgriStream: My Crop Videos</h2>
         <div class="bg-white rounded shadow-md p-6">
@@ -571,7 +571,7 @@
         </div>
     </section>
 
-    <!-- Farmer: Sell (Create Listing) Section (Remains V2 - with notifications and txHash) -->
+    <!-- Farmer: Sell (Create Listing) Section -->
     <section v-if="current==='farmerSell'" class="max-w-2xl mx-auto mt-6">
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-tags mr-2"></i>Sell Farm Crop on Marketplace</h2>
       <div class="bg-white rounded shadow-md p-6">
@@ -604,7 +604,7 @@
               <span class="ml-2 text-sm text-gray-700">Notify potential buyers about this listing</span>
             </label>
           </div>
-          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!listingForm.cid || !walletAddress"> <!-- Simplified disabled condition slightly -->
+          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!listingForm.cid || !walletAddress">
             <i class="fas fa-plus-circle mr-1"></i>Create Listing
           </button>
            <div v-if="!walletAddress" class="text-red-500 mt-3 text-sm text-center">Connect wallet to create listings.</div>
@@ -642,7 +642,7 @@
       </div>
     </section>
 
-    <!-- Farmer Funding Request Section - REVERTED TO V1 -->
+    <!-- Farmer Funding Request Section -->
     <section v-if="current==='farmerFunding'" class="max-w-3xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-money-bill-wave mr-2"></i>Request Funding for Your Farm</h2>
         <div class="bg-white rounded shadow-md p-6">
@@ -685,7 +685,7 @@
                 <label class="block text-gray-600 mb-1 text-sm">Select Video Evidence</label>
                 <select v-model="fundingForm.cid" class="w-full px-3 py-2 border rounded bg-white mb-2 text-sm" required>
                 <option value="" disabled>Select video...</option>
-                <option v-for="vid in availableVideosForFunding" :key="vid.cid" :value="vid.cid"> <!-- Changed to availableVideosForFunding -->
+                <option v-for="vid in availableVideosForFunding" :key="vid.cid" :value="vid.cid">
                     {{ vid.crop }} ({{ vid.location }}) - {{ vid.pesticideCompany || 'N/A' }}
                 </option>
                 <option v-if="availableVideosForFunding.length === 0" disabled>No videos suitable for funding available</option>
@@ -710,7 +710,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!fundingForm.cid || !walletAddress"> <!-- Simplified disabled condition -->
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!fundingForm.cid || !walletAddress">
                 <i class="fas fa-paper-plane mr-1"></i> Create Funding Request
             </button>
             <div v-if="!walletAddress" class="text-red-500 mt-3 text-sm text-center">Connect wallet to create funding requests.</div>
@@ -786,7 +786,7 @@
         </div>
     </section>
 
-    <!-- Buyer: Marketplace (AgriSell) Section (Remains V2) -->
+    <!-- Buyer: Marketplace (AgriSell) Section -->
     <section v-if="current==='buyerAgriSell'" class="max-w-6xl mx-auto mt-6">
       <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-shopping-basket mr-2"></i>AgriSell: Marketplace</h2>
       <div class="bg-white rounded shadow-md p-6 mb-7">
@@ -845,7 +845,7 @@
       </div>
     </section>
 
-    <!-- Investor Projects Section (Remains V2) -->
+    <!-- Investor Projects Section -->
     <section v-if="current==='investorProjects'" class="max-w-6xl mx-auto mt-6">
       <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-project-diagram mr-2"></i>Investment Opportunities</h2>
       <div class="bg-white rounded shadow-md p-6 mb-7">
@@ -978,7 +978,7 @@
       </div>
     </section>
 
-    <!-- Investor Portfolio Section (Remains V2) -->
+    <!-- Investor Portfolio Section -->
     <section v-if="current==='investorPortfolio'" class="max-w-6xl mx-auto mt-6">
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-chart-pie mr-2"></i>Investment Portfolio</h2>
       <div class="bg-white rounded-lg shadow p-6 mb-8">
@@ -1137,7 +1137,7 @@
       </div>
     </section>
 
-    <!-- User Profile Section (Remains V2) -->
+    <!-- User Profile Section -->
     <section v-if="current==='userProfile'" class="max-w-6xl mx-auto mt-6">
         <div v-if="!walletAddress" class="text-center p-10 bg-white rounded-lg shadow">
             <i class="fas fa-exclamation-circle text-3xl text-yellow-500 mb-4"></i>
@@ -1572,7 +1572,7 @@
         </div>
     </section>
 
-    <!-- Messaging Section (Remains V2) -->
+    <!-- Messaging Section -->
     <section v-if="current==='messaging'" class="max-w-6xl mx-auto mt-6">
          <div v-if="!walletAddress" class="text-center p-10 bg-white rounded-lg shadow">
             <i class="fas fa-exclamation-circle text-3xl text-yellow-500 mb-4"></i>
@@ -1656,7 +1656,7 @@
         </div>
     </section>
 
-    <!-- Modals (Remain V2, but ensure data passed is compatible) -->
+    <!-- Modals -->
     <div v-if="selectedPurchase && showPurchaseVideo" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full modal-scrollable">
         <div class="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
@@ -2018,14 +2018,27 @@ new Vue({
     showFarmerProfileModal: false,
     selectedFarmerProfile: null,
 
-    // IMPORTANT: Replace with your ACTUAL Pinata JWT. Keep this secure.
-    pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM',
-    // IMPORTANT: Replace with your Pinata Gateway if you have a dedicated one
-    pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud', // Generic public gateway, consider your own for better performance/rate limits
+    // ###################################################################################
+    // # CRITICAL: REPLACE THIS WITH YOUR *ACTUAL* PINATA JWT FROM YOUR PINATA ACCOUNT   #
+    // # Video uploads WILL FAIL if you use this placeholder JWT.                        #
+    // # Go to https://app.pinata.cloud/keys to create an API Key and get your JWT.    #
+    // ###################################################################################
+    pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM', // Example: 'eyJhbGciOiJIUzI1NiIsI.....REAL_JWT_CONTENT.....iIsInR5cCI6IkpXVCJ9...'
+    // The example JWT provided previously ('eyJhbGciOiJIUzI1N...ZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM')
+    // is just an example and will not work for your account. You MUST use your own.
+
+    // IMPORTANT: Replace with your Pinata Gateway if you have a dedicated one.
+    // The default public one is used here.
+    pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud',
 
     farmerLocationCity: '',
-    // IMPORTANT: Replace with your OpenWeatherMap API Key
-    weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY',
+    // ###################################################################################
+    // # CRITICAL: REPLACE THIS WITH YOUR *ACTUAL* OpenWeatherMap API KEY                #
+    // # The weather feature WILL NOT WORK if you use this placeholder.                  #
+    // # Go to https://openweathermap.org/api to get your key.                         #
+    // ###################################################################################
+    weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', // Example: 'ab123xyz789................'
+
     currentWeather: null,
     forecastWeather: [],
     weatherLoading: false,
@@ -2418,8 +2431,8 @@ new Vue({
         if (!this.recordForm.crop || !this.recordForm.pesticide || !this.recordForm.location || !this.recordForm.pesticideCompany || !this.recordForm.purpose) {
             alert("Please fill in all crop, location, pesticide, pesticide company details, and select a purpose before uploading."); return;
         }
-        if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) { // Check for placeholder or empty
-            this.uploadError = "Pinata JWT not configured. Cannot upload. Please check the `pinataJwt` value in the script.";
+        if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) {
+            this.uploadError = "CRITICAL ERROR: Pinata JWT is not configured. Video uploads will fail. Please go to your Pinata account, create an API Key (JWT), and replace 'YOUR_PINATA_JWT' in the script with your actual JWT.";
             console.error(this.uploadError);
             alert(this.uploadError);
             return;
@@ -2489,7 +2502,7 @@ new Vue({
             if (e.response) {
                 this.uploadError += `Server responded with ${e.response.status}. ${e.response.data?.error?.details || e.response.data?.error || e.message}`;
                 if (e.response.status === 401) {
-                    this.uploadError += " Please check your Pinata JWT in the script. It might be invalid or expired."
+                    this.uploadError += " Unauthorized. CRITICAL: Please ensure your Pinata JWT in the script is correct and active for YOUR Pinata account."
                 }
                  console.error("Pinata Upload Error Response:", e.response.data, e.response.status, e.response.headers);
             } else if (e.request) {
@@ -2499,7 +2512,7 @@ new Vue({
                 this.uploadError += e.message || "Unknown error";
                  console.error("Pinata Upload Error Message:", e.message);
             }
-            alert(this.uploadError + " Check console for more details."); // Alert user
+            alert(this.uploadError + " Check browser's Developer Console (Network and Console tabs) for more details."); // Alert user
             this.uploadCid = '';
         } finally {
             this.uploading = false;
@@ -2965,8 +2978,9 @@ new Vue({
             return;
         }
         if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-             this.weatherError = "Weather API key not configured. Please replace placeholder in the script.";
+             this.weatherError = "CRITICAL ERROR: Weather API key not configured. The weather feature will not work. Please get an API key from OpenWeatherMap and replace 'YOUR_OPENWEATHERMAP_API_KEY' in the script.";
              console.error(this.weatherError);
+             alert(this.weatherError);
              return;
         }
         this.weatherLoading = true;
@@ -2994,7 +3008,7 @@ new Vue({
             if (error.response) {
                 this.weatherError = `Error ${error.response.status}: ${error.response.data.message || 'Could not retrieve weather data.'}`;
                 if (error.response.status === 401) {
-                     this.weatherError += " Please check your OpenWeatherMap API key.";
+                     this.weatherError += " Unauthorized. CRITICAL: Please check your OpenWeatherMap API key in the script. It might be invalid.";
                 } else if (error.response.status === 404) {
                     this.weatherError = `Could not find weather for "${city}". Please check the city name.`;
                 }
@@ -3003,6 +3017,7 @@ new Vue({
             } else {
                 this.weatherError = "An unexpected error occurred while fetching weather data.";
             }
+            alert(this.weatherError + " Check browser's Developer Console for more details.");
         } finally {
             this.weatherLoading = false;
         }
@@ -3486,16 +3501,15 @@ new Vue({
     console.log("PestiVid Web3 App Mounted. Check console for any warnings or errors.");
     // WARNINGS FOR HOSTED ENVIRONMENT & API KEYS
     if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) {
-        console.warn("PESTIVID CONFIG WARNING: Pinata JWT is set to a placeholder ('YOUR_PINATA_JWT') or is empty. Video uploads to IPFS via Pinata WILL FAIL. Please replace this with your actual Pinata API Key (JWT) in the script's `data` section.");
-        // You might want to alert the user directly if this is a critical feature for your hosted demo
-        // alert("Configuration Warning: Pinata JWT is not set. Video uploads will fail. See console for details.");
+        console.warn("PESTIVID CONFIG WARNING: Pinata JWT is set to a placeholder ('YOUR_PINATA_JWT') or is empty. Video uploads to IPFS via Pinata WILL FAIL. Please replace this with your actual Pinata API Key (JWT) from YOUR Pinata account in the script's `data` section.");
+        alert("Configuration Warning: Pinata JWT is not set correctly. Video uploads will fail. Please obtain your JWT from Pinata and update the script. See console for details.");
     }
     if (this.pinataGateway === 'YOUR_PINATA_GATEWAY.mypinata.cloud' || this.pinataGateway === 'gateway.pinata.cloud') {
-        console.info("PESTIVID INFO: Using Pinata gateway. If you have a dedicated gateway, update `pinataGateway` for potentially better performance.");
+        console.info("PESTIVID INFO: Using a public Pinata gateway. If you have a dedicated gateway, update `pinataGateway` for potentially better performance.");
     }
      if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) {
         console.warn("PESTIVID CONFIG WARNING: OpenWeatherMap API Key is set to a placeholder ('YOUR_OPENWEATHERMAP_API_KEY') or is empty. The weather feature WILL NOT WORK. Please replace this with your actual OpenWeatherMap API key in the script's `data` section.");
-        // alert("Configuration Warning: OpenWeatherMap API Key is not set. Weather feature will not work. See console for details.");
+        alert("Configuration Warning: OpenWeatherMap API Key is not set. Weather feature will not work. Please obtain your key from OpenWeatherMap and update the script. See console for details.");
     }
     // Check for HTTPS for camera access if not on localhost
     if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
