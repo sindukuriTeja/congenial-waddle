@@ -829,8 +829,6 @@
           isOrangeIdCallback: false, // True if current URL is an Orange ID callback
           bedrockConfig: {
             baseUrl: 'https://api.bedrockpassport.com',
-            // IMPORTANT: Adjust if your app is not at the root.
-            // This should be the URL of THIS PestiVid page.
             authCallbackUrl: window.location.href.split('?')[0].split('#')[0],
             tenantId: 'orange-h0zmx5nf44', // YOUR PROVIDED PROJECT ID
           },
@@ -966,24 +964,30 @@
           getStarted() { if (!this.isUserAuthenticated) { this.current = 'loginChoice'; } else if (!this.role) { this.current = 'roleSelection'; } else if (this.role === 'farmer') { this.switchPage('farmerPestiVid'); } else if (this.role === 'buyer') { this.switchPage('buyerAgriSell'); } else if (this.role === 'investor') { this.switchPage('investorProjects'); } else { this.switchPage('landing'); } },
 
           handleAuthenticationSuccess(identifier, method, orangeUserDetails = null) {
-              console.log("PestiVid Auth Success:", method, identifier, orangeUserDetails);
-              this.currentUserIdentifier = identifier;
-              this.loginMethod = method;
-
-              if (method === 'orangeId' && orangeUserDetails) {
-                  this.orangeIdUser = orangeUserDetails; // Store the full user object from Orange ID
-                  this.walletAddress = null; // Clear Solana wallet if logged in via Orange ID
-              } else if (method === 'solana') {
-                  this.walletAddress = identifier;
-                  this.orangeIdUser = null; // Clear Orange ID user if logged in via Solana
-              }
-
+              console.log("PestiVid Auth Success (Original Call):", method, identifier, orangeUserDetails);
+              // Set flags that control UI sections immediately
+              this.isOrangeIdCallback = false;
               this.isAuthProcessing = false;
-              this.isOrangeIdCallback = false; // Reset callback flag
               this.showLoadingModal = false;
 
-              this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
-              this.loadOrSetupPestiVidProfile();
+              // Use $nextTick to allow Vue to process DOM changes (e.g., hiding the callback section)
+              // before proceeding with the rest of the authentication logic.
+              this.$nextTick(() => {
+                  console.log("PestiVid Auth Success (Inside $nextTick):", method, identifier);
+                  this.currentUserIdentifier = identifier;
+                  this.loginMethod = method;
+
+                  if (method === 'orangeId' && orangeUserDetails) {
+                      this.orangeIdUser = orangeUserDetails; // Store the full user object from Orange ID
+                      this.walletAddress = null; // Clear Solana wallet if logged in via Orange ID
+                  } else if (method === 'solana') {
+                      this.walletAddress = identifier;
+                      this.orangeIdUser = null; // Clear Orange ID user if logged in via Solana
+                  }
+
+                  this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
+                  this.loadOrSetupPestiVidProfile(); // This might change the current page
+              });
           },
 
           // --- Orange ID Integration Methods ---
@@ -1015,20 +1019,16 @@
                         this.bedrockConfig,
                         React.createElement(Bedrock.LoginPanel, {
                             title: "Sign in to PestiVid",
-                            logo: "https://sindukuriteja.github.io/favicon.ico", // Using a generic icon, replace if you have one
+                            logo: "https://sindukuriteja.github.io/favicon.ico",
                             logoAlt: "PestiVid",
-                            walletButtonText: "Connect Wallet", // Will be hidden by features config
                             showConnectWallet: false,
                             separatorText: "OR",
                             features: {
-                                enableWalletConnect: false, // Keeping this false as PestiVid has its own Solana connect
+                                enableWalletConnect: false,
                                 enableAppleLogin: true,
                                 enableGoogleLogin: true,
                                 enableEmailLogin: true,
                             },
-                            // Optional: Add custom styling classes if needed
-                            // panelClass: "custom-panel-class",
-                            // buttonClass: "custom-button-class",
                         })
                     )
                 );
@@ -1045,7 +1045,7 @@
                 this.orangeIdReactRootLogin = null;
                 this.orangeIdWidgetMounted = false;
                 const container = document.getElementById('orange-id-login-container');
-                if (container) container.innerHTML = ''; // Clear placeholder content
+                if (container) container.innerHTML = '';
             }
           },
           renderOrangeIdCallbackProcessor() {
@@ -1054,10 +1054,9 @@
             if (!container) return;
 
             this.orangeIdReactRootCallback = ReactDOM.createRoot(container);
-            const self = this; // For accessing Vue instance 'this' inside React component
+            const self = this;
 
             function AuthCallbackProcessor() {
-                // Hooks must be called at the top level of a React functional component
                 const { loginCallback, user, isAuthenticated, isLoading } = Bedrock.useBedrockPassport();
                 const [message, setMessage] = React.useState('Processing authentication...');
 
@@ -1070,32 +1069,29 @@
                         if (token && refreshToken) {
                             try {
                                 setMessage('Verifying tokens with Orange ID...');
-                                const bedrockUser = await loginCallback(token, refreshToken); // loginCallback now returns the user object
+                                const bedrockUser = await loginCallback(token, refreshToken);
                                 if (bedrockUser) {
                                     setMessage('Orange ID Login successful! Finalizing PestiVid session...');
-                                    // Remove token parameters from URL
-                                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash); // Keep hash for Vue router if used
-                                    // Pass Bedrock user details to PestiVid's auth success handler
+                                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
                                     self.handleAuthenticationSuccess(bedrockUser.sub || bedrockUser.id, 'orangeId', bedrockUser);
                                 } else {
                                     setMessage('Orange ID Authentication failed. Please try again.');
                                     self.addNotification("Orange ID authentication failed.", "error");
-                                    setTimeout(() => { self.current = 'loginChoice'; self.isOrangeIdCallback = false; }, 2000);
+                                    setTimeout(() => { self.isOrangeIdCallback = false; self.current = 'loginChoice'; }, 2000);
                                 }
                             } catch (error) {
                                 console.error('Orange ID Login callback error:', error);
                                 setMessage(`An error occurred during Orange ID login: ${error.message}`);
                                 self.addNotification(`Orange ID login error: ${error.message}`, "error");
-                                setTimeout(() => { self.current = 'loginChoice'; self.isOrangeIdCallback = false; }, 3000);
+                                setTimeout(() => { self.isOrangeIdCallback = false; self.current = 'loginChoice'; }, 3000);
                             }
                         } else {
-                            // This should not happen if isOrangeIdCallback is true, but as a fallback
                             setMessage('No authentication tokens found. Redirecting to login...');
-                             setTimeout(() => { self.current = 'loginChoice'; self.isOrangeIdCallback = false; }, 2000);
+                             setTimeout(() => { self.isOrangeIdCallback = false; self.current = 'loginChoice'; }, 2000);
                         }
                     }
                     processLogin();
-                }, [loginCallback]); // loginCallback dependency
+                }, [loginCallback]);
 
                 if (isLoading) return React.createElement('p', null, 'Loading Bedrock SDK...');
                 return React.createElement('div', { style: { textAlign: 'center', padding: '1rem' } }, message);
@@ -1109,10 +1105,12 @@
                 )
             );
           },
-          unmountOrangeIdCallbackProcessor() {
+          unmountOrangeIdCallbackProcessor() { // Added for explicit cleanup if needed
             if (this.orangeIdReactRootCallback) {
                 this.orangeIdReactRootCallback.unmount();
                 this.orangeIdReactRootCallback = null;
+                const container = document.getElementById('orange-id-callback-processor');
+                if (container) container.innerHTML = '';
             }
           },
           renderOrangeIdSignOutButton(containerId, isMobile = false) {
@@ -1121,40 +1119,25 @@
             if (!container) return;
 
             let rootRef = isMobile ? 'orangeIdReactRootSignOutMobile' : 'orangeIdReactRootSignOut';
-            this.unmountOrangeIdSignOutButton(containerId, isMobile); // Unmount previous if exists
+            this.unmountOrangeIdSignOutButton(containerId, isMobile);
 
             this[rootRef] = ReactDOM.createRoot(container);
             const self = this;
 
-            // Custom SignOutButton wrapper to call PestiVid's logout
             function PestiVidSignOutWrapper() {
                 const { logout } = Bedrock.useBedrockPassport();
-                const handleSignOut = async () => {
-                    try {
-                        await logout(); // This will clear Bedrock's session
-                        // self.logoutUser(true, false); // Call PestiVid's logout, don't re-trigger Bedrock logout
-                    } catch (error) {
-                        console.error("Orange ID sign out error:", error);
-                        self.addNotification("Error signing out from Orange ID.", "error");
-                    }
-                    // PestiVid's full logout will be called by the Bedrock.SignOutButton's onSignOut prop
-                };
-
                 return React.createElement(Bedrock.SignOutButton, {
                     onSignOut: () => {
-                        // This is called *after* Bedrock SDK has logged out.
-                        // Now call PestiVid's internal logout to clear its state.
-                        self.clearUserSession(true); // Notify PestiVid user
-                        self.current = 'landing'; // Redirect to landing
+                        self.clearUserSession(true);
+                        self.current = 'landing';
                     },
-                    buttonContent: React.createElement('i', { className: "fas fa-sign-out-alt text-lg" }), // Font Awesome icon
-                    // buttonClass: "text-gray-400 hover:text-red-500" // Apply PestiVid's styling
+                    buttonContent: React.createElement('i', { className: "fas fa-sign-out-alt text-lg" }),
                 });
             }
 
             this[rootRef].render(
                 React.createElement(
-                    Bedrock.BedrockPassportProvider, // Provider needed for SignOutButton to access context
+                    Bedrock.BedrockPassportProvider,
                     this.bedrockConfig,
                     React.createElement(PestiVidSignOutWrapper)
                 )
@@ -1175,9 +1158,7 @@
             const refreshToken = params.get('refreshToken');
             if (token && refreshToken) {
                 this.isOrangeIdCallback = true;
-                this.isAuthProcessing = true; // Show general "Authenticating..."
-                // Ensure no other view is shown while callback is processed
-                // this.current = 'landing'; // Or a dedicated loading view
+                this.isAuthProcessing = true;
                 this.$nextTick(() => this.renderOrangeIdCallbackProcessor());
                 return true;
             }
@@ -1197,7 +1178,7 @@
                        this.addNotification("Solana Wallet already connected.", "info"); return;
                    }
                    if(!confirm(`You are logged in with ${this.loginMethod}. Switch to Solana Wallet? This will log you out of Orange ID.`)) return;
-                   await this.logoutUser(false); // Logout without notification, wait for it
+                   await this.logoutUser(false);
                }
 
               this.isAuthProcessing = true;
@@ -1244,12 +1225,16 @@
               this.filterDataForCurrentUser();
               this.showMobileMenu = false;
 
-              if ( (this.current === 'loginChoice' || this.current === 'landing' || this.isOrangeIdCallback) && this.isUserAuthenticated && this.role) {
-                  this.getStarted();
-              } else if (this.isUserAuthenticated && !this.role) {
-                  this.current = 'roleSelection';
+              // Navigate if not already sent to roleSelection page by the logic above
+              if (this.current !== 'roleSelection') {
+                  if (this.isUserAuthenticated && this.role) {
+                      this.getStarted();
+                  } else if (this.isUserAuthenticated && !this.role) {
+                      // This case should ideally be handled by the 'else' block above,
+                      // but as a fallback, ensure user is sent to roleSelection.
+                      this.current = 'roleSelection';
+                  }
               }
-              this.isOrangeIdCallback = false; // Ensure this is reset after processing
           },
           completeOnboarding() {
               if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Please fill in Full Name, PestiVid Email, and select a Role."); return; }
@@ -1283,51 +1268,33 @@
 
               if (this.loginMethod === 'solana') {
                  await this.disconnectWallet();
-                 this.clearUserSession(notify); // Clear PestiVid session immediately
+                 this.clearUserSession(notify);
               } else if (this.loginMethod === 'orangeId') {
-                  // For Orange ID, the SignOutButton's onSignOut will call clearUserSession.
-                  // If this function is called directly (not via Bedrock.SignOutButton),
-                  // we might need to manually trigger Bedrock's logout.
-                  // However, the Bedrock.SignOutButton is the preferred way.
-                  // If triggerOrangeIdLogout is true (meaning this wasn't called from the button's callback)
-                  // we should ensure the button's logic is what clears the session.
-                  // This current setup relies on the SignOutButton component to handle Bedrock's logout.
-                  // If calling logoutUser directly for OrangeID, it won't log out from OrangeID server.
-                  // The SignOutButton component is the primary way to ensure Bedrock SDK logout.
-                  // If the SignOutButton is not rendered (e.g. programmatic logout not via UI button),
-                  // then we might need to call bedrock.logout() here explicitly IF bedrock instance is available.
-                  // For now, we assume SignOutButton handles it. If it doesn't, clearUserSession might be called prematurely.
-                  // Let's let SignOutButton call clearUserSession.
-                  if (!triggerOrangeIdLogout) { // If called from SignOutButton callback essentially
+                  if (!triggerOrangeIdLogout) { // Called from SignOutButton callback
                      this.clearUserSession(notify);
                   } else {
-                     // If called directly, this won't log out of OrangeID. User might still be logged into OrangeID.
-                     // This scenario needs careful handling if a full logout from OrangeID is needed without UI.
-                     // For this demo, we'll assume the UI button is used.
-                     console.warn("Direct Orange ID logout called without UI button. Orange ID session might persist.");
-                     this.clearUserSession(notify);
+                     console.warn("Direct Orange ID logout called without UI button. Orange ID session might persist on their server. Use UI button for full logout.");
+                     this.clearUserSession(notify); // Clear local PestiVid session
                   }
               } else {
                  this.clearUserSession(notify);
               }
               this.showLoadingModal = false;
-              if (this.current !== 'landing') this.current = 'landing'; // Go to landing unless already there.
+              if (this.current !== 'landing') this.current = 'landing';
           },
           clearUserSession(notify = true) {
               this.currentUserIdentifier = null;
-              // loginMethod is kept to allow SignOutButton to render if it was OrangeID
-              // this.loginMethod = null; // Don't nullify if we need to unmount signout button based on it
               this.walletAddress = null;
               this.orangeIdUser = null;
               this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerLocationCity = '';
 
               this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = [];
               this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = [];
-              this.activeConversationId = null; //this.messages = []; this.conversations = [];
+              this.activeConversationId = null;
 
               this.unmountOrangeIdSignOutButton('orange-id-signout-button-container');
               this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile');
-              if (this.loginMethod === 'orangeId') this.loginMethod = null; // Now clear it after unmounting
+              if (this.loginMethod === 'orangeId') this.loginMethod = null;
 
               this.showMobileMenu = false;
               this.isAuthProcessing = false;
@@ -1376,7 +1343,7 @@
           simulateUserEmail(id) { return id ? `${id.substring(0, 6)}@pestivid.xyz` : 'user@example.com'; },
           simulateMemberSince(id) { let hash = 0; for (let i = 0; i < (id || '').length; i++) { hash = (hash << 5) - hash + id.charCodeAt(i); hash |= 0; } const daysAgo = Math.abs(hash % 730) + 30; const joinDate = new Date(); joinDate.setDate(joinDate.getDate() - daysAgo); return joinDate.toLocaleDateString(); },
           simulateFarmName(id) { return id ? `Farm ${id.substring(0, 5)}` : "The Good Farm"; },
-          simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - hash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; }, // Corrected 'hash' variable
+          simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - bioHash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; }, // Corrected 'hash' variable
           async fetchWeather() { if (!this.farmerLocationCity) { this.weatherError = "Enter city."; return; } if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') { this.weatherError = "Weather API key needed. Please configure in script."; alert(this.weatherError); return; } this.weatherLoading = true; this.weatherError = ''; this.currentWeather = null; this.forecastWeather = []; const city = this.farmerLocationCity; const apiKey = this.weatherApiKey; const units = 'metric'; try { const currentResponse = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.currentWeather = currentResponse.data; const forecastResponse = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.forecastWeather = this.processForecastData(forecastResponse.data); } catch (error) { if (error.response) { this.weatherError = `Err ${error.response.status}: ${error.response.data.message || 'Weather error.'}`; if (error.response.status === 401) this.weatherError += " Check API key."; else if (error.response.status === 404) this.weatherError = `No weather for "${city}".`; } else if (error.request) { this.weatherError = "Network/CORS error."; } else { this.weatherError = "Unexpected weather error."; } alert(this.weatherError + " See console."); } finally { this.weatherLoading = false; } },
           processForecastData(data) { if (!data || !data.list) return []; const dailyData = {}; data.list.forEach(item => { const date = new Date(item.dt * 1000); const dateString = date.toISOString().split('T')[0]; if (!dailyData[dateString]) { dailyData[dateString] = { date: date, dateString: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), temps: [], icons: [], descriptions: [] }; } dailyData[dateString].temps.push(item.main.temp); dailyData[dateString].icons.push(item.weather[0].icon); dailyData[dateString].descriptions.push(item.weather[0].description); }); return Object.values(dailyData).map(day => { let repIcon = day.icons[0]; let repDesc = day.descriptions[0]; const middayIdx = data.list.findIndex(item => new Date(item.dt * 1000).toISOString().startsWith(day.date.toISOString().split('T')[0]) && new Date(item.dt*1000).getHours() >= 11 && new Date(item.dt*1000).getHours() <= 14); if (middayIdx !== -1) { repIcon = data.list[middayIdx].weather[0].icon; repDesc = data.list[middayIdx].weather[0].description; } return { date: day.date, dateString: day.dateString, minTemp: Math.min(...day.temps), maxTemp: Math.max(...day.temps), icon: repIcon, description: repDesc }; }).slice(0, 5); },
           getWeatherIconUrl(iconCode) { return `https://openweathermap.org/img/wn/${iconCode}@2x.png`; },
@@ -1536,4 +1503,4 @@ Be concise and focus on actionable recommendations. If the image is not clear or
     window.vueApp = app;
 </script>
 </body>
-</html>
+</html> 
