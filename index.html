@@ -12,7 +12,7 @@
   <!-- Google Fonts (Inter) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Orange ID Required Dependencies (for Orange ID login path) -->
+  <!-- Orange ID Required Dependencies -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://public-cdn-files.pages.dev/bedrock-passport.umd.js"></script>
@@ -27,11 +27,6 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.0/lib/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  <script>
-    // The old DOMContentLoaded listener for Orange ID redirect has been removed.
-    // Its functionality is now handled by the initializeOrangeIdStateListener within the Vue app,
-    // which uses the Bedrock SDK's loginCallback for proper token processing.
-  </script>
 
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; }
@@ -72,38 +67,30 @@
     .login-panel-wrapper h2 { font-size: 1.5rem; font-weight: 700; color: #166534; /* green-800 */ margin-bottom: 0.5rem; }
     .login-panel-wrapper .tagline { color: #4b5563; /* gray-600 */ margin-bottom: 1.5rem; font-size: 0.9rem; }
 
-    #bedrock-login-widget-container { margin: 0 auto; }
-    #bedrock-login-widget-container > div > div { /* Targets the direct child of BedrockPassportProvider which is the LoginPanel's main container */
-        display: flex !important;
-        justify-content: center !important;
-        gap: 1rem !important;
-        flex-wrap: nowrap !important;
+    /* Orange ID specific styles */
+    #orange-id-login-container { margin: 0 auto; } /* Center the widget if it has its own width */
+    #orange-id-login-container > div > div { /* Target the inner panel to potentially override default Bedrock styles if needed */
+        /* Example: box-shadow: none !important; */
     }
-    #bedrock-login-widget-container button {
-        padding: 0.5rem !important;
-        min-width: 50px !important;
-        width: 60px !important;
-        height: 60px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background-color: #fff !important;
-        border: 1px solid #e5e7eb !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-    }
-    #bedrock-login-widget-container button:hover {
-        border-color: #d1d5db !important;
-    }
-    #bedrock-login-widget-container button > svg { /* Targets the SVG icon inside the button */
-        width: 32px !important;
-        height: 32px !important;
-        margin-right: 0 !important; /* Remove default margin if any */
-    }
-    #bedrock-login-widget-container button > span { /* Hides the text span like "Sign in with Google" */
-        display: none !important;
-    }
+    /* You might need to adjust button styles if Bedrock's default doesn't match PestiVid */
+    /* #orange-id-login-container button { background-color: #10b981 !important; color: white !important; } */
+    /* #orange-id-login-container button:hover { background-color: #059669 !important; } */
 
-    #orange-id-signout-button-container, #orange-id-signout-button-container-mobile { display: inline-block; }
+    #orange-id-signout-button-container, #orange-id-signout-button-container-mobile {
+        display: inline-flex; /* or inline-block depending on desired layout */
+        align-items: center;
+    }
+    /* Style the button rendered by Bedrock.SignOutButton if needed */
+    #orange-id-signout-button-container button, #orange-id-signout-button-container-mobile button {
+        background-color: transparent !important;
+        color: #9CA3AF !important; /* gray-400 */
+        padding: 0.25rem 0.5rem !important;
+        border: none !important;
+        font-size: 1rem !important; /* Match PestiVid's icon size */
+    }
+    #orange-id-signout-button-container button:hover, #orange-id-signout-button-container-mobile button:hover {
+        color: #EF4444 !important; /* red-500 */
+    }
   </style>
 </head>
 <body class="text-gray-900">
@@ -117,8 +104,8 @@
       <nav class="hidden md:flex space-x-5 items-center">
         <a href="#" @click.prevent="switchPage('landing')" :class="{'font-bold text-green-700': current==='landing'}" class="hover:text-green-600">Home</a>
 
-        <a v-if="!isUserAuthenticated && !isAuthProcessing" href="#" @click.prevent="switchPage('loginChoice')" class="hover:text-green-600">Login / Sign Up</a>
-        <span v-if="isAuthProcessing && !isUserAuthenticated" class="text-gray-500 text-sm">Authenticating...</span>
+        <a v-if="!isUserAuthenticated && !isAuthProcessing && !isOrangeIdCallback" href="#" @click.prevent="switchPage('loginChoice')" class="hover:text-green-600">Login / Sign Up</a>
+        <span v-if="(isAuthProcessing || isOrangeIdCallback) && !isUserAuthenticated" class="text-gray-500 text-sm">Authenticating...</span>
 
         <a v-if="isUserAuthenticated" href="#" @click.prevent="switchPage('messaging')" :class="{'font-bold text-green-700': current==='messaging'}" class="hover:text-green-600 relative">
           <i class="fas fa-comments mr-1"></i>Messages
@@ -145,7 +132,7 @@
           <a href="#" @click.prevent="switchPage('userProfile')" :class="{'font-bold text-green-700': current==='userProfile'}" class="bg-green-600 text-white text-xs rounded-full px-3 py-1 select-none ml-2 hover:bg-green-700 flex items-center">
              <i class="fas fa-user-circle mr-1"></i> {{ userName ? userName.split(' ')[0] : displayedUserIdentifier }}
           </a>
-           <div v-if="loginMethod === 'orangeId'" id="orange-id-signout-button-container"> <!-- Orange ID specific sign out --> </div>
+           <div v-if="loginMethod === 'orangeId'" id="orange-id-signout-button-container" class="ml-2"></div>
            <a v-if="loginMethod === 'solana'" href="#" title="Disconnect Wallet" @click.prevent="logoutUser" class="text-gray-400 hover:text-red-500 ml-2"><i class="fas fa-sign-out-alt text-lg"></i></a>
         </template>
       </nav>
@@ -157,8 +144,8 @@
     <div v-show="showMobileMenu" class="md:hidden bg-white border-t z-40">
       <div class="py-2 flex flex-col space-y-1 px-4">
         <a href="#" @click.prevent="switchPage('landing');showMobileMenu=false" :class="{'font-bold text-green-700': current==='landing'}">Home</a>
-        <a v-if="!isUserAuthenticated && !isAuthProcessing" href="#" @click.prevent="switchPage('loginChoice');showMobileMenu=false" >Login / Sign Up</a>
-        <span v-if="isAuthProcessing && !isUserAuthenticated" class="text-gray-500 text-sm px-1 py-1">Authenticating...</span>
+        <a v-if="!isUserAuthenticated && !isAuthProcessing && !isOrangeIdCallback" href="#" @click.prevent="switchPage('loginChoice');showMobileMenu=false" >Login / Sign Up</a>
+        <span v-if="(isAuthProcessing || isOrangeIdCallback) && !isUserAuthenticated" class="text-gray-500 text-sm px-1 py-1">Authenticating...</span>
 
         <a v-if="isUserAuthenticated" href="#" @click.prevent="switchPage('messaging');showMobileMenu=false" :class="{'font-bold text-green-700': current==='messaging'}" class="flex items-center">
           <i class="fas fa-comments mr-1"></i>Messages
@@ -183,7 +170,7 @@
              <a href="#" @click.prevent="switchPage('userProfile');showMobileMenu=false" :class="{'font-bold text-green-700': current==='userProfile'}" class="inline-block bg-green-600 text-white text-xs rounded px-2 py-1 ml-1 flex items-center">
                 <i class="fas fa-user-circle mr-1"></i> {{ userName ? userName.split(' ')[0] : displayedUserIdentifier }}
              </a>
-             <div v-if="loginMethod === 'orangeId'" id="orange-id-signout-button-container-mobile"> <!-- Orange ID specific sign out --> </div>
+             <div v-if="loginMethod === 'orangeId'" id="orange-id-signout-button-container-mobile"></div>
              <a v-if="loginMethod === 'solana'" href="#" class="text-gray-400 hover:text-red-500" title="Disconnect Wallet" @click.prevent="logoutUser();showMobileMenu=false"><i class="fas fa-sign-out-alt"></i></a>
            </div>
         </template>
@@ -194,7 +181,8 @@
   <!-- Main Content -->
   <main class="flex-1 max-w-7xl mx-auto w-full px-4 pt-8 pb-8">
     <!-- Landing Section -->
-    <section v-if="current==='landing'">
+    <section v-if="current==='landing' && !isOrangeIdCallback">
+        <!-- ... (PestiVid Landing content remains the same) ... -->
         <div class="flex flex-col md:flex-row items-center mb-12 pt-2">
             <div class="md:w-1/2 md:pr-8">
             <h1 class="text-4xl font-bold text-green-800 mb-4">PestiVid: Blockchain Transparency in Agriculture</h1>
@@ -274,8 +262,22 @@
         </div>
     </section>
 
+    <!-- Orange ID Callback Processing View -->
+    <section v-if="isOrangeIdCallback" class="login-page-container">
+        <div class="login-panel-wrapper">
+            <div class="login-branding justify-center">
+                <i class="fas fa-seedling logo-icon"></i>
+                <span class="app-name">PestiVid</span>
+            </div>
+            <div id="orange-id-callback-processor" class="text-center p-4">
+                <!-- Orange ID Callback Processor will be rendered here by React -->
+                <p class="text-gray-600"><i class="fas fa-spinner fa-spin mr-2"></i>Processing authentication...</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Login Choice Page -->
-    <section v-if="current==='loginChoice'" class="login-page-container">
+    <section v-if="current==='loginChoice' && !isOrangeIdCallback" class="login-page-container">
         <div class="login-panel-wrapper">
             <div class="login-branding justify-center ">
                 <i class="fas fa-seedling logo-icon"></i>
@@ -284,14 +286,19 @@
             <h2 class="text-xl font-bold text-green-800 mb-2">Login or Sign Up</h2>
             <p class="text-gray-600 mb-6 text-sm">Choose your preferred method to access PestiVid.</p>
 
+            <!-- Orange ID Social Login Block -->
             <div class="mb-4">
-                <p class="text-xs text-gray-500 mb-2 text-left ml-1">Sign in with your social account:</p>
-                <div id="bedrock-login-widget-container" class="flex justify-center space-x-2">
-                    <p v-if="isOrangeIdPanelRendering" class="text-gray-500 p-4 text-sm"> <i class="fas fa-spinner fa-spin mr-2"></i>Loading Social Logins...</p>
-                    <p v-if="!isOrangeIdPanelRendering && bedrockSDKError" class="text-red-500 p-4 text-sm"> <i class="fas fa-exclamation-triangle mr-2"></i>Social login service could not load.</p>
-                    <!-- Orange ID LoginPanel (Google/Apple icons) will be rendered here by renderOrangeIdLoginPanel() -->
+                <p class="text-xs text-gray-500 mb-2 text-left ml-1">Sign in with Orange ID:</p>
+                <div id="orange-id-login-container" class="flex justify-center">
+                    <p v-if="!orangeIdWidgetMounted && !orangeIdBedrockSDKError" class="text-gray-500 p-4 text-sm">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading Social Logins...
+                    </p>
+                    <p v-if="orangeIdBedrockSDKError" class="text-red-500 p-4 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Social login service could not load.
+                    </p>
+                    <!-- Orange ID LoginPanel will be rendered here by renderOrangeIdLoginWidget() -->
                 </div>
-                 <p class="text-xs text-black mt-2 text-center">Powered by <a href="https://orangeid.xyz" target="_blank" class="underline hover:text-orange-500">Orange ID</a></p>
+                 <p class="text-xs text-gray-500 mt-2 text-center">Powered by <a href="https://orangeid.xyz" target="_blank" class="underline hover:text-orange-500">Orange ID</a></p>
             </div>
 
             <div class="relative my-6">
@@ -314,10 +321,10 @@
     </section>
 
     <!-- Role Selection (after any login if new PestiVid user) -->
-    <section v-if="current==='roleSelection'" class="max-w-lg mx-auto bg-white shadow rounded-lg p-8 mt-8">
+    <section v-if="current==='roleSelection' && !isOrangeIdCallback" class="max-w-lg mx-auto bg-white shadow rounded-lg p-8 mt-8">
         <h2 class="text-2xl font-bold text-green-700 mb-4">Welcome to PestiVid!</h2>
         <p class="text-gray-600 mb-1">
-            <span v-if="loginMethod === 'orangeId'">Logged in as <strong class="font-mono text-sm">{{ orangeUser ? (orangeUser.displayName || orangeUser.email) : displayedUserIdentifier }}</strong> via Orange ID.</span>
+            <span v-if="loginMethod === 'orangeId'">Logged in as <strong class="font-mono text-sm">{{ orangeIdUser ? (orangeIdUser.name || orangeIdUser.email) : displayedUserIdentifier }}</strong> via Orange ID.</span>
             <span v-if="loginMethod === 'solana'">Your wallet <strong class="font-mono text-sm">{{ displayedUserIdentifier }}</strong> is connected.</span>
         </p>
         <p class="text-gray-600 mb-5">Please complete your PestiVid profile and select your primary role:</p>
@@ -349,8 +356,10 @@
         <button @click="completeOnboarding" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" :disabled="!selectedRoleOnboarding || !userNameOnboarding || !userEmailOnboarding">Confirm Profile & Role</button>
     </section>
 
-    <!-- Farmer: PestiVid Recording Section -->
-    <section v-if="current==='farmerPestiVid'" class="max-w-3xl mx-auto mt-6">
+    <!-- ... (All other PestiVid sections: farmerPestiVid, farmerAgriStream, etc. remain the same) ... -->
+    <!-- ... but ensure they are hidden if isOrangeIdCallback is true ... -->
+    <section v-if="current==='farmerPestiVid' && !isOrangeIdCallback" class="max-w-3xl mx-auto mt-6">
+      <!-- Farmer PestiVid content -->
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-video mr-2"></i>PestiVid: Record Crop Video</h2>
       <div class="bg-white rounded shadow-md p-6 space-y-6">
         <form @submit.prevent>
@@ -396,9 +405,8 @@
         </div>
       </div>
     </section>
-
-    <!-- Farmer: AgriStream Section -->
-    <section v-if="current==='farmerAgriStream'" class="max-w-4xl mx-auto mt-6">
+    <section v-if="current==='farmerAgriStream' && !isOrangeIdCallback" class="max-w-4xl mx-auto mt-6">
+        <!-- Farmer AgriStream content -->
         <h2 class="text-2xl font-bold text-green-700 mb-5"><i class="fas fa-stream mr-2"></i>AgriStream: My Crop Videos</h2>
         <div class="bg-white rounded shadow-md p-6">
             <div v-if="farmerVideos.length===0" class="text-gray-600 text-center p-6 bg-gray-50 rounded"> <i class="fas fa-film text-4xl text-gray-400 mb-3"></i><br> No uploads yet. Go to <a href="#" class="text-green-700 underline" @click.prevent="switchPage('farmerPestiVid')">PestiVid</a> to upload. </div>
@@ -422,10 +430,9 @@
             </div>
         </div>
     </section>
-
-    <!-- Farmer: Sell Section -->
-    <section v-if="current==='farmerSell'" class="max-w-2xl mx-auto mt-6">
-      <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-tags mr-2"></i>Sell Farm Crop on Marketplace</h2>
+    <section v-if="current==='farmerSell' && !isOrangeIdCallback" class="max-w-2xl mx-auto mt-6">
+        <!-- Farmer Sell content -->
+        <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-tags mr-2"></i>Sell Farm Crop on Marketplace</h2>
       <div class="bg-white rounded shadow-md p-6">
         <form @submit.prevent="createListing">
           <div class="mb-4">
@@ -459,10 +466,9 @@
         </div>
       </div>
     </section>
-
-    <!-- Farmer Funding Request Section -->
-    <section v-if="current==='farmerFunding'" class="max-w-3xl mx-auto mt-6">
-      <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-money-bill-wave mr-2"></i>Request Funding for Your Farm</h2>
+    <section v-if="current==='farmerFunding' && !isOrangeIdCallback" class="max-w-3xl mx-auto mt-6">
+        <!-- Farmer Funding content -->
+        <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-money-bill-wave mr-2"></i>Request Funding for Your Farm</h2>
         <div class="bg-white rounded shadow-md p-6">
             <form @submit.prevent="createFundingRequest_V1">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -497,10 +503,9 @@
             </div>
         </div>
     </section>
-
-    <!-- Buyer: Marketplace (AgriSell) Section -->
-    <section v-if="current==='buyerAgriSell'" class="max-w-6xl mx-auto mt-6">
-      <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-shopping-basket mr-2"></i>AgriSell: Marketplace</h2>
+    <section v-if="current==='buyerAgriSell' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
+        <!-- Buyer AgriSell content -->
+        <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-shopping-basket mr-2"></i>AgriSell: Marketplace</h2>
       <div class="bg-white rounded shadow-md p-6 mb-7">
         <div class="flex flex-col md:flex-row md:items-end gap-5">
           <div class="w-full md:w-48"> <label class="text-gray-600 text-sm">Crop Type</label> <select v-model="buyerFilters.crop" class="w-full px-2 py-1 border rounded bg-white text-sm"> <option value="">All</option> <option v-for="c in uniqueCrops" :key="c">{{c}}</option> </select> </div>
@@ -519,16 +524,15 @@
           <div class="text-xs text-gray-500 mb-1">Pesticide: <span class="font-mono">{{ l.pesticide }}</span></div>
           <div class="text-xs text-gray-500 mb-2">Pesticide Co.: <span class="font-mono">{{ l.pesticideCompany || 'N/A' }}</span></div>
           <div class="text-sm my-2">Price Range: <br><span class="font-mono text-base font-semibold">{{ l.minPrice }}</span> - <span class="font-mono text-base font-semibold">{{ l.maxPrice }}</span> SOL</div>
-          <div class="flex items-center text-xs text-gray-600 mb-2"> <span class="mr-1">Sold by: {{ l.farmerWallet.substring(0,6) }}...</span> <button @click="showFarmerProfile(l.farmerWallet)" class="text-blue-500 hover:text-blue-700 focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> </div>
+          <div class="flex items-center text-xs text-gray-600 mb-2"> <span class="mr-1">Sold by: {{ getSellerDisplayIdentifier(l.farmerWallet) }}</span> <button @click="showFarmerProfile(l.farmerWallet)" class="text-blue-500 hover:text-blue-700 focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> </div>
           <button class="mt-auto bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm" @click="buyListing(l)" :disabled="!isUserAuthenticated || role !== 'buyer' || currentUserIdentifier === l.farmerWallet"> <i class="fas fa-shopping-cart mr-1"></i> {{ currentUserIdentifier === l.farmerWallet ? 'Your Listing' : (isUserAuthenticated && role === 'buyer' ? 'Initiate Purchase' : 'Login as Buyer to Purchase') }} </button>
           <button @click="startOrGoToConversation(l.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== l.farmerWallet" class="mt-2 text-xs text-blue-600 hover:text-blue-700 border border-blue-400 rounded-full px-3 py-1 hover:bg-blue-50 flex items-center justify-center"> <i class="fas fa-envelope mr-1"></i> Message Seller </button>
         </div>
       </div>
     </section>
-
-    <!-- Investor Projects Section -->
-    <section v-if="current==='investorProjects'" class="max-w-6xl mx-auto mt-6">
-      <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-project-diagram mr-2"></i>Investment Opportunities</h2>
+    <section v-if="current==='investorProjects' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
+        <!-- Investor Projects content -->
+        <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-project-diagram mr-2"></i>Investment Opportunities</h2>
       <div class="bg-white rounded shadow-md p-6 mb-7">
         <div class="flex flex-col md:flex-row md:items-end gap-5">
           <div class="w-full md:w-48"> <label class="text-gray-600 text-sm">Crop Type</label> <select v-model="investorFilters.crop" class="w-full px-2 py-1 border rounded bg-white text-sm"> <option value="">All Crops</option> <option v-for="c in uniqueFundingCrops" :key="c">{{c}}</option> </select> </div>
@@ -546,7 +550,7 @@
             <div class="flex flex-col md:flex-row gap-6">
               <div class="md:w-1/3">
                 <video :src="ipfsUrl(project.cid)" controls playsinline webkit-playsinline class="rounded w-full h-40 object-cover bg-black mb-3"></video>
-                <div class="grid grid-cols-2 gap-2 text-sm"> <div> <div class="text-xs text-gray-500">Farmer</div> <div class="font-medium truncate flex items-center"> <span>{{ project.farmerWallet.substring(0,6) }}...</span> <button @click="showFarmerProfile(project.farmerWallet)" class="ml-2 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> </div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div class="font-medium">{{ project.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Timeline</div> <div class="font-medium">{{ project.timeline }} months</div> </div> <div> <div class="text-xs text-gray-500">Expected ROI</div> <div class="font-medium text-green-700">{{ project.roi }}%</div> </div> </div>
+                <div class="grid grid-cols-2 gap-2 text-sm"> <div> <div class="text-xs text-gray-500">Farmer</div> <div class="font-medium truncate flex items-center"> <span>{{ getFarmerDisplayIdentifier(project.farmerWallet) }}</span> <button @click="showFarmerProfile(project.farmerWallet)" class="ml-2 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> </div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div class="font-medium">{{ project.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Timeline</div> <div class="font-medium">{{ project.timeline }} months</div> </div> <div> <div class="text-xs text-gray-500">Expected ROI</div> <div class="font-medium text-green-700">{{ project.roi }}%</div> </div> </div>
                 <button @click="startOrGoToConversation(project.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== project.farmerWallet" class="mt-3 w-full text-xs text-blue-600 hover:text-blue-700 border border-blue-400 rounded-full px-3 py-1 hover:bg-blue-50 flex items-center justify-center"> <i class="fas fa-envelope mr-1"></i> Message Farmer </button>
               </div>
               <div class="md:w-2/3">
@@ -563,9 +567,8 @@
       </div>
       <div v-if="filteredFundingRequests.length === 0" class="bg-gray-50 p-8 text-center rounded-lg mt-4"> <i class="fas fa-seedling text-gray-300 text-4xl mb-3"></i> <h3 class="text-gray-600 text-lg mb-2">No Projects Found</h3> <p class="text-gray-500">Try adjusting your filters or check back later for new investment opportunities.</p> </div>
     </section>
-
-    <!-- Investor Portfolio Section -->
-    <section v-if="current==='investorPortfolio'" class="max-w-6xl mx-auto mt-6">
+    <section v-if="current==='investorPortfolio' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
+        <!-- Investor Portfolio content -->
         <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-chart-pie mr-2"></i>Investment Portfolio</h2>
         <div class="bg-white rounded-lg shadow p-6 mb-8">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Portfolio Overview</h3>
@@ -580,7 +583,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-for="investment in investorInvestments" :key="investment.id">
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ investment.projectTitle }}</div> <div class="text-xs text-gray-500">{{ investment.crop }}</div> </td>
-                    <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900">{{ investment.farmerWallet.substring(0,10) }}...</div> <button @click="showFarmerProfile(investment.farmerWallet)" class="text-blue-500 hover:text-blue-700 text-xs focus:outline-none mr-2" title="View Farmer Info"> <i class="fas fa-info-circle mr-1"></i>View Info </button> <button @click="startOrGoToConversation(investment.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== investment.farmerWallet" class="text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope mr-1"></i>Message </button> </td>
+                    <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900">{{ getFarmerDisplayIdentifier(investment.farmerWallet, 10) }}</div> <button @click="showFarmerProfile(investment.farmerWallet)" class="text-blue-500 hover:text-blue-700 text-xs focus:outline-none mr-2" title="View Farmer Info"> <i class="fas fa-info-circle mr-1"></i>View Info </button> <button @click="startOrGoToConversation(investment.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== investment.farmerWallet" class="text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope mr-1"></i>Message </button> </td>
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ investment.amount }}</div> <div class="text-xs text-gray-500">{{ investment.investmentDate }}</div> </td>
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="w-24 bg-gray-200 rounded-full h-2.5"> <div class="bg-green-600 h-2.5 rounded-full" :style="{width: investment.progress+'%'}"></div> </div> <div class="text-xs text-gray-500 mt-1">{{ investment.progress }}% Complete</div> </td>
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ calculateExpectedReturn(investment) }}</div> <div class="text-xs text-gray-500">{{ investment.roi }}% ROI</div> </td>
@@ -610,16 +613,15 @@
             </div>
         </div>
     </section>
-
-    <!-- User Profile Section -->
-    <section v-if="current==='userProfile'" class="max-w-6xl mx-auto mt-6">
-      <div v-if="!isUserAuthenticated" class="text-center p-10 bg-white rounded-lg shadow"> <i class="fas fa-exclamation-circle text-3xl text-yellow-500 mb-4"></i> <p class="text-xl text-gray-700">Please log in to view your profile.</p> </div>
+    <section v-if="current==='userProfile' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
+        <!-- User Profile content -->
+        <div v-if="!isUserAuthenticated" class="text-center p-10 bg-white rounded-lg shadow"> <i class="fas fa-exclamation-circle text-3xl text-yellow-500 mb-4"></i> <p class="text-xl text-gray-700">Please log in to view your profile.</p> </div>
       <div v-else class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="bg-gradient-to-r from-green-700 to-green-500 p-6 text-white">
           <div class="flex flex-col md:flex-row justify-between items-center">
             <div class="flex items-center mb-4 md:mb-0">
               <div class="bg-white rounded-full w-16 h-16 flex items-center justify-center mr-4 text-green-600 shadow overflow-hidden">
-                <img v-if="loginMethod === 'orangeId' && orangeUser && orangeUser.picture" :src="orangeUser.picture" alt="Avatar" class="w-full h-full object-cover"/>
+                <img v-if="loginMethod === 'orangeId' && orangeIdUser && orangeIdUser.picture" :src="orangeIdUser.picture" alt="Avatar" class="w-full h-full object-cover"/>
                 <i v-else :class="role === 'farmer' ? 'fas fa-tractor' : (role === 'buyer' ? 'fas fa-shopping-cart' : 'fas fa-chart-line')" class="text-3xl"></i>
               </div>
               <div> <h2 class="text-2xl font-bold">{{ userName || displayedUserIdentifier }}</h2> <p class="text-green-100 capitalize"> {{ role === 'farmer' ? 'Agricultural Producer' : role === 'buyer' ? 'Crop Buyer' : 'Agricultural Investor' }} </p> </div>
@@ -634,12 +636,12 @@
               <div>
                 <div class="mb-4"> <p class="text-gray-600">Full Name (PestiVid)</p> <p class="font-medium">{{ userName || 'Not Provided in PestiVid Profile' }}</p> </div>
                 <div class="mb-4"> <p class="text-gray-600">PestiVid User Identifier ({{ loginMethod === 'orangeId' ? 'Orange ID' : 'Solana Wallet' }})</p> <p class="font-medium font-mono break-all">{{ currentUserIdentifier }}</p> </div>
-                <div v-if="loginMethod === 'orangeId' && orangeUser && orangeUser.ethAddress" class="mb-4"> <p class="text-gray-600">ETH Address (from Orange ID, if available)</p> <p class="font-medium font-mono break-all">{{ orangeUser.ethAddress }}</p> </div>
+                <div v-if="loginMethod === 'orangeId' && orangeIdUser && orangeIdUser.ethAddress" class="mb-4"> <p class="text-gray-600">ETH Address (from Orange ID, if available)</p> <p class="font-medium font-mono break-all">{{ orangeIdUser.ethAddress }}</p> </div>
                 <div> <p class="text-gray-600">PestiVid Account Type</p> <p class="font-medium capitalize">{{ role || "Not Set" }}</p> </div>
               </div>
               <div>
                 <div class="mb-4"> <p class="text-gray-600">Email (PestiVid)</p> <p class="font-medium">{{ userEmail || 'Not Provided in PestiVid Profile' }}</p> </div>
-                <div v-if="loginMethod === 'orangeId' && orangeUser && orangeUser.email && orangeUser.email !== userEmail" class="mb-4"> <p class="text-gray-600">Authenticated Email (Orange ID)</p> <p class="font-medium">{{ orangeUser.email }}</p> </div>
+                <div v-if="loginMethod === 'orangeId' && orangeIdUser && orangeIdUser.email && orangeIdUser.email !== userEmail" class="mb-4"> <p class="text-gray-600">Authenticated Email (Orange ID)</p> <p class="font-medium">{{ orangeIdUser.email }}</p> </div>
                 <div class="mb-4"> <p class="text-gray-600">Phone (PestiVid)</p> <p class="font-medium">{{ userPhone || 'Not Provided' }}</p> </div>
                 <div> <p class="text-gray-600">PestiVid Member Since</p> <p class="font-medium">{{ memberSince || 'N/A' }}</p> </div>
               </div>
@@ -661,15 +663,14 @@
                 <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-tags mr-2"></i>Your Active Listings ({{ farmerListings.length }}) </h3> <div v-if="farmerListings.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-store text-gray-400 text-2xl mb-2"></i> <p>You don't have any active listings.</p> <button @click="switchPage('farmerSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Create your first listing</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="listing in farmerListings" :key="listing.id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ listing.crop }}</div> <div class="text-xs text-gray-500" :title="listing.cid">CID: {{ listing.cid.substring(0, 8) }}...</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ listing.location }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ listing.pesticideCompany || 'N/A' }} </td> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ listing.minPrice }} - {{ listing.maxPrice }}</div> </td> <td class="px-6 py-4 whitespace-nowrap"> <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"> Active </span> </td> </tr> </tbody> </table> </div> </div> </div>
                 <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-hand-holding-usd mr-2"></i>Your Funding Requests ({{ farmerFundingRequests.length }}) </h3> <div v-if="farmerFundingRequests.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-money-bill-wave text-gray-400 text-2xl mb-2"></i> <p>You haven't created any funding requests yet.</p> <button @click="switchPage('farmerFunding')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Request funding for your farm</button> </div> <div v-else class="space-y-4"> <div v-for="req in farmerFundingRequests" :key="req.id" class="border rounded-lg overflow-hidden bg-white shadow-sm"> <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-50 border-b"> <h4 class="font-bold mb-1 sm:mb-0">{{ req.title }}</h4> <span :class="{'bg-yellow-100 text-yellow-800': req.status === 'pending', 'bg-green-100 text-green-800': req.status === 'funded', 'bg-blue-100 text-blue-800': req.status === 'partially_funded'}" class="px-2 py-1 rounded text-xs font-medium"> {{ req.status === 'pending' ? 'Pending' : req.status === 'funded' ? 'Fully Funded' : (req.status === 'partially_funded' ? 'Partially Funded' : req.status) }} </span> </div> <div class="p-4 text-sm"> <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"> <div> <div class="text-xs text-gray-500">Crop</div> <div>{{ req.crop }}</div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div>{{ req.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Required</div> <div class="font-mono">{{ req.amount }} SOL</div> </div> <div> <div class="text-xs text-gray-500">Raised</div> <div class="font-mono">{{ req.fundedAmount || 0 }} SOL</div> </div> </div> <div class="mb-4"> <div class="text-xs text-gray-500 mb-1">Funding Progress</div> <div class="progress-bar"> <div class="progress-fill bg-green-500" :style="{width: fundingProgressPercent(req) + '%'}"></div> </div> <div class="text-xs mt-1">{{ fundingProgressPercent(req) }}% Complete</div> </div> <div class="flex justify-end mt-4"> <button v-if="req.status !== 'funded'" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" @click="cancelFundingRequest_V1(req.id)"> <i class="fas fa-times mr-1"></i>Cancel Request </button> <span v-if="req.status === 'funded'" class="text-xs text-green-600"><i class="fas fa-check-circle mr-1"></i>Fully Funded!</span> </div> </div> </div> </div> </div>
             </div>
-           <div v-if="role === 'buyer'"> <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-shopping-basket mr-2"></i>Your Purchase History ({{ buyerPurchases.length }}) </h3> <div v-if="buyerPurchases.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-shopping-cart text-gray-400 text-2xl mb-2"></i> <p>You haven't made any purchases yet.</p> <button @click="switchPage('buyerAgriSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Browse marketplace</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Paid (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video/Tx</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="purchase in buyerPurchases" :key="purchase.id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ purchase.crop }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.location }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.pesticideCompany || 'N/A' }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono"> {{ purchase.price }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.date }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.farmerWallet.substring(0,10) }}... <button @click="showFarmerProfile(purchase.farmerWallet)" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(purchase.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== purchase.farmerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Seller"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewPurchaseVideo(purchase)" class="hover:underline mr-2">Video</a> <a :href="solanaExplorerUrl(purchase.txHash)" target="_blank" class="hover:underline" title="View Transaction (Demo Link)">Tx</a> </td> </tr> </tbody> </table> </div> </div> </div> </div>
-           <div v-if="role === 'investor'"> <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-chart-pie mr-2"></i>Investment Portfolio Summary </h3> <div v-if="investorInvestments.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-coins text-gray-400 text-2xl mb-2"></i> <p>You haven't made any investments yet.</p> <button @click="switchPage('investorProjects')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Browse investment opportunities</button> </div> <div v-else> <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Total Invested</div> <div class="text-xl font-bold text-green-700">{{ totalInvestedAmount }} SOL</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Projects</div> <div class="text-xl font-bold">{{ investorInvestments.length }}</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Avg. ROI</div> <div class="text-xl font-bold text-green-700">{{ investorAvgRoi }}%</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Completed</div> <div class="text-xl font-bold">{{ investorCompletedProjects }}</div> </div> </div> <div class="overflow-x-auto mt-4"> <h4 class="text-lg font-semibold text-gray-800 mb-3">Your Investments</h4> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="inv in investorInvestments" :key="inv.id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ inv.projectTitle }}</div> <div class="text-xs text-gray-500">{{ inv.crop }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ inv.farmerWallet.substring(0,10) }}... <button @click="showFarmerProfile(inv.farmerWallet)" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(inv.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== inv.farmerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-mono text-gray-900">{{ inv.amount }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ inv.investmentDate }} </td> <td class="px-6 py-4 whitespace-nowrap"> <span :class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-blue-100 text-blue-800': inv.status === 'active', 'bg-green-100 text-green-800': inv.status === 'harvested', 'bg-yellow-100 text-yellow-800': inv.status === 'growing'}"> {{ inv.status.charAt(0).toUpperCase() + inv.status.slice(1) }} </span> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewInvestmentDetails(inv)" class="hover:underline">View</a> </td> </tr> </tbody> </table> </div> <div class="mt-4 text-right"> <button @click="switchPage('investorPortfolio')" class="text-green-700 text-sm hover:underline">Go to Full Portfolio <i class="fas fa-arrow-right ml-1"></i></button> </div> </div> </div> <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-link mr-2"></i>Platform Verification (Simulated) </h3> <div class="bg-gray-50 p-5 rounded-lg border"> <div class="flex items-center mb-4"> <i class="fas fa-shield-alt text-green-600 text-2xl mr-3"></i> <div> <h4 class="font-bold text-gray-800">PestiVid Platform Records</h4> <p class="text-sm text-gray-600">All your investment transactions are recorded on the PestiVid platform (Simulated Ledger).</p> </div> </div> <div v-if="investorTransactions.length > 0" class="mt-4"> <h5 class="font-medium text-sm mb-2">Recent Transactions</h5> <div class="space-y-2"> <div v-for="tx in investorTransactions.slice(0, 3)" :key="tx.id" class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 bg-white rounded border text-sm"> <div class="flex items-center mb-1 sm:mb-0"> <span :class="{'px-2 py-0.5 text-xs rounded-full mr-2': true, 'bg-green-100 text-green-800': tx.type === 'investment', 'bg-blue-100 text-blue-800': tx.type === 'payout'}"> {{ tx.type === 'investment' ? 'Invest' : 'Payout' }} </span> <span class="font-mono text-xs text-gray-500 truncate" :title="tx.txHash">{{ tx.txHash.substring(0, 8) }}...{{ tx.txHash.substring(tx.txHash.length - 8) }}</span> <a :href="solanaExplorerUrl(tx.txHash)" target="_blank" class="ml-1 text-blue-500 hover:text-blue-700" title="View on Solana Explorer (Demo Link)"> <i class="fas fa-external-link-alt text-xs"></i> </a> </div> <div class="text-right w-full sm:w-auto"> <div class="font-mono text-sm">{{ tx.amount }} SOL</div> <div class="text-xs text-gray-500">{{ tx.date }}</div> </div> </div> </div> <div class="mt-3 text-right"> <button @click="switchPage('investorPortfolio')" class="text-green-700 text-sm hover:underline">View all transactions <i class="fas fa-arrow-right ml-1"></i></button> </div> </div> <div v-else class="bg-white p-4 rounded border text-center text-sm text-gray-600"> <p>No platform transactions recorded yet.</p> </div> </div> </div> </div>
+           <div v-if="role === 'buyer'"> <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-shopping-basket mr-2"></i>Your Purchase History ({{ buyerPurchases.length }}) </h3> <div v-if="buyerPurchases.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-shopping-cart text-gray-400 text-2xl mb-2"></i> <p>You haven't made any purchases yet.</p> <button @click="switchPage('buyerAgriSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Browse marketplace</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Paid (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video/Tx</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="purchase in buyerPurchases" :key="purchase.id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ purchase.crop }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.location }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.pesticideCompany || 'N/A' }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono"> {{ purchase.price }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.date }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ getSellerDisplayIdentifier(purchase.farmerWallet, 10) }} <button @click="showFarmerProfile(purchase.farmerWallet)" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(purchase.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== purchase.farmerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Seller"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewPurchaseVideo(purchase)" class="hover:underline mr-2">Video</a> <a :href="solanaExplorerUrl(purchase.txHash)" target="_blank" class="hover:underline" title="View Transaction (Demo Link)">Tx</a> </td> </tr> </tbody> </table> </div> </div> </div> </div>
+           <div v-if="role === 'investor'"> <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-chart-pie mr-2"></i>Investment Portfolio Summary </h3> <div v-if="investorInvestments.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-coins text-gray-400 text-2xl mb-2"></i> <p>You haven't made any investments yet.</p> <button @click="switchPage('investorProjects')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Browse investment opportunities</button> </div> <div v-else> <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Total Invested</div> <div class="text-xl font-bold text-green-700">{{ totalInvestedAmount }} SOL</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Projects</div> <div class="text-xl font-bold">{{ investorInvestments.length }}</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Avg. ROI</div> <div class="text-xl font-bold text-green-700">{{ investorAvgRoi }}%</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Completed</div> <div class="text-xl font-bold">{{ investorCompletedProjects }}</div> </div> </div> <div class="overflow-x-auto mt-4"> <h4 class="text-lg font-semibold text-gray-800 mb-3">Your Investments</h4> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="inv in investorInvestments" :key="inv.id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ inv.projectTitle }}</div> <div class="text-xs text-gray-500">{{ inv.crop }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ getFarmerDisplayIdentifier(inv.farmerWallet, 10) }} <button @click="showFarmerProfile(inv.farmerWallet)" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(inv.farmerWallet)" v-if="isUserAuthenticated && currentUserIdentifier !== inv.farmerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-mono text-gray-900">{{ inv.amount }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ inv.investmentDate }} </td> <td class="px-6 py-4 whitespace-nowrap"> <span :class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-blue-100 text-blue-800': inv.status === 'active', 'bg-green-100 text-green-800': inv.status === 'harvested', 'bg-yellow-100 text-yellow-800': inv.status === 'growing'}"> {{ inv.status.charAt(0).toUpperCase() + inv.status.slice(1) }} </span> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewInvestmentDetails(inv)" class="hover:underline">View</a> </td> </tr> </tbody> </table> </div> <div class="mt-4 text-right"> <button @click="switchPage('investorPortfolio')" class="text-green-700 text-sm hover:underline">Go to Full Portfolio <i class="fas fa-arrow-right ml-1"></i></button> </div> </div> </div> <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-link mr-2"></i>Platform Verification (Simulated) </h3> <div class="bg-gray-50 p-5 rounded-lg border"> <div class="flex items-center mb-4"> <i class="fas fa-shield-alt text-green-600 text-2xl mr-3"></i> <div> <h4 class="font-bold text-gray-800">PestiVid Platform Records</h4> <p class="text-sm text-gray-600">All your investment transactions are recorded on the PestiVid platform (Simulated Ledger).</p> </div> </div> <div v-if="investorTransactions.length > 0" class="mt-4"> <h5 class="font-medium text-sm mb-2">Recent Transactions</h5> <div class="space-y-2"> <div v-for="tx in investorTransactions.slice(0, 3)" :key="tx.id" class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 bg-white rounded border text-sm"> <div class="flex items-center mb-1 sm:mb-0"> <span :class="{'px-2 py-0.5 text-xs rounded-full mr-2': true, 'bg-green-100 text-green-800': tx.type === 'investment', 'bg-blue-100 text-blue-800': tx.type === 'payout'}"> {{ tx.type === 'investment' ? 'Invest' : 'Payout' }} </span> <span class="font-mono text-xs text-gray-500 truncate" :title="tx.txHash">{{ tx.txHash.substring(0, 8) }}...{{ tx.txHash.substring(tx.txHash.length - 8) }}</span> <a :href="solanaExplorerUrl(tx.txHash)" target="_blank" class="text-blue-600 hover:underline whitespace-nowrap"> <i class="fas fa-external-link-alt"></i> View (Demo Link) </a> </div> <div class="text-right w-full sm:w-auto"> <div class="font-mono text-sm">{{ tx.amount }} SOL</div> <div class="text-xs text-gray-500">{{ tx.date }}</div> </div> </div> </div> <div class="mt-3 text-right"> <button @click="switchPage('investorPortfolio')" class="text-green-700 text-sm hover:underline">View all transactions <i class="fas fa-arrow-right ml-1"></i></button> </div> </div> <div v-else class="bg-white p-4 rounded border text-center text-sm text-gray-600"> <p>No platform transactions recorded yet.</p> </div> </div> </div> </div>
         </div>
       </div>
     </section>
-
-    <!-- Messaging Section -->
-    <section v-if="current==='messaging'" class="max-w-6xl mx-auto mt-6">
-      <div v-if="!isUserAuthenticated" class="text-center p-10 bg-white rounded-lg shadow"> <i class="fas fa-exclamation-circle text-3xl text-yellow-500 mb-4"></i> <p class="text-xl text-gray-700">Please log in to access messaging.</p> </div>
+    <section v-if="current==='messaging' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
+        <!-- Messaging content -->
+        <div v-if="!isUserAuthenticated" class="text-center p-10 bg-white rounded-lg shadow"> <i class="fas fa-exclamation-circle text-3xl text-yellow-500 mb-4"></i> <p class="text-xl text-gray-700">Please log in to access messaging.</p> </div>
       <div v-else class="bg-white rounded-lg shadow-md flex" style="height: calc(100vh - 200px);">
         <div class="w-full md:w-1/3 border-r flex flex-col bg-gray-50">
             <div class="p-4 border-b"> <h2 class="text-xl font-semibold text-green-700">Conversations</h2> </div>
@@ -698,9 +699,8 @@
         </div>
       </div>
     </section>
-
-    <!-- Plant Disease Recommendation Section -->
-    <section v-if="current==='plantRecomendation'" class="max-w-3xl mx-auto mt-6">
+    <section v-if="current==='plantRecomendation' && !isOrangeIdCallback" class="max-w-3xl mx-auto mt-6">
+      <!-- Plant Recomendation content -->
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-leaf mr-2"></i>Plant Disease Detection & Recommendation</h2>
       <div class="bg-white rounded shadow-md p-6 space-y-6">
         <p class="text-sm text-gray-600">Upload an image of an affected plant. Gemini AI will attempt to identify the plant, detect diseases, and suggest treatments.</p>
@@ -754,10 +754,9 @@
       </div>
     </section>
 
-
     <!-- Modals (Purchase Video, Buy Listing, Investment Details, Farmer Profile) -->
      <!-- Purchase Video Modal -->
-    <div v-if="selectedPurchase && showPurchaseVideo" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div v-if="selectedPurchase && showPurchaseVideo && !isOrangeIdCallback" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full modal-scrollable">
         <div class="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10"> <h3 class="font-bold text-lg text-green-700">{{ selectedPurchase.crop }} - Purchase Verification</h3> <button @click="showPurchaseVideo = false" class="text-gray-500 hover:text-gray-700"> <i class="fas fa-times"></i> </button> </div>
         <div class="p-4"> <video :src="ipfsUrl(selectedPurchase.cid)" controls playsinline webkit-playsinline class="w-full rounded bg-black mb-4"></video> <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"> <div> <p class="text-gray-600">Location</p> <p class="font-medium">{{ selectedPurchase.location }}</p> </div> <div> <p class="text-gray-600">Pesticide Used</p> <p class="font-medium">{{ selectedPurchase.pesticide }}</p> </div> <div> <p class="text-gray-600">Pesticide Company</p> <p class="font-medium">{{ selectedPurchase.pesticideCompany || 'N/A' }}</p> </div> <div> <p class="text-gray-600">Purchase Price</p> <p class="font-medium font-mono">{{ selectedPurchase.price }} SOL</p> </div> <div> <p class="text-gray-600">Purchase Date</p> <p class="font-medium">{{ selectedPurchase.date }}</p> </div> <div> <p class="text-gray-600">Seller Identifier</p> <p class="font-medium font-mono text-xs">{{ selectedPurchase.farmerWallet }}</p> </div> </div> <div class="mt-4 bg-gray-100 p-3 rounded text-xs border"> <p class="font-bold mb-1">Platform Verification (Simulated):</p> <p class="font-mono break-all mb-1">IPFS CID: {{ selectedPurchase.cid }}</p> <p class="font-mono break-all">Simulated Tx: {{ selectedPurchase.txHash }} <a :href="solanaExplorerUrl(selectedPurchase.txHash)" target="_blank" class="text-blue-500 hover:text-blue-700"><i class="fas fa-external-link-alt text-xs"></i></a> </p> <p class="mt-1 text-gray-500">Video evidence on IPFS, linked on PestiVid platform (Simulated).</p> <a :href="ipfsUrl(selectedPurchase.cid)" target="_blank" class="text-blue-600 hover:underline mt-1 inline-block">View on IPFS Gateway <i class="fas fa-external-link-alt text-xs ml-1"></i></a> </div> </div>
@@ -765,7 +764,7 @@
       </div>
     </div>
     <!-- Buy Listing Modal -->
-    <div v-if="showBuyModal && selectedListing" class="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center items-center p-4">
+    <div v-if="showBuyModal && selectedListing && !isOrangeIdCallback" class="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center items-center p-4">
       <div class="bg-white rounded shadow-lg w-full max-w-sm p-6 relative mx-2 modal-scrollable">
         <button class="absolute top-2 right-2 text-gray-400 hover:text-red-500" @click="closeBuyModal"><i class="fas fa-times"></i></button>
         <h3 class="font-bold text-green-700 text-lg mb-3">Purchase Crop Batch</h3>
@@ -776,7 +775,7 @@
       </div>
     </div>
     <!-- Investment Details Modal -->
-    <div v-if="showInvestmentDetailsModal && selectedInvestment" class="fixed inset-0 z-50 bg-black bg-opacity-70 flex justify-center items-center p-4">
+    <div v-if="showInvestmentDetailsModal && selectedInvestment && !isOrangeIdCallback" class="fixed inset-0 z-50 bg-black bg-opacity-70 flex justify-center items-center p-4">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl relative mx-2 modal-scrollable">
         <div class="p-4 bg-green-50 border-b flex justify-between items-center sticky top-0 z-10"> <h3 class="font-bold text-lg text-green-800">{{ selectedInvestment.projectTitle }}</h3> <button class="text-gray-400 hover:text-red-500" @click="showInvestmentDetailsModal=false"><i class="fas fa-times"></i></button> </div>
         <div class="p-6"> <div class="flex flex-col md:flex-row gap-6"> <div class="md:w-1/3"> <video :src="ipfsUrl(selectedInvestment.cid)" controls playsinline webkit-playsinline class="rounded w-full h-40 object-cover bg-black mb-3"></video> <div class="mt-3 space-y-2 text-sm"> <div> <div class="text-xs text-gray-500">Farmer Identifier</div> <div class="font-medium flex items-center font-mono text-xs"> <span>{{ selectedInvestment.farmerWallet }}</span> <button @click="showFarmerProfile(selectedInvestment.farmerWallet); showInvestmentDetailsModal=false;" class="ml-2 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(selectedInvestment.farmerWallet); showInvestmentDetailsModal=false;" v-if="isUserAuthenticated && currentUserIdentifier !== selectedInvestment.farmerWallet" class="ml-2 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope"></i> </button> </div> </div> <div> <div class="text-xs text-gray-500">Investment Date</div> <div class="font-medium">{{ selectedInvestment.investmentDate }}</div> </div> <div> <div class="text-xs text-gray-500">Amount Invested</div> <div class="font-medium text-green-700 font-mono">{{ selectedInvestment.amount }} SOL</div> </div> <div> <div class="text-xs text-gray-500">Status</div> <span :class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-blue-100 text-blue-800': selectedInvestment.status === 'active', 'bg-green-100 text-green-800': selectedInvestment.status === 'harvested', 'bg-yellow-100 text-yellow-800': selectedInvestment.status === 'growing'}"> {{ selectedInvestment.status.charAt(0).toUpperCase() + selectedInvestment.status.slice(1) }} </span> </div> </div> </div> <div class="md:w-2/3"> <div class="mb-4"> <div class="text-sm font-medium mb-1">{{ selectedInvestment.crop }} ({{ selectedInvestment.method }})</div> <p class="text-sm text-gray-700 max-h-24 overflow-y-auto border p-2 rounded bg-gray-50">{{ selectedInvestment.description }}</p> </div> <div class="mb-4"> <div class="text-xs text-gray-500 mb-1">Project Progress</div> <div class="progress-bar"> <div class="progress-fill bg-green-500" :style="{width: selectedInvestment.progress + '%'}"></div> </div> <div class="flex justify-between text-xs mt-1"> <span>{{ selectedInvestment.progress }}% Complete</span> <span>Est. {{ selectedInvestment.timeline }} months total</span> </div> </div> <div class="grid grid-cols-2 gap-4 mb-4 text-sm"> <div> <div class="text-xs text-gray-500">Expected Return</div> <div class="font-medium text-green-700 font-mono">{{ calculateExpectedReturn(selectedInvestment) }} SOL</div> </div> <div> <div class="text-xs text-gray-500">ROI</div> <div class="font-medium text-green-700">{{ selectedInvestment.roi }}%</div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div class="font-medium">{{ selectedInvestment.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Your Share</div> <div class="font-medium">{{ selectedInvestment.investorShare }}%</div> </div> </div> <div v-if="selectedInvestmentProject && selectedInvestmentProject.updates && selectedInvestmentProject.updates.length > 0" class="mb-4"> <h4 class="text-sm font-semibold text-gray-700 mb-2">Farmer Updates</h4> <div class="project-updates-list text-xs"> <div v-for="update in selectedInvestmentProject.updates.slice().reverse()" :key="update.id" class="project-update-item"> <span class="font-medium text-gray-500">{{ update.date }}:</span> {{ update.text }} </div> </div> </div> <div v-else-if="selectedInvestmentProject" class="mb-4 text-xs text-gray-500"> No project updates posted by the farmer yet. </div> <div class="bg-gray-100 p-3 rounded mb-4 border"> <div class="text-sm font-medium mb-1">Platform Transaction (Simulated)</div> <div class="flex items-center text-xs"> <span class="font-mono bg-white px-2 py-1 rounded border mr-2 truncate" :title="selectedInvestment.txHash">{{ selectedInvestment.txHash }}</span> <a :href="solanaExplorerUrl(selectedInvestment.txHash)" target="_blank" class="text-blue-600 hover:underline whitespace-nowrap"> <i class="fas fa-external-link-alt"></i> View (Demo Link) </a> </div> </div> <div v-if="selectedInvestment.status === 'harvested'" class="bg-green-100 p-3 rounded border border-green-200"> <div class="flex items-center"> <i class="fas fa-check-circle text-green-600 mr-2 text-lg"></i> <div> <div class="font-medium">Harvest Completed & Payout Processed</div> <div class="text-sm">Your return of {{ calculateExpectedReturn(selectedInvestment) }} SOL has been simulated.</div> </div> </div> </div> <div v-else-if="selectedInvestment.status === 'growing'" class="bg-yellow-50 p-3 rounded border border-yellow-200"> <div class="flex items-center"> <i class="fas fa-hourglass-half text-yellow-600 mr-2 text-lg"></i> <div> <div class="font-medium">Project Growing</div> <div class="text-sm">Harvest expected within {{ selectedInvestment.timeline }} months. Progress: {{selectedInvestment.progress}}%.</div> </div> </div> </div> </div> </div> </div>
@@ -784,7 +783,7 @@
       </div>
     </div>
     <!-- Farmer Profile Modal -->
-    <div v-if="showFarmerProfileModal && selectedFarmerProfile" class="fixed inset-0 z-50 bg-black bg-opacity-70 flex justify-center items-center p-4">
+    <div v-if="showFarmerProfileModal && selectedFarmerProfile && !isOrangeIdCallback" class="fixed inset-0 z-50 bg-black bg-opacity-70 flex justify-center items-center p-4">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-lg relative mx-2 modal-scrollable">
         <div class="p-4 bg-green-50 border-b flex justify-between items-center sticky top-0 z-10"> <h3 class="font-bold text-lg text-green-800 flex items-center"> <i class="fas fa-user-tie mr-2"></i> Farmer Profile </h3> <button class="text-gray-400 hover:text-red-500" @click="closeFarmerProfileModal"><i class="fas fa-times"></i></button> </div>
         <div class="p-6 space-y-5"> <div class="flex items-center space-x-4"> <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center text-green-600 text-2xl"> <i class="fas fa-tractor"></i> </div> <div> <p class="text-xs text-gray-500">Farmer Identifier</p> <p class="font-semibold text-lg text-green-700 font-mono">{{ selectedFarmerProfile.walletAddress.substring(0,10) }}...</p> <p class="text-sm text-gray-600">Farm Name (Sim.): {{ selectedFarmerProfile.farmName || 'N/A' }}</p> </div> </div> <div class="border-t pt-4"> <p class="text-xs text-gray-500">Short Bio (Simulated)</p> <p class="text-sm text-gray-700 italic">{{ selectedFarmerProfile.bio || 'This farmer has not provided a bio yet.' }}</p> </div> <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4"> <div> <p class="text-xs text-gray-500">PestiVid Email</p> <p class="text-sm">{{ selectedFarmerProfile.email }}</p> </div> <div> <p class="text-xs text-gray-500">PestiVid Member Since</p> <p class="text-sm">{{ selectedFarmerProfile.memberSince }}</p> </div> </div> <div class="border-t pt-4"> <p class="text-sm font-medium text-gray-700 mb-2">Platform Activity:</p> <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"> <div class="bg-gray-100 p-3 rounded-md"> <p class="font-semibold">{{ selectedFarmerProfile.fundingRequestCount }}</p> <p class="text-xs text-gray-500">Active Funding Request(s)</p> </div> <div class="bg-gray-100 p-3 rounded-md"> <p class="font-semibold">{{ selectedFarmerProfile.activeListingCount }}</p> <p class="text-xs text-gray-500">Active Marketplace Listing(s)</p> </div> </div> <p class="text-xs text-gray-400 mt-2">(Note: Activity based on currently visible items on the platform.)</p> </div> </div>
@@ -792,14 +791,13 @@
       </div>
     </div>
 
+
     <!-- Notification Toast Container -->
     <div class="notification-toast-container">
         <div v-for="n in recentNotifications" :key="n.id" class="notification-toast" :class="{'show': n.show}" :data-notif-id="n.id"> <span :class="['icon', 'icon-' + n.type]"> <i :class="n.type === 'success' ? 'fas fa-check-circle' : (n.type === 'info' ? 'fas fa-info-circle' : (n.type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-bug'))"></i> </span> <span class="message">{{ n.message }}</span> <button @click="dismissNotification(n.id)" class="close-btn">&times;</button> </div>
     </div>
     <!-- Loading/Transaction Modal -->
     <div v-if="showLoadingModal" class="loading-modal"> <div class="loading-content"> <i class="fas fa-spinner fa-spin"></i> <p class="text-gray-700">{{ loadingMessage }}</p> </div> </div>
-    <!-- Invisible container for Orange ID State Updater -->
-    <div id="orange-id-state-updater-container" style="display:none;"></div>
   </main>
 
   <footer class="bg-white border-t py-6 mt-auto text-center text-sm text-gray-500">
@@ -808,57 +806,33 @@
 </div>
 
 <script>
-    // =======================================================================
-    // ORANGE ID INTEGRATION - IMPORTANT NOTES FOR PestiVid
-    // =======================================================================
-    // 1. The `tenantId` and `subscriptionKey` in `bedrockConfig` below
-    //    have been updated with your new Orange ID credentials.
-    //
-    // 2. **CRITICAL STEP:** You MUST update the `authCallbackUrl` in
-    //    `bedrockConfig`.
-    //    - Replace `<your-actual-domain-and-port-here>` with the actual
-    //      domain and port where your PestiVid application will be running.
-    //      Examples:
-    //        - Local testing: 'http://localhost:8000/auth/callback' (if your server is on port 8000)
-    //        - Production:    'https://pestivid.yourdomain.com/auth/callback'
-    //
-    // 3. **CRITICAL STEP:** You MUST add the *exact* URL you set for
-    //    `authCallbackUrl` to the "Allowed Callback URLs" in your
-    //    Orange ID project settings for Project ID 'orange-h0zmx5nf44'.
-    //
-    // Failure to complete steps 2 and 3 correctly will cause Orange ID login to fail.
-    // Your Vue app's `initializeOrangeIdStateListener` is designed to handle
-    // the tokens when the user is redirected to this `authCallbackUrl`.
-    // =======================================================================
-
     const app = new Vue({
         el: "#app",
         data: {
           current: 'landing',
           showMobileMenu: false,
 
-          // Authentication State
-          loginMethod: null,
-          currentUserIdentifier: null,
-          isAuthProcessing: false,
+          // --- Authentication State ---
+          loginMethod: null, // 'solana' or 'orangeId'
+          currentUserIdentifier: null, // Solana wallet address or Orange ID user subject/ID
+          isAuthProcessing: false, // General auth processing flag
 
-          // Orange ID Specific State
-          orangeUser: null,
-          isOrangeIdPanelRendering: false,
-          bedrockSDKError: false,
+          // --- Orange ID Specific State ---
+          orangeIdUser: null, // Stores the user object from Orange ID SDK
+          orangeIdBedrockSDK: null, // Will hold the Bedrock instance
+          orangeIdReactRootLogin: null, // React root for LoginPanel
+          orangeIdReactRootCallback: null, // React root for CallbackProcessor
+          orangeIdReactRootSignOut: null, // React root for SignOutButton
+          orangeIdReactRootSignOutMobile: null, // React root for SignOutButton mobile
+          orangeIdWidgetMounted: false,
+          orangeIdBedrockSDKError: false,
+          isOrangeIdCallback: false, // True if current URL is an Orange ID callback
           bedrockConfig: {
             baseUrl: 'https://api.bedrockpassport.com',
-            // =================== CRITICAL ORANGE ID CONFIGURATION ==================
-            // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-            //      YOU MUST UPDATE THE DOMAIN AND PORT IN THE URL BELOW
-            //      AND ENSURE THIS EXACT URL IS WHITELISTED IN ORANGE ID
-            // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-            authCallbackUrl: 'https://sindukuriteja.github.io',  // <<< --- !!! REPLACE AND WHITELIST !!!
-            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            // =======================================================================
-            tenantId: 'orange-h0zmx5nf44', // Your assigned tenant ID
-            subscriptionKey: '8646bf58ff1d4c109adf123addd2c364', // Your assigned API Key
+            // IMPORTANT: Adjust if your app is not at the root.
+            // This should be the URL of THIS PestiVid page.
+            authCallbackUrl: window.location.href.split('?')[0].split('#')[0],
+            tenantId: 'orange-h0zmx5nf44', // YOUR PROVIDED PROJECT ID
           },
 
           // Solana Wallet Specific State
@@ -888,10 +862,10 @@
           investorInvestments: [], investorTransactions: [], investorFilters: {crop: '', method: '', minRoi: null, maxAmount: null}, allFundingRequests: [], investmentAmounts: {}, investmentErrors: {}, showInvestmentDetailsModal: false, selectedInvestment: null, selectedInvestmentProject: null,
           showFarmerProfileModal: false, selectedFarmerProfile: null,
 
-          pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM',
-          pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud',
+          pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM', // Replace with your actual Pinata JWT
+          pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud', // Replace with your Pinata Gateway
 
-          weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY',
+          weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', // Replace with your OpenWeatherMap API Key
           currentWeather: null, forecastWeather: [], weatherLoading: false, weatherError: '',
 
           conversations: [], messages: [], activeConversationId: null, messageInputText: '',
@@ -899,8 +873,7 @@
           showLoadingModal: false, loadingMessage: '',
           targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
 
-          // New Plant Recommendation Feature State
-          geminiApiKey: 'AIzaSyDTLMDYq3eoBCUJ-d0Z45HOKh8KKilzgcc', // YOUR ACTUAL GEMINI API KEY - INSECURE IN CLIENT-SIDE
+          geminiApiKey: 'AIzaSyDTLMDYq3eoBCUJ-d0Z45HOKh8KKilzgcc', // Replace with your Gemini API Key
           plantImageFile: null,
           plantImageUrl: null,
           plantImageMimeType: null,
@@ -911,19 +884,20 @@
         },
         computed: {
           isUserAuthenticated() {
-              return !!this.currentUserIdentifier && !this.isAuthProcessing ;
+              return !!this.currentUserIdentifier && !this.isAuthProcessing && !this.isOrangeIdCallback;
           },
           displayedUserIdentifier() {
               if (!this.currentUserIdentifier) return '';
               if (this.userName) return this.userName.split(' ')[0];
-              if (this.loginMethod === 'orangeId' && this.orangeUser && (this.orangeUser.displayName || this.orangeUser.name)) {
-                  return (this.orangeUser.displayName || this.orangeUser.name).split(' ')[0];
+
+              if (this.loginMethod === 'orangeId' && this.orangeIdUser) {
+                  return (this.orangeIdUser.name || this.orangeIdUser.email || this.currentUserIdentifier).split(' ')[0];
               }
-              const id = this.currentUserIdentifier.toString();
-              if (this.loginMethod === 'orangeId' && id.length > 20 && id.includes('-')) {
-                  return `${id.substring(0, 4)}...${id.substring(id.length - 4)}`;
+              if (this.loginMethod === 'solana' && this.walletAddress) {
+                  const id = this.walletAddress.toString();
+                  return `${id.substring(0, 6)}...${id.substring(id.length - 4)}`;
               }
-              return `${id.substring(0, 6)}...${id.substring(id.length - 4)}`;
+              return this.currentUserIdentifier.substring(0,8) + '...';
           },
           uniqueCrops() { const crops = this.allListings.map(l=>l.crop).filter(Boolean); return [...new Set(crops)].sort(); },
           filteredListings() { const oneDayAgo = Date.now() - (24*60*60*1000); return this.allListings.map(l => ({...l, isNew: new Date(l.createdAt) > oneDayAgo })).filter(l => { const cropMatch = !this.buyerFilters.crop || (l.crop || '').toLowerCase() === this.buyerFilters.crop.toLowerCase(); const locMatch = !this.buyerFilters.location || (l.location || '').toLowerCase().includes(this.buyerFilters.location.toLowerCase()); const companyMatch = !this.buyerFilters.pesticideCompany || (l.pesticideCompany || '').toLowerCase().includes(this.buyerFilters.pesticideCompany.toLowerCase()); return cropMatch && locMatch && companyMatch; }); },
@@ -938,7 +912,7 @@
           userConversations() { if (!this.isUserAuthenticated) return []; return this.conversations.filter(conv => conv.participants.includes(this.currentUserIdentifier)).sort((a, b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); },
           currentMessages() { if (!this.activeConversationId || !this.isUserAuthenticated) return []; return this.messages.filter(msg => msg.conversationId === this.activeConversationId).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); },
           activeConversationPartnerIdentifier() { if (!this.activeConversationId || !this.isUserAuthenticated) return null; const conv = this.conversations.find(c => c.id === this.activeConversationId); if (!conv) return null; return conv.participants.find(p => p !== this.currentUserIdentifier); },
-          activeConversationPartnerDisplayAddress() { const partnerId = this.activeConversationPartnerIdentifier; if (!partnerId) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const partnerProfile = userProfiles[partnerId]; if(partnerProfile && partnerProfile.name) return partnerProfile.name.split(" ")[0]; if (partnerId.length > 20 && partnerId.includes('-')) return `${partnerId.substring(0,4)}...${partnerId.substring(partnerId.length-4)}`; return `${partnerId.substring(0,6)}...${partnerId.substring(partnerId.length-4)}`; },
+          activeConversationPartnerDisplayAddress() { const partnerId = this.activeConversationPartnerIdentifier; if (!partnerId) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const partnerProfile = userProfiles[partnerId]; if(partnerProfile && partnerProfile.name) return partnerProfile.name.split(" ")[0]; return `${partnerId.substring(0,6)}...${partnerId.substring(partnerId.length-4)}`; },
           activeConversationPartnerInitial() { const partnerDisplay = this.activeConversationPartnerDisplayAddress; if (!partnerDisplay || partnerDisplay === '?') return '?'; return partnerDisplay.charAt(0).toUpperCase(); },
           unreadMessageCount() { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.receiver === this.currentUserIdentifier && !msg.read).length; },
         },
@@ -952,22 +926,15 @@
               if (newPage === 'userProfile' && this.isUserAuthenticated && this.role === 'farmer' && this.farmerLocationCity && !this.currentWeather) { this.fetchWeather(); }
               if (newPage === 'messaging' && this.activeConversationId) { this.scrollToMessageBottom(); this.markConversationAsRead(this.activeConversationId); }
 
-              if (newPage === 'loginChoice' && !this.isUserAuthenticated) {
-                  this.isOrangeIdPanelRendering = true;
-                  this.$nextTick(() => {
-                      if (document.getElementById('bedrock-login-widget-container')) {
-                          this.renderOrangeIdLoginPanel();
-                      } else {
-                          this.isOrangeIdPanelRendering = false;
-                      }
-                  });
+              if (newPage === 'loginChoice' && !this.isOrangeIdCallback && !this.isUserAuthenticated) {
+                  this.$nextTick(() => this.renderOrangeIdLoginWidget());
+              } else if (oldPage === 'loginChoice' && newPage !== 'loginChoice') {
+                  this.$nextTick(() => this.unmountOrangeIdLoginWidget());
               }
+
               if (oldPage === 'plantRecomendation' && newPage !== 'plantRecomendation') {
-                  this.plantImageFile = null;
-                  this.plantImageUrl = null;
-                  this.plantImageMimeType = null;
-                  this.analysisResultText = '';
-                  this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
+                  this.plantImageFile = null; this.plantImageUrl = null; this.plantImageMimeType = null;
+                  this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
                   this.analysisErrorText = '';
               }
           },
@@ -975,16 +942,20 @@
               this.$nextTick(() => {
                   if (isAuthenticated && this.loginMethod === 'orangeId') {
                       this.renderOrangeIdSignOutButton('orange-id-signout-button-container');
-                      if (this.showMobileMenu) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); }
+                      if (this.showMobileMenu) {
+                          this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true);
+                      }
                   } else if (!isAuthenticated) {
-                      const desktopContainer = document.getElementById('orange-id-signout-button-container'); if(desktopContainer) desktopContainer.innerHTML = '';
-                      const mobileContainer = document.getElementById('orange-id-signout-button-container-mobile'); if(mobileContainer) mobileContainer.innerHTML = '';
+                      this.unmountOrangeIdSignOutButton('orange-id-signout-button-container');
+                      this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile');
                   }
               });
           },
           showMobileMenu(isShown) {
               if (isShown && this.isUserAuthenticated && this.loginMethod === 'orangeId') {
-                  this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); });
+                  this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); });
+              } else if (!isShown && this.loginMethod === 'orangeId') {
+                  this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile');
               }
           },
           farmerVideos: { handler(newVideos) { if (this.current === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { if (newVideos.some(v => v.cid === this.targetAgriStreamVideoCid)) { this.scrollToAndHighlightAgriStreamVideo(); } } }, deep: true }
@@ -995,182 +966,225 @@
           getStarted() { if (!this.isUserAuthenticated) { this.current = 'loginChoice'; } else if (!this.role) { this.current = 'roleSelection'; } else if (this.role === 'farmer') { this.switchPage('farmerPestiVid'); } else if (this.role === 'buyer') { this.switchPage('buyerAgriSell'); } else if (this.role === 'investor') { this.switchPage('investorProjects'); } else { this.switchPage('landing'); } },
 
           handleAuthenticationSuccess(identifier, method, orangeUserDetails = null) {
+              console.log("PestiVid Auth Success:", method, identifier, orangeUserDetails);
               this.currentUserIdentifier = identifier;
               this.loginMethod = method;
+
               if (method === 'orangeId' && orangeUserDetails) {
-                  this.orangeUser = orangeUserDetails;
-                  this.walletAddress = null;
+                  this.orangeIdUser = orangeUserDetails; // Store the full user object from Orange ID
+                  this.walletAddress = null; // Clear Solana wallet if logged in via Orange ID
               } else if (method === 'solana') {
                   this.walletAddress = identifier;
-                  this.orangeUser = null;
+                  this.orangeIdUser = null; // Clear Orange ID user if logged in via Solana
               }
+
               this.isAuthProcessing = false;
+              this.isOrangeIdCallback = false; // Reset callback flag
               this.showLoadingModal = false;
-              this.isOrangeIdPanelRendering = false;
+
               this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
-
-              const isOnCallbackPath = window.location.pathname.endsWith('/auth/callback');
-              const hasTokensInUrl = window.location.search.includes('token=') || window.location.search.includes('refreshToken=');
-
-              if (hasTokensInUrl) {
-                  if (isOnCallbackPath) {
-                      const cleanUrl = window.location.origin + (window.location.pathname.replace(/\/auth\/callback$/, '') || '/');
-                      window.history.replaceState({}, document.title, cleanUrl);
-                      if (window.location.href !== cleanUrl) {
-                          window.location.href = cleanUrl;
-                          return;
-                      }
-                  } else {
-                      const cleanUrl = window.location.origin + window.location.pathname;
-                      window.history.replaceState({}, document.title, cleanUrl);
-                  }
-              }
               this.loadOrSetupPestiVidProfile();
           },
 
-          initializeOrangeIdStateListener() {
-            const bedrockConfig = this.bedrockConfig;
-            const self = this;
-
-            function OrangeIdStateUpdater() {
-              if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) {
-                console.warn("Orange ID SDK not fully ready. Retrying state listener init.");
-                setTimeout(() => self.initializeOrangeIdStateListener(), 1000);
-                return null;
-              }
-              const { user, isLoading, loginCallback } = Bedrock.useBedrockPassport();
-
-              React.useEffect(() => {
-                  const params = new URLSearchParams(window.location.search);
-                  const isConfiguredCallbackPathWithTokens = (window.location.href.startsWith(bedrockConfig.authCallbackUrl) || window.location.pathname.endsWith('/auth/callback')) && params.has('token') && params.has('refreshToken');
-
-                  if (self.loginMethod === 'orangeId' || !self.loginMethod) {
-                      self.isAuthProcessing = isLoading;
-                  }
-
-                  if (!isLoading) {
-                      if (user) {
-                          if (self.currentUserIdentifier !== user.id || self.loginMethod !== 'orangeId') {
-                             self.handleAuthenticationSuccess(user.id, 'orangeId', user);
-                          }
-                      } else {
-                          if (self.loginMethod === 'orangeId' && !isConfiguredCallbackPathWithTokens) {
-                             self.clearUserSession(false);
-                             if (self.current !== 'landing' && self.current !== 'loginChoice') {
-                                 self.current = 'landing';
-                             }
-                          }
-                      }
-                  }
-              }, [user, isLoading]);
-
-              React.useEffect(() => {
-                  const params = new URLSearchParams(window.location.search);
-                  const token = params.get('token');
-                  const refreshToken = params.get('refreshToken');
-
-                  if ( (window.location.href.startsWith(bedrockConfig.authCallbackUrl) || window.location.pathname.endsWith('/auth/callback')) && token && refreshToken) {
-                      self.showLoadingModal = true;
-                      self.loadingMessage = "Processing Orange ID authentication...";
-                      self.isAuthProcessing = true;
-
-                      async function processCallback() {
-                          try {
-                              const success = await loginCallback(token, refreshToken);
-                              if (success) {
-                                  console.log("Orange ID loginCallback successful. User state will update via other effect.");
-                              } else {
-                                  self.addNotification('Orange ID login failed to process callback.', 'error');
-                                  self.isAuthProcessing = false;
-                                  self.showLoadingModal = false;
-                                  const currentPath = window.location.pathname;
-                                  const cleanUrl = window.location.origin + currentPath;
-                                  window.history.replaceState({}, document.title, cleanUrl);
-                              }
-                          } catch (e) {
-                            self.addNotification('Orange ID login error during callback: ' + (e.message || 'Try again.'), 'error');
-                            self.isAuthProcessing = false;
-                            self.showLoadingModal = false;
-                            const currentPath = window.location.pathname;
-                            const cleanUrl = window.location.origin + currentPath;
-                            window.history.replaceState({}, document.title, cleanUrl);
-                          }
-                      }
-                      processCallback();
-                  }
-              }, [loginCallback]);
-
-              return null;
+          // --- Orange ID Integration Methods ---
+          initializeOrangeIdSDK() {
+            if (!window.React || !window.ReactDOM || !window.Bedrock) {
+                console.error('Error: Orange ID - Required libraries (React, ReactDOM, Bedrock) failed to load.');
+                this.orangeIdBedrockSDKError = true;
+                this.addNotification("Orange ID login service failed to load.", "error");
+                return false;
             }
-
-            const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div');
-            tempContainer.id = 'orange-id-state-updater-container';
-            if (!document.body.contains(tempContainer)) {
-              document.body.appendChild(tempContainer);
-            }
-            const root = ReactDOM.createRoot(tempContainer);
-            root.render(React.createElement(Bedrock.BedrockPassportProvider, bedrockConfig, React.createElement(OrangeIdStateUpdater)));
+            this.orangeIdBedrockSDKError = false;
+            return true;
           },
 
-          renderOrangeIdLoginPanel() {
-            this.isOrangeIdPanelRendering = true;
-            const container = document.getElementById('bedrock-login-widget-container');
-            if (!container) { console.error("Login widget container missing."); this.isOrangeIdPanelRendering = false; return; }
-            container.innerHTML = '';
-            if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) {
-                this.bedrockSDKError = true;
-                this.isOrangeIdPanelRendering = false;
+          renderOrangeIdLoginWidget() {
+            if (!this.initializeOrangeIdSDK() || this.orangeIdWidgetMounted) return;
+            const container = document.getElementById('orange-id-login-container');
+            if (!container) {
+                console.error("Orange ID login container not found.");
                 return;
             }
-            this.bedrockSDKError = false;
-            const root = ReactDOM.createRoot(container);
-            root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(Bedrock.LoginPanel, {
-                title: "", logo: "", logoAlt: "", walletButtonText: "Connect Wallet", showConnectWallet: false, separatorText: "",
-                features: { enableWalletConnect: false, enableAppleLogin: true, enableGoogleLogin: true, enableEmailLogin: false, },
-                panelClass: "bg-transparent shadow-none p-0", titleClass: "hidden", logoClass: "hidden", headerClass: "justify-center mb-0",
-                buttonClass: "flex items-center justify-center p-2 border border-gray-200 rounded-md hover:border-green-400 focus:ring-1 focus:ring-green-400 w-auto min-w-[60px] h-[60px]",
-                separatorTextClass: "hidden",
-                separatorClass: "hidden",
-            })));
-            this.isOrangeIdPanelRendering = false;
-          },
-          renderOrangeIdSignOutButton(containerId) {
-              const container = document.getElementById(containerId); if (!container) return; if (container.querySelector('button') || container.querySelector('i.fa-sign-out-alt')) return; container.innerHTML = '';
-              if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) { console.error("Cannot render Orange ID signout, SDK missing."); return; }
-              const root = ReactDOM.createRoot(container); const self = this;
-              function SignOutButtonComponent() {
-                if (!Bedrock.useBedrockPassport) return null;
-                const { user } = Bedrock.useBedrockPassport();
+            this.unmountOrangeIdLoginWidget(); // Ensure any previous instance is unmounted
 
-                if (!user && self.isUserAuthenticated && self.loginMethod === 'orangeId') {
-                     self.clearUserSession(false);
-                     return null;
-                }
-                if (!user) return null;
+            this.orangeIdReactRootLogin = ReactDOM.createRoot(container);
+            try {
+                this.orangeIdReactRootLogin.render(
+                    React.createElement(
+                        Bedrock.BedrockPassportProvider,
+                        this.bedrockConfig,
+                        React.createElement(Bedrock.LoginPanel, {
+                            title: "Sign in to PestiVid",
+                            logo: "https://sindukuriteja.github.io/favicon.ico", // Using a generic icon, replace if you have one
+                            logoAlt: "PestiVid",
+                            walletButtonText: "Connect Wallet", // Will be hidden by features config
+                            showConnectWallet: false,
+                            separatorText: "OR",
+                            features: {
+                                enableWalletConnect: false, // Keeping this false as PestiVid has its own Solana connect
+                                enableAppleLogin: true,
+                                enableGoogleLogin: true,
+                                enableEmailLogin: true,
+                            },
+                            // Optional: Add custom styling classes if needed
+                            // panelClass: "custom-panel-class",
+                            // buttonClass: "custom-button-class",
+                        })
+                    )
+                );
+                this.orangeIdWidgetMounted = true;
+            } catch (e) {
+                console.error("Error rendering Orange ID LoginPanel:", e);
+                this.orangeIdBedrockSDKError = true;
+                container.innerHTML = '<p class="text-red-500 p-4 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i>Failed to render login widget.</p>';
+            }
+          },
+          unmountOrangeIdLoginWidget() {
+            if (this.orangeIdReactRootLogin) {
+                this.orangeIdReactRootLogin.unmount();
+                this.orangeIdReactRootLogin = null;
+                this.orangeIdWidgetMounted = false;
+                const container = document.getElementById('orange-id-login-container');
+                if (container) container.innerHTML = ''; // Clear placeholder content
+            }
+          },
+          renderOrangeIdCallbackProcessor() {
+            if (!this.initializeOrangeIdSDK()) return;
+            const container = document.getElementById('orange-id-callback-processor');
+            if (!container) return;
 
-                return React.createElement('button', {
-                    className: 'text-gray-400 hover:text-red-500 ml-2 focus:outline-none',
-                    title: "Sign Out",
-                    onClick: () => self.logoutUser()
-                }, React.createElement('i', {className: 'fas fa-sign-out-alt text-lg'}));
-              }
-              root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(SignOutButtonComponent)));
+            this.orangeIdReactRootCallback = ReactDOM.createRoot(container);
+            const self = this; // For accessing Vue instance 'this' inside React component
+
+            function AuthCallbackProcessor() {
+                // Hooks must be called at the top level of a React functional component
+                const { loginCallback, user, isAuthenticated, isLoading } = Bedrock.useBedrockPassport();
+                const [message, setMessage] = React.useState('Processing authentication...');
+
+                React.useEffect(() => {
+                    async function processLogin() {
+                        const params = new URLSearchParams(window.location.search);
+                        const token = params.get('token');
+                        const refreshToken = params.get('refreshToken');
+
+                        if (token && refreshToken) {
+                            try {
+                                setMessage('Verifying tokens with Orange ID...');
+                                const bedrockUser = await loginCallback(token, refreshToken); // loginCallback now returns the user object
+                                if (bedrockUser) {
+                                    setMessage('Orange ID Login successful! Finalizing PestiVid session...');
+                                    // Remove token parameters from URL
+                                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash); // Keep hash for Vue router if used
+                                    // Pass Bedrock user details to PestiVid's auth success handler
+                                    self.handleAuthenticationSuccess(bedrockUser.sub || bedrockUser.id, 'orangeId', bedrockUser);
+                                } else {
+                                    setMessage('Orange ID Authentication failed. Please try again.');
+                                    self.addNotification("Orange ID authentication failed.", "error");
+                                    setTimeout(() => { self.current = 'loginChoice'; self.isOrangeIdCallback = false; }, 2000);
+                                }
+                            } catch (error) {
+                                console.error('Orange ID Login callback error:', error);
+                                setMessage(`An error occurred during Orange ID login: ${error.message}`);
+                                self.addNotification(`Orange ID login error: ${error.message}`, "error");
+                                setTimeout(() => { self.current = 'loginChoice'; self.isOrangeIdCallback = false; }, 3000);
+                            }
+                        } else {
+                            // This should not happen if isOrangeIdCallback is true, but as a fallback
+                            setMessage('No authentication tokens found. Redirecting to login...');
+                             setTimeout(() => { self.current = 'loginChoice'; self.isOrangeIdCallback = false; }, 2000);
+                        }
+                    }
+                    processLogin();
+                }, [loginCallback]); // loginCallback dependency
+
+                if (isLoading) return React.createElement('p', null, 'Loading Bedrock SDK...');
+                return React.createElement('div', { style: { textAlign: 'center', padding: '1rem' } }, message);
+            }
+
+            this.orangeIdReactRootCallback.render(
+                React.createElement(
+                    Bedrock.BedrockPassportProvider,
+                    this.bedrockConfig,
+                    React.createElement(AuthCallbackProcessor)
+                )
+            );
           },
-          promptOrangeIdLogin() {
-              if (this.isUserAuthenticated && this.loginMethod === 'orangeId') { this.addNotification("Already logged in with Orange ID.", "info"); return; }
-              if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); }
-              this.loginMethod = 'orangeId';
-              this.isAuthProcessing = true;
-              if(this.current !== 'loginChoice') {
-                  this.switchPage('loginChoice');
-              } else {
-                  this.$nextTick(() => {
-                      if (document.getElementById('bedrock-login-widget-container')) {
-                           this.renderOrangeIdLoginPanel();
-                      }
-                  });
-              }
+          unmountOrangeIdCallbackProcessor() {
+            if (this.orangeIdReactRootCallback) {
+                this.orangeIdReactRootCallback.unmount();
+                this.orangeIdReactRootCallback = null;
+            }
           },
+          renderOrangeIdSignOutButton(containerId, isMobile = false) {
+            if (!this.initializeOrangeIdSDK() || !this.isUserAuthenticated || this.loginMethod !== 'orangeId') return;
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            let rootRef = isMobile ? 'orangeIdReactRootSignOutMobile' : 'orangeIdReactRootSignOut';
+            this.unmountOrangeIdSignOutButton(containerId, isMobile); // Unmount previous if exists
+
+            this[rootRef] = ReactDOM.createRoot(container);
+            const self = this;
+
+            // Custom SignOutButton wrapper to call PestiVid's logout
+            function PestiVidSignOutWrapper() {
+                const { logout } = Bedrock.useBedrockPassport();
+                const handleSignOut = async () => {
+                    try {
+                        await logout(); // This will clear Bedrock's session
+                        // self.logoutUser(true, false); // Call PestiVid's logout, don't re-trigger Bedrock logout
+                    } catch (error) {
+                        console.error("Orange ID sign out error:", error);
+                        self.addNotification("Error signing out from Orange ID.", "error");
+                    }
+                    // PestiVid's full logout will be called by the Bedrock.SignOutButton's onSignOut prop
+                };
+
+                return React.createElement(Bedrock.SignOutButton, {
+                    onSignOut: () => {
+                        // This is called *after* Bedrock SDK has logged out.
+                        // Now call PestiVid's internal logout to clear its state.
+                        self.clearUserSession(true); // Notify PestiVid user
+                        self.current = 'landing'; // Redirect to landing
+                    },
+                    buttonContent: React.createElement('i', { className: "fas fa-sign-out-alt text-lg" }), // Font Awesome icon
+                    // buttonClass: "text-gray-400 hover:text-red-500" // Apply PestiVid's styling
+                });
+            }
+
+            this[rootRef].render(
+                React.createElement(
+                    Bedrock.BedrockPassportProvider, // Provider needed for SignOutButton to access context
+                    this.bedrockConfig,
+                    React.createElement(PestiVidSignOutWrapper)
+                )
+            );
+          },
+          unmountOrangeIdSignOutButton(containerId, isMobile = false) {
+            let rootRef = isMobile ? 'orangeIdReactRootSignOutMobile' : 'orangeIdReactRootSignOut';
+            if (this[rootRef]) {
+                this[rootRef].unmount();
+                this[rootRef] = null;
+                const container = document.getElementById(containerId);
+                if(container) container.innerHTML = '';
+            }
+          },
+          checkOrangeIdCallback() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const refreshToken = params.get('refreshToken');
+            if (token && refreshToken) {
+                this.isOrangeIdCallback = true;
+                this.isAuthProcessing = true; // Show general "Authenticating..."
+                // Ensure no other view is shown while callback is processed
+                // this.current = 'landing'; // Or a dedicated loading view
+                this.$nextTick(() => this.renderOrangeIdCallbackProcessor());
+                return true;
+            }
+            this.isOrangeIdCallback = false;
+            return false;
+          },
+          // --- End Orange ID ---
 
           async connectWallet() {
               if (typeof window.solana === 'undefined' || typeof window.solana.connect === 'undefined') {
@@ -1178,8 +1192,13 @@
                   window.open('https://phantom.app/', '_blank');
                   return;
               }
-              if (this.isUserAuthenticated && this.loginMethod === 'solana') { this.addNotification("Solana Wallet already connected.", "info"); return; }
-              if (this.isUserAuthenticated && this.loginMethod === 'orangeId') { if(!confirm("You are logged in with Orange ID. Switch to Solana Wallet?")) return; this.logoutUser(false); }
+              if (this.isUserAuthenticated) {
+                   if (this.loginMethod === 'solana') {
+                       this.addNotification("Solana Wallet already connected.", "info"); return;
+                   }
+                   if(!confirm(`You are logged in with ${this.loginMethod}. Switch to Solana Wallet? This will log you out of Orange ID.`)) return;
+                   await this.logoutUser(false); // Logout without notification, wait for it
+               }
 
               this.isAuthProcessing = true;
               try {
@@ -1187,7 +1206,7 @@
                   this.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
               } catch (err) {
                   console.error("Solana Wallet connection error:", err);
-                  alert("Could not connect to Solana wallet. " + (err.message || ''));
+                  this.addNotification("Could not connect to Solana wallet. " + (err.message || ''), "error");
                   this.loginMethod = null;
                   this.isAuthProcessing = false;
               }
@@ -1210,26 +1229,31 @@
                   this.userPhone = pestividProfile.phone || '';
                   this.memberSince = pestividProfile.memberSince || new Date().toLocaleDateString();
                   if (this.role === 'farmer') { this.farmerLocationCity = pestividProfile.farmerLocationCity || ''; }
+                  else { this.farmerLocationCity = ''; }
               } else {
-                  this.userNameOnboarding = (this.loginMethod === 'orangeId' && this.orangeUser) ? (this.orangeUser.name || this.orangeUser.displayName || '') : '';
-                  this.userEmailOnboarding = (this.loginMethod === 'orangeId' && this.orangeUser) ? (this.orangeUser.email || '') : '';
+                  this.userNameOnboarding = this.loginMethod === 'orangeId' && this.orangeIdUser ? (this.orangeIdUser.name || '') : '';
+                  this.userEmailOnboarding = this.loginMethod === 'orangeId' && this.orangeIdUser ? (this.orangeIdUser.email || '') : '';
                   this.userPhoneOnboarding = '';
                   this.farmerLocationCityOnboarding = '';
                   this.selectedRoleOnboarding = '';
                   this.current = 'roleSelection';
-                  if (this.isUserAuthenticated) this.addNotification(`Welcome, ${this.userNameOnboarding || this.displayedUserIdentifier}! Please complete your PestiVid profile.`, 'info');
+                  if (this.isUserAuthenticated) {
+                       this.addNotification(`Welcome! Please complete your PestiVid profile.`, 'info');
+                  }
               }
               this.filterDataForCurrentUser();
               this.showMobileMenu = false;
-              if ( (this.current === 'loginChoice' || this.current === 'landing') && this.isUserAuthenticated && this.role) {
+
+              if ( (this.current === 'loginChoice' || this.current === 'landing' || this.isOrangeIdCallback) && this.isUserAuthenticated && this.role) {
                   this.getStarted();
               } else if (this.isUserAuthenticated && !this.role) {
                   this.current = 'roleSelection';
               }
+              this.isOrangeIdCallback = false; // Ensure this is reset after processing
           },
           completeOnboarding() {
-              if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Fill: Name, PestiVid Email, Role."); return; }
-              if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Valid PestiVid email."); return; }
+              if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Please fill in Full Name, PestiVid Email, and select a Role."); return; }
+              if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Please enter a valid PestiVid email address."); return; }
 
               this.role = this.selectedRoleOnboarding;
               this.userName = this.userNameOnboarding.trim();
@@ -1245,70 +1269,84 @@
                   memberSince: this.memberSince,
                   farmerLocationCity: this.role === 'farmer' ? this.farmerLocationCity : undefined,
                   authMethod: this.loginMethod,
-                  orangeAuthEmail: (this.loginMethod === 'orangeId' && this.orangeUser) ? this.orangeUser.email : null
+                  orangeAuthEmail: this.loginMethod === 'orangeId' && this.orangeIdUser ? this.orangeIdUser.email : null,
+                  orangeEthAddress: this.loginMethod === 'orangeId' && this.orangeIdUser ? this.orangeIdUser.ethAddress : null,
               };
               localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles));
               this.filterDataForCurrentUser();
               this.getStarted();
-              this.addNotification(`Profile for ${this.userName} setup!`, 'success');
+              this.addNotification(`Profile for ${this.userName} setup! Welcome!`, 'success');
           },
-          async logoutUser(notify = true) {
+          async logoutUser(notify = true, triggerOrangeIdLogout = true) {
               this.showLoadingModal = true;
               this.loadingMessage = "Signing out...";
-              const currentLoginMethod = this.loginMethod;
 
-              if (currentLoginMethod === 'orangeId') {
-                  if (typeof Bedrock !== 'undefined' && Bedrock.BedrockPassportProvider && ReactDOM.createRoot) {
-                      const tempSignOutContainer = document.createElement('div');
-                      const root = ReactDOM.createRoot(tempSignOutContainer);
-                      try {
-                          await new Promise((resolve, reject) => {
-                              function TempSignOut() {
-                                  const { signOut: bedrockSignOut, user } = Bedrock.useBedrockPassport();
-                                  React.useEffect(() => {
-                                      if (user && bedrockSignOut) {
-                                          bedrockSignOut().then(resolve).catch(reject);
-                                      } else {
-                                          resolve();
-                                      }
-                                  }, [bedrockSignOut, user]);
-                                  return null;
-                              }
-                              root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(TempSignOut)));
-                          });
-                          console.log("Bedrock SDK signOut process completed.");
-                      } catch (e) {
-                          console.error("Orange ID sign out error via Bedrock SDK:", e);
-                      }
+              if (this.loginMethod === 'solana') {
+                 await this.disconnectWallet();
+                 this.clearUserSession(notify); // Clear PestiVid session immediately
+              } else if (this.loginMethod === 'orangeId') {
+                  // For Orange ID, the SignOutButton's onSignOut will call clearUserSession.
+                  // If this function is called directly (not via Bedrock.SignOutButton),
+                  // we might need to manually trigger Bedrock's logout.
+                  // However, the Bedrock.SignOutButton is the preferred way.
+                  // If triggerOrangeIdLogout is true (meaning this wasn't called from the button's callback)
+                  // we should ensure the button's logic is what clears the session.
+                  // This current setup relies on the SignOutButton component to handle Bedrock's logout.
+                  // If calling logoutUser directly for OrangeID, it won't log out from OrangeID server.
+                  // The SignOutButton component is the primary way to ensure Bedrock SDK logout.
+                  // If the SignOutButton is not rendered (e.g. programmatic logout not via UI button),
+                  // then we might need to call bedrock.logout() here explicitly IF bedrock instance is available.
+                  // For now, we assume SignOutButton handles it. If it doesn't, clearUserSession might be called prematurely.
+                  // Let's let SignOutButton call clearUserSession.
+                  if (!triggerOrangeIdLogout) { // If called from SignOutButton callback essentially
+                     this.clearUserSession(notify);
                   } else {
-                      console.warn("Bedrock SDK not available for Orange ID signout.");
+                     // If called directly, this won't log out of OrangeID. User might still be logged into OrangeID.
+                     // This scenario needs careful handling if a full logout from OrangeID is needed without UI.
+                     // For this demo, we'll assume the UI button is used.
+                     console.warn("Direct Orange ID logout called without UI button. Orange ID session might persist.");
+                     this.clearUserSession(notify);
                   }
-              } else if (currentLoginMethod === 'solana') {
-                  await this.disconnectWallet();
+              } else {
+                 this.clearUserSession(notify);
               }
-
-              this.clearUserSession(notify);
               this.showLoadingModal = false;
-              this.current = 'landing';
+              if (this.current !== 'landing') this.current = 'landing'; // Go to landing unless already there.
           },
           clearUserSession(notify = true) {
               this.currentUserIdentifier = null;
-              this.loginMethod = null;
+              // loginMethod is kept to allow SignOutButton to render if it was OrangeID
+              // this.loginMethod = null; // Don't nullify if we need to unmount signout button based on it
               this.walletAddress = null;
-              this.orangeUser = null;
+              this.orangeIdUser = null;
               this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerLocationCity = '';
 
               this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = [];
               this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = [];
-              this.activeConversationId = null; this.messages = []; this.conversations = [];
+              this.activeConversationId = null; //this.messages = []; this.conversations = [];
+
+              this.unmountOrangeIdSignOutButton('orange-id-signout-button-container');
+              this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile');
+              if (this.loginMethod === 'orangeId') this.loginMethod = null; // Now clear it after unmounting
 
               this.showMobileMenu = false;
               this.isAuthProcessing = false;
-              this.isOrangeIdPanelRendering = false;
+              this.isOrangeIdCallback = false;
 
-              if (notify) this.addNotification("You have been signed out.", 'info');
+              if (notify) this.addNotification("You have been signed out from PestiVid.", 'info');
+          },
+          getFarmerDisplayIdentifier(wallet, length = 6) {
+                if (!wallet) return 'N/A';
+                const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
+                const profile = userProfiles[wallet];
+                if (profile && profile.name) return profile.name.split(' ')[0];
+                return `${wallet.substring(0, length)}...`;
+          },
+          getSellerDisplayIdentifier(wallet, length = 6) { // Alias for consistency
+                return this.getFarmerDisplayIdentifier(wallet, length);
           },
 
+          // ... (All other PestiVid methods like simulateTransaction, startVideo, uploadVideo, etc., remain the same) ...
           async simulateTransaction(description = "Processing...") { this.showLoadingModal = true; this.loadingMessage = "Confirm action (Simulated)..."; await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500)); this.loadingMessage = `${description} on PestiVid (Simulated)...`; await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2500)); const txHash = 'sim_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2, 12); this.showLoadingModal = false; return txHash; },
           async startVideo() { if (!this.isUserAuthenticated) { alert("Please log in."); return; } if (this.recording || this.uploading) return; if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("HTTPS recommended for camera."); } this.recordBlob = null; this.recordBlobUrl = ''; this.uploadCid = ''; this.uploadError = ''; this.showLive = true; try { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); this.recordStream = stream; this.$refs.liveVideo.srcObject = stream; this.$refs.liveVideo.play(); let chunks = []; this.recording = true; const mimeTypes = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']; let selectedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || undefined; this.recordMediaRecorder = new MediaRecorder(stream, { mimeType: selectedMimeType }); this.recordMediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); }; this.recordMediaRecorder.onstop = () => { const blobType = this.recordMediaRecorder.mimeType || 'video/webm'; this.recordBlob = new Blob(chunks, { type: blobType }); if (this.recordBlobUrl) URL.revokeObjectURL(this.recordBlobUrl); this.recordBlobUrl = URL.createObjectURL(this.recordBlob); this.showLive = false; stream.getTracks().forEach(t => t.stop()); this.recordStream = null; this.recording = false; }; this.recordMediaRecorder.onerror = (e) => { this.uploadError = "Recording error: " + e.name; this.stopVideo(); }; this.recordMediaRecorder.start(1000); } catch (e) { let alertMsg = "Camera access failed."; if (e.name === 'NotAllowedError') alertMsg = "Camera denied."; else if (e.name === 'NotFoundError') alertMsg = "No camera found."; else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') alertMsg = "Camera in use."; if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') alertMsg += " HTTPS might be required."; alert(alertMsg); this.showLive = false; this.recording = false; } },
           stopVideo() { if (this.recordMediaRecorder && this.recordMediaRecorder.state === "recording") this.recordMediaRecorder.stop(); if (this.recordStream) { this.recordStream.getTracks().forEach(t => t.stop()); this.recordStream = null; } this.recording = false; this.showLive = false; },
@@ -1328,8 +1366,8 @@
           viewPurchaseVideo(purchase) { this.selectedPurchase = purchase; this.showPurchaseVideo = true; },
           resetInvestorFilters() { this.investorFilters = {crop: '', method: '', minRoi: null, maxAmount: null}; },
           maxInvestmentAmount(project) { if (!project || project.status === 'funded' || project.amount === undefined || project.fundedAmount === undefined) return 0; const remaining = project.amount - (project.fundedAmount || 0); return remaining > 0 ? remaining.toFixed(2) : 0; },
-          async investInProject(project) { if (!this.isUserAuthenticated || this.role !== 'investor') { alert("Login as Investor."); if(!this.isUserAuthenticated) this.switchPage('loginChoice'); return; } const amount = this.investmentAmounts[project.id]; this.$set(this.investmentErrors, project.id, ''); if (!amount || isNaN(amount) || amount <= 0) { this.$set(this.investmentErrors, project.id, 'Invalid amount.'); return; } const maxInvest = parseFloat(this.maxInvestmentAmount(project)); const tolerance = 0.001; if (amount > maxInvest + tolerance) { this.$set(this.investmentErrors, project.id, `Max ${maxInvest} SOL.`); return; } const preciseAmount = parseFloat(amount.toFixed(2)); const txHash = await this.simulateTransaction(`Investing ${preciseAmount} SOL`); if (!txHash) { this.$set(this.investmentErrors, project.id, 'Investment Tx failed.'); return; } try { const projectInAllIdx = this.allFundingRequests.findIndex(p => p.id === project.id); if (projectInAllIdx === -1) throw new Error("Project not found"); const updatedProject = { ...this.allFundingRequests[projectInAllIdx] }; updatedProject.fundedAmount = (updatedProject.fundedAmount || 0) + preciseAmount; updatedProject.investors = [...(updatedProject.investors || []), { investorId: this.currentUserIdentifier, amount: preciseAmount, txHash: txHash }]; if (updatedProject.fundedAmount >= updatedProject.amount - tolerance) { updatedProject.status = 'funded'; updatedProject.fundedAmount = updatedProject.amount; } else { updatedProject.status = 'partially_funded'; } this.$set(this.allFundingRequests, projectInAllIdx, updatedProject); const farmerProjectIndex = this.farmerFundingRequests.findIndex(p => p.id === project.id); if(farmerProjectIndex > -1) { this.$set(this.farmerFundingRequests, farmerProjectIndex, updatedProject); } const newInvestment = { id: 'inv' + Date.now(), investorWallet: this.currentUserIdentifier, projectId: project.id, projectTitle: project.title, farmerWallet: project.farmerWallet, crop: project.crop, method: project.method, description: project.description, acres: project.acres, timeline: project.timeline, roi: project.roi, investorShare: project.investorShare, amount: preciseAmount, cid: project.cid, status: 'active', progress: 0, investmentDate: new Date().toLocaleDateString(), txHash: txHash }; this.investorInvestments.unshift(newInvestment); const newTransaction = { id: 'tx' + Date.now(), investorWallet: this.currentUserIdentifier, txHash: txHash, type: 'investment', amount: preciseAmount, date: new Date().toLocaleDateString(), projectId: project.id, projectTitle: project.title }; this.investorTransactions.unshift(newTransaction); this.investorTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)); this.addNotification(`Investment ${preciseAmount} SOL successful!`, 'success'); this.addNotification(`${preciseAmount} SOL from ${this.currentUserIdentifier.substring(0,6)}... for "${project.title}"!`, 'success', project.farmerWallet); this.$set(this.investmentAmounts, project.id, null); alert(`Invested ${preciseAmount} SOL in "${project.title}"!`); this.saveDataToLocalStorage(); } catch (err) { this.$set(this.investmentErrors, project.id, 'Invest sim failed.'); alert("Invest sim failed."); } },
-          updateInvestmentProgress() { const now = new Date(); this.investorInvestments.forEach(inv => { if (inv.status === 'active' || inv.status === 'growing') { const dateInvested = new Date(inv.investmentDate); const monthsElapsed = (now.getFullYear() - dateInvested.getFullYear())*12 + (now.getMonth() - dateInvested.getMonth()); let progress = 0; if (inv.timeline && inv.timeline > 0) { progress = Math.min(100, Math.max(0, Math.round((monthsElapsed/inv.timeline)*100))); } progress = Math.min(100, Math.max(inv.progress||0, progress + ((inv.progress||0)<95 ? Math.floor(Math.random()*3) : 0) )); inv.progress = progress; if (progress >= 100) { inv.status = 'harvested'; if (!inv.payoutNotified) { const expectedReturn = this.calculateExpectedReturn(inv); const payoutTxHash = 'sim_payout_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2,10); this.investorTransactions.unshift({ id: 'txp' + Date.now(), investorWallet: inv.investorWallet, txHash: payoutTxHash, type: 'payout', amount: parseFloat(expectedReturn), date: new Date().toLocaleDateString(), projectId: inv.projectId, projectTitle: inv.projectTitle }); this.investorTransactions.sort((a,b) => new Date(b.date) - new Date(a.date)); this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} SOL!`, 'success', inv.investorWallet); this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} SOL to ${inv.investorWallet.substring(0,6)}...`, 'info', inv.farmerWallet); inv.payoutNotified = true; this.saveDataToLocalStorage(); } } else if (progress > 0 && inv.status === 'active') { inv.status = 'growing'; } else if (progress === 0 && inv.status !== 'active') { inv.status = 'active'; } } }); },
+          async investInProject(project) { if (!this.isUserAuthenticated || this.role !== 'investor') { alert("Login as Investor."); if(!this.isUserAuthenticated) this.switchPage('loginChoice'); return; } const amount = this.investmentAmounts[project.id]; this.$set(this.investmentErrors, project.id, ''); if (!amount || isNaN(amount) || amount <= 0) { this.$set(this.investmentErrors, project.id, 'Invalid amount.'); return; } const maxInvest = parseFloat(this.maxInvestmentAmount(project)); const tolerance = 0.001; if (amount > maxInvest + tolerance) { this.$set(this.investmentErrors, project.id, `Max ${maxInvest} SOL.`); return; } const preciseAmount = parseFloat(amount.toFixed(2)); const txHash = await this.simulateTransaction(`Investing ${preciseAmount} SOL`); if (!txHash) { this.$set(this.investmentErrors, project.id, 'Investment Tx failed.'); return; } try { const projectInAllIdx = this.allFundingRequests.findIndex(p => p.id === project.id); if (projectInAllIdx === -1) throw new Error("Project not found"); const updatedProject = { ...this.allFundingRequests[projectInAllIdx] }; updatedProject.fundedAmount = (updatedProject.fundedAmount || 0) + preciseAmount; updatedProject.investors = [...(updatedProject.investors || []), { investorId: this.currentUserIdentifier, amount: preciseAmount, txHash: txHash }]; if (updatedProject.fundedAmount >= updatedProject.amount - tolerance) { updatedProject.status = 'funded'; updatedProject.fundedAmount = updatedProject.amount; } else { updatedProject.status = 'partially_funded'; } this.$set(this.allFundingRequests, projectInAllIdx, updatedProject); const farmerProjectIndex = this.farmerFundingRequests.findIndex(p => p.id === project.id); if(farmerProjectIndex > -1) { this.$set(this.farmerFundingRequests, farmerProjectIndex, updatedProject); } const newInvestment = { id: 'inv' + Date.now(), investorWallet: this.currentUserIdentifier, projectId: project.id, projectTitle: project.title, farmerWallet: project.farmerWallet, crop: project.crop, method: project.method, description: project.description, acres: project.acres, timeline: project.timeline, roi: project.roi, investorShare: project.investorShare, amount: preciseAmount, cid: project.cid, status: 'active', progress: 0, investmentDate: new Date().toLocaleDateString(), txHash: txHash }; this.investorInvestments.unshift(newInvestment); const newTransaction = { id: 'tx' + Date.now(), investorWallet: this.currentUserIdentifier, txHash: txHash, type: 'investment', amount: preciseAmount, date: new Date().toLocaleDateString(), projectId: project.id, projectTitle: project.title }; this.investorTransactions.unshift(newTransaction); this.investorTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)); this.addNotification(`Investment ${preciseAmount} SOL successful!`, 'success'); this.addNotification(`${preciseAmount} SOL from ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)} for "${project.title}"!`, 'success', project.farmerWallet); this.$set(this.investmentAmounts, project.id, null); alert(`Invested ${preciseAmount} SOL in "${project.title}"!`); this.saveDataToLocalStorage(); } catch (err) { this.$set(this.investmentErrors, project.id, 'Invest sim failed.'); alert("Invest sim failed."); } },
+          updateInvestmentProgress() { const now = new Date(); this.investorInvestments.forEach(inv => { if (inv.status === 'active' || inv.status === 'growing') { const dateInvested = new Date(inv.investmentDate); const monthsElapsed = (now.getFullYear() - dateInvested.getFullYear())*12 + (now.getMonth() - dateInvested.getMonth()); let progress = 0; if (inv.timeline && inv.timeline > 0) { progress = Math.min(100, Math.max(0, Math.round((monthsElapsed/inv.timeline)*100))); } progress = Math.min(100, Math.max(inv.progress||0, progress + ((inv.progress||0)<95 ? Math.floor(Math.random()*3) : 0) )); inv.progress = progress; if (progress >= 100) { inv.status = 'harvested'; if (!inv.payoutNotified) { const expectedReturn = this.calculateExpectedReturn(inv); const payoutTxHash = 'sim_payout_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2,10); this.investorTransactions.unshift({ id: 'txp' + Date.now(), investorWallet: inv.investorWallet, txHash: payoutTxHash, type: 'payout', amount: parseFloat(expectedReturn), date: new Date().toLocaleDateString(), projectId: inv.projectId, projectTitle: inv.projectTitle }); this.investorTransactions.sort((a,b) => new Date(b.date) - new Date(a.date)); this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} SOL!`, 'success', inv.investorWallet); this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} SOL to ${this.getFarmerDisplayIdentifier(inv.investorWallet)}...`, 'info', inv.farmerWallet); inv.payoutNotified = true; this.saveDataToLocalStorage(); } } else if (progress > 0 && inv.status === 'active') { inv.status = 'growing'; } else if (progress === 0 && inv.status !== 'active') { inv.status = 'active'; } } }); },
           viewInvestmentDetails(investment) { this.selectedInvestmentProject = this.allFundingRequests.find(p => p.id === investment.projectId); this.selectedInvestment = { ...investment, description: this.selectedInvestmentProject ? this.selectedInvestmentProject.description : investment.description, updates: this.selectedInvestmentProject ? (this.selectedInvestmentProject.updates || []) : [] }; this.showInvestmentDetailsModal = true; },
           calculateExpectedReturn(investment) { if (!investment || !investment.amount || !investment.roi) return '0.00'; return (investment.amount * (investment.roi / 100)).toFixed(2); },
           solanaExplorerUrl(txHash) { return `https://explorer.solana.com/tx/${txHash}?cluster=devnet`; },
@@ -1338,44 +1376,53 @@
           simulateUserEmail(id) { return id ? `${id.substring(0, 6)}@pestivid.xyz` : 'user@example.com'; },
           simulateMemberSince(id) { let hash = 0; for (let i = 0; i < (id || '').length; i++) { hash = (hash << 5) - hash + id.charCodeAt(i); hash |= 0; } const daysAgo = Math.abs(hash % 730) + 30; const joinDate = new Date(); joinDate.setDate(joinDate.getDate() - daysAgo); return joinDate.toLocaleDateString(); },
           simulateFarmName(id) { return id ? `Farm ${id.substring(0, 5)}` : "The Good Farm"; },
-          simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - hash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
+          simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - hash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; }, // Corrected 'hash' variable
           async fetchWeather() { if (!this.farmerLocationCity) { this.weatherError = "Enter city."; return; } if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') { this.weatherError = "Weather API key needed. Please configure in script."; alert(this.weatherError); return; } this.weatherLoading = true; this.weatherError = ''; this.currentWeather = null; this.forecastWeather = []; const city = this.farmerLocationCity; const apiKey = this.weatherApiKey; const units = 'metric'; try { const currentResponse = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.currentWeather = currentResponse.data; const forecastResponse = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.forecastWeather = this.processForecastData(forecastResponse.data); } catch (error) { if (error.response) { this.weatherError = `Err ${error.response.status}: ${error.response.data.message || 'Weather error.'}`; if (error.response.status === 401) this.weatherError += " Check API key."; else if (error.response.status === 404) this.weatherError = `No weather for "${city}".`; } else if (error.request) { this.weatherError = "Network/CORS error."; } else { this.weatherError = "Unexpected weather error."; } alert(this.weatherError + " See console."); } finally { this.weatherLoading = false; } },
           processForecastData(data) { if (!data || !data.list) return []; const dailyData = {}; data.list.forEach(item => { const date = new Date(item.dt * 1000); const dateString = date.toISOString().split('T')[0]; if (!dailyData[dateString]) { dailyData[dateString] = { date: date, dateString: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), temps: [], icons: [], descriptions: [] }; } dailyData[dateString].temps.push(item.main.temp); dailyData[dateString].icons.push(item.weather[0].icon); dailyData[dateString].descriptions.push(item.weather[0].description); }); return Object.values(dailyData).map(day => { let repIcon = day.icons[0]; let repDesc = day.descriptions[0]; const middayIdx = data.list.findIndex(item => new Date(item.dt * 1000).toISOString().startsWith(day.date.toISOString().split('T')[0]) && new Date(item.dt*1000).getHours() >= 11 && new Date(item.dt*1000).getHours() <= 14); if (middayIdx !== -1) { repIcon = data.list[middayIdx].weather[0].icon; repDesc = data.list[middayIdx].weather[0].description; } return { date: day.date, dateString: day.dateString, minTemp: Math.min(...day.temps), maxTemp: Math.max(...day.temps), icon: repIcon, description: repDesc }; }).slice(0, 5); },
           getWeatherIconUrl(iconCode) { return `https://openweathermap.org/img/wn/${iconCode}@2x.png`; },
           saveFarmerCity() { if (this.isUserAuthenticated && this.role === 'farmer') { const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; if (userProfiles[this.currentUserIdentifier]) { userProfiles[this.currentUserIdentifier].farmerLocationCity = this.farmerLocationCity; localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); } } },
           selectConversation(convId) { this.activeConversationId = convId; this.markConversationAsRead(convId); this.$nextTick(() => this.scrollToMessageBottom()); },
-          sendMessage() { if (!this.messageInputText.trim() || !this.activeConversationId || !this.isUserAuthenticated) return; const conversation = this.conversations.find(c => c.id === this.activeConversationId); if (!conversation) return; const receiverId = conversation.participants.find(p => p !== this.currentUserIdentifier); if (!receiverId) return; const newMessage = { id: 'msg' + Date.now(), conversationId: this.activeConversationId, sender: this.currentUserIdentifier, receiver: receiverId, text: this.messageInputText.trim(), timestamp: new Date().toISOString(), read: false }; this.messages.push(newMessage); conversation.lastMessageSnippet = newMessage.text.substring(0, 35) + (newMessage.text.length > 35 ? '...' : ''); conversation.lastMessageTimestamp = newMessage.timestamp; this.conversations.sort((a, b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.addNotification(`New message from ${this.userName || this.displayedUserIdentifier}`, 'info', receiverId); this.messageInputText = ''; this.$nextTick(() => this.scrollToMessageBottom()); this.saveDataToLocalStorage(); },
+          sendMessage() { if (!this.messageInputText.trim() || !this.activeConversationId || !this.isUserAuthenticated) return; const conversation = this.conversations.find(c => c.id === this.activeConversationId); if (!conversation) return; const receiverId = conversation.participants.find(p => p !== this.currentUserIdentifier); if (!receiverId) return; const newMessage = { id: 'msg' + Date.now(), conversationId: this.activeConversationId, sender: this.currentUserIdentifier, receiver: receiverId, text: this.messageInputText.trim(), timestamp: new Date().toISOString(), read: false }; this.messages.push(newMessage); conversation.lastMessageSnippet = newMessage.text.substring(0, 35) + (newMessage.text.length > 35 ? '...' : ''); conversation.lastMessageTimestamp = newMessage.timestamp; this.conversations.sort((a, b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.addNotification(`New message from ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`, 'info', receiverId); this.messageInputText = ''; this.$nextTick(() => this.scrollToMessageBottom()); this.saveDataToLocalStorage(); },
           startOrGoToConversation(targetIdentifier) { if (!this.isUserAuthenticated || !targetIdentifier ) { if (!this.isUserAuthenticated) { alert("Log in to message."); this.switchPage('loginChoice'); return;} if (!targetIdentifier) { alert("Target missing."); return;} } if (targetIdentifier === this.currentUserIdentifier) { alert("Cannot message self."); return; } const sortedParticipants = [this.currentUserIdentifier, targetIdentifier].sort(); let conversation = this.conversations.find(conv => conv.participants.length === 2 && conv.participants.join(',') === sortedParticipants.join(',')); if (!conversation) { const newConvId = 'conv' + Date.now(); conversation = { id: newConvId, participants: sortedParticipants, lastMessageSnippet: 'Conversation started.', lastMessageTimestamp: new Date().toISOString() }; this.conversations.unshift(conversation); this.conversations.sort((a,b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.saveDataToLocalStorage(); } this.switchPage('messaging'); this.$nextTick(() => this.selectConversation(conversation.id)); },
           messageFarmerFromProfile() { if (this.selectedFarmerProfile && this.isUserAuthenticated && this.currentUserIdentifier !== this.selectedFarmerProfile.walletAddress) { const targetUserIdentifier = this.selectedFarmerProfile.walletAddress; this.closeFarmerProfileModal(); this.$nextTick(() => this.startOrGoToConversation(targetUserIdentifier)); } else if (this.selectedFarmerProfile && this.isUserAuthenticated && this.currentUserIdentifier === this.selectedFarmerProfile.walletAddress) { alert("Cannot message self."); } },
           scrollToMessageBottom() { const el = this.$refs.messageContainer; if (el) setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50); },
           getUnreadCountForConversation(convId) { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.conversationId === convId && msg.receiver === this.currentUserIdentifier && !msg.read).length; },
           markConversationAsRead(convId) { let changed = false; this.messages.forEach(msg => { if (msg.conversationId === convId && msg.receiver === this.currentUserIdentifier && !msg.read) { msg.read = true; changed = true; } }); if (changed) this.saveDataToLocalStorage(); },
-          addNotification(message, type = 'info', recipientIdentifier = null) { if (recipientIdentifier === null || recipientIdentifier === this.currentUserIdentifier) { const newNotification = { id: 'notif_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if(this.recentNotifications.length === 0) { this.showNextToastNotification(); } } else { console.log(`(SIM) Notif for ${recipientIdentifier}: "${message}" by ${this.currentUserIdentifier}`); } },
+          addNotification(message, type = 'info', recipientIdentifier = null) { if (recipientIdentifier === null || recipientIdentifier === this.currentUserIdentifier) { const newNotification = { id: 'notif_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if(this.recentNotifications.length === 0) { this.showNextToastNotification(); } } else { console.log(`(SIM) Notif for ${recipientIdentifier}: "${message}" by ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`); } },
           showNextToastNotification() { if (this.recentNotifications.length >= 3 || this.notifications.length === 0) return; const notificationToShow = this.notifications.shift(); this.recentNotifications.push(notificationToShow); this.$nextTick(() => { setTimeout(() => { const index = this.recentNotifications.findIndex(n => n.id === notificationToShow.id); if(index > -1) { this.$set(this.recentNotifications[index], 'show', true); } }, 50); }); notificationToShow.timeoutId = setTimeout(() => this.dismissNotification(notificationToShow.id), 4500); },
           dismissNotification(id) { const index = this.recentNotifications.findIndex(n => n.id === id); if (index > -1) { if (this.recentNotifications[index].timeoutId) clearTimeout(this.recentNotifications[index].timeoutId); this.$set(this.recentNotifications[index], 'show', false); setTimeout(() => { const removeIndex = this.recentNotifications.findIndex(n => n.id === id); if (removeIndex > -1) this.recentNotifications.splice(removeIndex, 1); this.$nextTick(() => this.showNextToastNotification()); }, 400); } },
-          notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${listing.farmerWallet.substring(0,6)}... available!`, 'info'); if (this.role === 'buyer' && this.currentUserIdentifier !== listing.farmerWallet) this.addNotification(`Check new listing for "${listing.crop}"!`, 'info'); console.log(`SIM: Notifying buyers about listing ${listing.id}`); },
-          notifyInvestorsAboutFunding(request, markAsSent = false) { if (markAsSent) {/* mark notificationSent */} this.addNotification(`New funding: "${request.title}" by ${request.farmerWallet.substring(0,6)}... seeking investors!`, 'info'); if (this.role === 'investor' && this.currentUserIdentifier !== request.farmerWallet) this.addNotification(`New project "${request.title}" needs funding!`, 'info'); console.log(`SIM: Notifying investors about funding ${request.id}`); },
+          notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${this.getFarmerDisplayIdentifier(listing.farmerWallet)}... available!`, 'info'); if (this.role === 'buyer' && this.currentUserIdentifier !== listing.farmerWallet) this.addNotification(`Check new listing for "${listing.crop}"!`, 'info'); console.log(`SIM: Notifying buyers about listing ${listing.id}`); },
+          notifyInvestorsAboutFunding(request, markAsSent = false) { if (markAsSent) {/* mark notificationSent */} this.addNotification(`New funding: "${request.title}" by ${this.getFarmerDisplayIdentifier(request.farmerWallet)}... seeking investors!`, 'info'); if (this.role === 'investor' && this.currentUserIdentifier !== request.farmerWallet) this.addNotification(`New project "${request.title}" needs funding!`, 'info'); console.log(`SIM: Notifying investors about funding ${request.id}`); },
           saveDataToLocalStorage() { localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: this.getAllFarmerVideos(), buyerPurchases: this.getAllBuyerPurchases(), investorInvestments: this.getAllInvestorInvestments(), investorTransactions: this.getAllInvestorTransactions(), messages: this.messages, conversations: this.conversations, })); },
           getAllFarmerVideos() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.farmerVideos || []; if (this.isUserAuthenticated && this.farmerVideos.length > 0) { const userCIDs = new Set(this.farmerVideos.map(v => v.cid)); all = all.filter(v => !userCIDs.has(v.cid) || v.farmerWallet !== this.currentUserIdentifier); all.push(...this.farmerVideos); } return [...new Map(all.map(item => [item.cid + item.farmerWallet, item])).values()]; },
           getAllBuyerPurchases() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.buyerPurchases || []; if (this.isUserAuthenticated && this.buyerPurchases.length > 0) { const userIDs = new Set(this.buyerPurchases.map(p => p.id)); all = all.filter(p => !userIDs.has(p.id) || p.buyerWallet !== this.currentUserIdentifier); all.push(...this.buyerPurchases); } return [...new Map(all.map(item => [item.id, item])).values()]; },
           getAllInvestorInvestments() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorInvestments || []; if (this.isUserAuthenticated && this.investorInvestments.length > 0) { const userIDs = new Set(this.investorInvestments.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorWallet !== this.currentUserIdentifier); all.push(...this.investorInvestments); } return [...new Map(all.map(item => [item.id, item])).values()]; },
           getAllInvestorTransactions() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorTransactions || []; if (this.isUserAuthenticated && this.investorTransactions.length > 0) { const userIDs = new Set(this.investorTransactions.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorWallet !== this.currentUserIdentifier); all.push(...this.investorTransactions); } return [...new Map(all.map(item => [item.id, item])).values()]; },
-          loadDataFromLocalStorage() { const savedData = localStorage.getItem('pestiVidAppData'); if (savedData) { try { const appData = JSON.parse(savedData); this.allListings = appData.allListings || []; this.allFundingRequests = appData.allFundingRequests || []; this.messages = appData.messages || []; this.conversations = appData.conversations || []; if (!this.currentUserIdentifier) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; } else { this.filterDataForCurrentUser(); } } catch (e) { localStorage.removeItem('pestiVidAppData'); this.loadDemoDataIfNeeded(); } } else { this.loadDemoDataIfNeeded(); } },
-          filterDataForCurrentUser() { const savedData = localStorage.getItem('pestiVidAppData'); const appData = savedData ? JSON.parse(savedData) : {}; if (!this.isUserAuthenticated) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; return; } if (this.role === 'farmer') { this.farmerVideos = (appData.farmerVideos || []).filter(v => v.farmerWallet === this.currentUserIdentifier).map(v => ({...v, purpose: v.purpose || 'agristream'})); this.farmerListings = this.allListings.filter(l => l.farmerWallet === this.currentUserIdentifier); this.farmerFundingRequests = this.allFundingRequests.filter(r => r.farmerWallet === this.currentUserIdentifier); } else { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; } if (this.role === 'buyer') { this.buyerPurchases = (appData.buyerPurchases || []).filter(p => p.buyerWallet === this.currentUserIdentifier); } else { this.buyerPurchases = []; } if (this.role === 'investor') { this.investorInvestments = (appData.investorInvestments || []).filter(i => i.investorWallet === this.currentUserIdentifier); this.investorTransactions = (appData.investorTransactions || []).filter(t => t.investorWallet === this.currentUserIdentifier); this.updateInvestmentProgress(); } else { this.investorInvestments = []; this.investorTransactions = []; } },
+          loadDataFromLocalStorage() { const savedData = localStorage.getItem('pestiVidAppData'); if (savedData) { try { const appData = JSON.parse(savedData); this.allListings = appData.allListings || []; this.allFundingRequests = appData.allFundingRequests || []; this.messages = appData.messages || []; this.conversations = appData.conversations || []; if (!this.currentUserIdentifier) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; } else { this.filterDataForCurrentUser(); } } catch (e) { console.error("Error loading data from localStorage:", e); localStorage.removeItem('pestiVidAppData'); this.loadDemoDataIfNeeded(); } } else { this.loadDemoDataIfNeeded(); } const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; if (this.currentUserIdentifier && userProfiles[this.currentUserIdentifier]) { const profile = userProfiles[this.currentUserIdentifier]; this.role = profile.role; this.userName = profile.name; this.userEmail = profile.email; this.userPhone = profile.phone || ''; this.memberSince = profile.memberSince || new Date().toLocaleDateString(); if (this.role === 'farmer') { this.farmerLocationCity = profile.farmerLocationCity || ''; } } },
+          filterDataForCurrentUser() { const appData = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); if (!this.isUserAuthenticated) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.messages = appData.messages || []; this.conversations = appData.conversations || []; return; } if (this.role === 'farmer') { this.farmerVideos = (appData.farmerVideos || []).filter(v => v.farmerWallet === this.currentUserIdentifier).map(v => ({...v, purpose: v.purpose || 'agristream'})); this.farmerListings = this.allListings.filter(l => l.farmerWallet === this.currentUserIdentifier); this.farmerFundingRequests = this.allFundingRequests.filter(r => r.farmerWallet === this.currentUserIdentifier); } else { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; } if (this.role === 'buyer') { this.buyerPurchases = (appData.buyerPurchases || []).filter(p => p.buyerWallet === this.currentUserIdentifier); } else { this.buyerPurchases = []; } if (this.role === 'investor') { this.investorInvestments = (appData.investorInvestments || []).filter(i => i.investorWallet === this.currentUserIdentifier); this.investorTransactions = (appData.investorTransactions || []).filter(t => t.investorWallet === this.currentUserIdentifier); this.updateInvestmentProgress(); } else { this.investorInvestments = []; this.investorTransactions = []; } this.messages = (appData.messages || []).filter(msg => msg.sender === this.currentUserIdentifier || msg.receiver === this.currentUserIdentifier); this.conversations = (appData.conversations || []).filter(conv => conv.participants.includes(this.currentUserIdentifier)); if (this.activeConversationId) { const activeConv = this.conversations.find(c => c.id === this.activeConversationId); if (!activeConv || !activeConv.participants.includes(this.currentUserIdentifier)) { this.activeConversationId = null; } } },
           loadDemoDataIfNeeded() {
             let appDataString = localStorage.getItem('pestiVidAppData');
             if (appDataString) {
                 try {
                   const existingData = JSON.parse(appDataString);
-                  if (existingData && existingData.allFundingRequests && existingData.allFundingRequests.length > 0) {
-                       console.log("Demo data or existing data found. Skipping demo load."); return;
+                  if (existingData && (existingData.allFundingRequests?.length > 0 || existingData.allListings?.length > 0 || existingData.farmerVideos?.length > 0)) {
+                       this.allListings = existingData.allListings || [];
+                       this.allFundingRequests = existingData.allFundingRequests || [];
+                       this.messages = existingData.messages || [];
+                       this.conversations = existingData.conversations || [];
+                       this.filterDataForCurrentUser();
+                       return;
                   }
-                } catch(e) { /* Corrupted, will proceed to load demo */ }
+                } catch(e) { console.error("Error parsing existing demo data, loading fresh demo.", e); }
             }
-            console.log("Loading PestiVid Demo Data with Orange ID compatible identifiers.");
-            const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString(); const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
-            const demoFarmer1 = 'orangeid-demo-farmer1-uuid-string'; const demoFarmer2 = 'orangeid-demo-farmer2-uuid-string';
-            const demoInvestor1 = 'orangeid-demo-investor1-uuid-str'; const demoBuyer1 = 'orangeid-demo-buyer1-uuid-string';
+            console.log("No data found or corrupted. Loading PestiVid Demo Data.");
+            const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString();
+            const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
+
+            const demoFarmer1 = 'oid_farmer_1_sub'; // Example Orange ID subject
+            const demoFarmer2 = 'sol_farmer_2_addr'; // Example Solana address
+            const demoInvestor1 = 'oid_investor_1_sub';
+            const demoBuyer1 = 'sol_buyer_1_addr';
 
             const demoFarmerVideos = [ { farmerWallet: demoFarmer1, cid: 'QmXyZDemoCIDListing1', crop: 'Tomatoes', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell'}, { farmerWallet: demoFarmer1, cid: 'QmYpUkLqrn4N1YgdNvT3zJbJnbZu4wcjGbDqrXKuL71L3V', crop: 'Strawberries', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding'}, { farmerWallet: demoFarmer2, cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', crop: 'Lettuce', pesticide: 'Nutrient Solution', location: 'Hydro Unit 1', pesticideCompany: 'HydroGrow', purpose: 'agristream'}, ];
             const demoBuyerPurchases = [ { id: 'pur_demo1', buyerWallet: demoBuyer1, farmerWallet: demoFarmer1, crop: 'Demo Tomatoes', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: 'QmXyZDemoCIDListing1', price: 0.9, date: 'March 10, 2024', txHash: 'sim_pur_tx_demo1' }, ];
@@ -1384,254 +1431,108 @@
             const now = Date.now(); const minToMs = (min) => 1000 * 60 * min; const conv1Id = 'conv_demo_f1_i1';
             const demoConversations = [ { id: conv1Id, participants: [demoFarmer1, demoInvestor1].sort(), lastMessageSnippet: 'Sounds good, will review the project terms tonight.', lastMessageTimestamp: new Date(now - minToMs(5)).toISOString() } ];
             const demoMessages = [ { id: 'msg_demo1a', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'Hi Investor, thanks for showing interest in the Strawberry Expansion project. Let me know if you have questions.', timestamp: new Date(now - minToMs(10)).toISOString(), read: true }, { id: 'msg_demo1b', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Hello Farmer! Yes, the project looks promising. What are the projected returns again?', timestamp: new Date(now - minToMs(8)).toISOString(), read: true }, { id: 'msg_demo1c', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'We are projecting an 18% ROI over 6 months, with a 20% profit share for investors.', timestamp: new Date(now - minToMs(6)).toISOString(), read: true }, { id: 'msg_demo1d', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Sounds good, will review the project terms tonight.', timestamp: new Date(now - minToMs(5)).toISOString(), read: false } ];
+
             this.allFundingRequests = [ { id: 'fr_demo1', farmerWallet: demoFarmer1, title: 'Organic Strawberry Expansion', crop: 'Strawberries', acres: 2.5, amount: 25, method: 'organic', cid: 'QmYpUkLqrn4N1YgdNvT3zJbJnbZu4wcjGbDqrXKuL71L3V', description: 'Expanding organic strawberry fields using best practices and new irrigation for higher yields.', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 10, status: 'partially_funded', createdAt: oneDayAgo, investors: [{investorId: demoInvestor1, amount: 10, txHash:'sim_inv_tx_demo1'}], updates: [], txHash: 'sim_fr_tx_1' }, { id: 'fr_demo2', farmerWallet: demoFarmer2, title: 'Hydroponic Lettuce Setup', crop: 'Lettuce', acres: 0.5, amount: 40, method: 'hydroponic', cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', description: 'Setting up a new NFT hydroponic system for year-round high-quality lettuce production. Funds will be used for system components and initial setup.', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: oneDayAgo, investors: [], updates: [], txHash: 'sim_fr_tx_2' }, ];
             this.allListings = [ { id: 'lst_demo1', farmerWallet: demoFarmer1, crop: 'Tomatoes', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: 'QmXyZDemoCIDListing1', minPrice: 0.8, maxPrice: 1.2, status: 'active', createdAt: oneDayAgo, isNew: true, txHash: 'sim_lst_tx_1' }, { id: 'lst_demo2', farmerWallet: demoFarmer2, crop: 'Peppers', location: 'Greenhouse 3', pesticide: 'Neem Oil', pesticideCompany: 'Organics Inc.', cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', minPrice: 1.0, maxPrice: 1.5, status: 'active', createdAt: threeDaysAgo, isNew: false, txHash: 'sim_lst_tx_2' }, ];
-            localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: demoFarmerVideos, buyerPurchases: demoBuyerPurchases, investorInvestments: demoInvestorInvestments, investorTransactions: demoInvestorTransactions, messages: demoMessages, conversations: demoConversations }));
+
+            const demoProfiles = {};
+            demoProfiles[demoFarmer1] = { role: 'farmer', name: 'Alice Farmer (OID)', email: 'alice.oid@pestivid.sim', phone: '555-0101', memberSince: this.simulateMemberSince(demoFarmer1), farmerLocationCity: 'Anytown, USA', authMethod: 'orangeId'};
+            demoProfiles[demoFarmer2] = { role: 'farmer', name: 'Bob Farmer (SOL)', email: 'bob.sol@pestivid.sim', phone: '555-0102', memberSince: this.simulateMemberSince(demoFarmer2), farmerLocationCity: 'Otherville, Canada', authMethod: 'solana'};
+            demoProfiles[demoInvestor1] = { role: 'investor', name: 'Charlie Investor (OID)', email: 'charlie.oid@pestivid.sim', phone: '555-0103', memberSince: this.simulateMemberSince(demoInvestor1), authMethod: 'orangeId'};
+            demoProfiles[demoBuyer1] = { role: 'buyer', name: 'Dana Buyer (SOL)', email: 'dana.sol@pestivid.sim', phone: '555-0104', memberSince: this.simulateMemberSince(demoBuyer1), authMethod: 'solana'};
+
+            localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: demoFarmerVideos, buyerPurchases: demoBuyerPurchases, investorInvestments: demoInvestorInvestments, investorTransactions: demoInvestorTransactions, messages: demoMessages, conversations: demoConversations, }));
+            localStorage.setItem('pestiVidUserProfiles', JSON.stringify(demoProfiles));
             this.loadDataFromLocalStorage();
           },
           scrollToAndHighlightAgriStreamVideo() { if (!this.targetAgriStreamVideoCid) return; this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid; this.$nextTick(() => { const videoCardRef = this.$refs[`videoCard-${this.targetAgriStreamVideoCid}`]; if (videoCardRef && videoCardRef[0]) { videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; }, 2500); } else { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; } }); },
-          getOtherParticipantInitial(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.charAt(0).toUpperCase(); if (otherP.length > 20 && otherP.includes('-')) return otherP.substring(0,1).toUpperCase(); return otherP.charAt(0).toUpperCase(); },
-          getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; if (otherP.length > 20 && otherP.includes('-')) return `${otherP.substring(0,4)}...${otherP.substring(otherP.length-4)}`; return `${otherP.substring(0,6)}...${otherP.substring(otherP.length-4)}`; },
+          getOtherParticipantInitial(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.charAt(0).toUpperCase(); return otherP.charAt(0).toUpperCase(); },
+          getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; return `${otherP.substring(0,6)}...${otherP.substring(otherP.length-4)}`; },
           formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } },
-
-          // --- New Plant Recommendation Methods ---
-          handlePlantImageUpload(event) {
-              const file = event.target.files[0];
-              if (file) {
-                  this.plantImageFile = file;
-                  this.plantImageMimeType = file.type;
-                  this.plantImageUrl = URL.createObjectURL(file);
-                  this.analysisResultText = '';
-                  this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
-                  this.analysisErrorText = '';
-              }
-          },
-          convertFileToBase64(file) {
-              return new Promise((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.readAsDataURL(file);
-                  reader.onload = () => {
-                      resolve(reader.result.split(',')[1]);
-                  };
-                  reader.onerror = error => reject(error);
-              });
-          },
+          handlePlantImageUpload(event) { const file = event.target.files[0]; if (file) { this.plantImageFile = file; this.plantImageMimeType = file.type; this.plantImageUrl = URL.createObjectURL(file); this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; } },
+          convertFileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => { resolve(reader.result.split(',')[1]); }; reader.onerror = error => reject(error); }); },
           async analyzePlant() {
-              if (!this.plantImageFile) {
-                  this.analysisErrorText = "Please upload an image first.";
-                  return;
-              }
-              if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) {
-                  this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script.";
-                  // No alert here, rely on the mounted check for initial loud alert
-                  return;
-              }
-
-              this.analysisInProgress = true;
-              this.analysisResultText = '';
-              this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
-              this.analysisErrorText = '';
-
+              if (!this.plantImageFile) { this.analysisErrorText = "Please upload an image first."; return; }
+              if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script."; return; }
+              this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = '';
               try {
                   const base64Image = await this.convertFileToBase64(this.plantImageFile);
-                  const apiKey = this.geminiApiKey;
-                  // THE MODEL IS CHANGED HERE
-                  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
+                  const apiKey = this.geminiApiKey; const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                   const prompt = `Analyze this image of a plant. Identify the plant if possible, then detect any visible diseases. Based on your findings, provide the following information, each on a new line, formatted exactly as:
 Plant: [Plant Name or 'Unknown']
 Disease: [Disease Name or 'Healthy' or 'Not Apparent' or 'Unknown']
 Treatment: [Recommended treatment and/or types of pesticides. If healthy, state 'No treatment needed'. If disease is not apparent or unknown, state 'Cannot recommend treatment without clear disease identification.'].
 Be concise and focus on actionable recommendations. If the image is not clear or not a plant, state that.`;
-
-                  const payload = {
-                      contents: [{
-                          parts: [
-                              { text: prompt },
-                              {
-                                  inline_data: {
-                                      mime_type: this.plantImageMimeType,
-                                      data: base64Image
-                                  }
-                              }
-                          ]
-                      }],
-                      generationConfig: {
-                          "temperature": 0.4,
-                          "topK": 32,
-                          "topP": 1,
-                          "maxOutputTokens": 2048,
-                      },
-                      safetySettings: [
-                          { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-                          { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-                          { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-                          { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }
-                      ]
-                  };
-
+                  const payload = { contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: this.plantImageMimeType, data: base64Image } } ] }], generationConfig: { "temperature": 0.4, "topK": 32, "topP": 1, "maxOutputTokens": 2048, }, safetySettings: [ { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" } ] };
                   const response = await axios.post(url, payload);
-
-                  if (response.data && response.data.candidates && response.data.candidates.length > 0 &&
-                      response.data.candidates[0].content && response.data.candidates[0].content.parts &&
-                      response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) {
-
-                      this.analysisResultText = response.data.candidates[0].content.parts[0].text;
-                      this.parseGeminiResponse(this.analysisResultText);
+                  if (response.data && response.data.candidates && response.data.candidates.length > 0 && response.data.candidates[0].content && response.data.candidates[0].content.parts && response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) {
+                      this.analysisResultText = response.data.candidates[0].content.parts[0].text; this.parseGeminiResponse(this.analysisResultText);
                   } else if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) {
-                      this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`;
-                      this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' };
-                  }
-                   else {
-                      console.error("Unexpected response structure from Gemini API:", response.data);
-                      throw new Error("Invalid or empty response structure from Gemini API.");
-                  }
-
+                      this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`; this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' };
+                  } else { console.error("Unexpected response structure from Gemini API:", response.data); throw new Error("Invalid or empty response structure from Gemini API."); }
               } catch (error) {
                   console.error("Error analyzing plant image with Gemini:", error);
-                  if (error.response) {
-                      this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`;
-                      if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) {
-                        this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project.";
-                      } else if (error.response.status === 429) {
-                        this.analysisErrorText += " You might have exceeded your API quota.";
-                      }
-                  } else if (error.request) {
-                      this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection.";
-                  } else {
-                      this.analysisErrorText = "An unexpected error occurred: " + error.message;
-                  }
+                  if (error.response) { this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`; if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) { this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project."; } else if (error.response.status === 429) { this.analysisErrorText += " You might have exceeded your API quota."; }
+                  } else if (error.request) { this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection."; } else { this.analysisErrorText = "An unexpected error occurred: " + error.message; }
                   this.parsedAnalysis = { plantName: '-', diseaseName: '-', treatmentRecommended: '-' };
-              } finally {
-                  this.analysisInProgress = false;
-              }
+              } finally { this.analysisInProgress = false; }
           },
-
           parseGeminiResponse(text) {
-              const result = {
-                  plantName: 'Unknown',
-                  diseaseName: 'Not Apparent',
-                  treatmentRecommended: 'Could not determine specific treatment.'
-              };
-              if (!text) {
-                this.parsedAnalysis = result;
-                return;
-              }
-
-              const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-              let currentPlant = null;
-              let currentDisease = null;
-              let currentTreatment = [];
-
-              lines.forEach(line => {
-                  const lowerLine = line.toLowerCase();
-                  if (lowerLine.startsWith('plant:')) {
-                      currentPlant = line.substring('plant:'.length).trim();
-                  } else if (lowerLine.startsWith('disease:')) {
-                      currentDisease = line.substring('disease:'.length).trim();
-                  } else if (lowerLine.startsWith('treatment:')) {
-                      currentTreatment.push(line.substring('treatment:'.length).trim());
-                  } else if (currentTreatment.length > 0) {
-                     currentTreatment.push(line);
-                  } else if (currentDisease && !currentTreatment.length > 0) {
-                     currentTreatment.push(line);
-                  } else if (currentPlant && !currentDisease && !currentTreatment.length > 0) {
-                     if (lowerLine.includes("healthy") || lowerLine.includes("not apparent") || lowerLine.includes("unknown disease")) {
-                         currentDisease = line;
-                     }
-                  }
-              });
-
-              if (currentPlant) result.plantName = currentPlant;
-              if (currentDisease) result.diseaseName = currentDisease;
-              if (currentTreatment.length > 0) result.treatmentRecommended = currentTreatment.join('\n');
-
-              if (result.plantName === 'Unknown' && result.diseaseName === 'Not Apparent' && result.treatmentRecommended === 'Could not determine specific treatment.') {
-                    const plantMatch = text.match(/Plant:\s*(.*)/i);
-                    const diseaseMatch = text.match(/Disease:\s*(.*)/i);
-                    const treatmentMatch = text.match(/Treatment:\s*(.*)/is);
-
-                    if (plantMatch && plantMatch[1]) result.plantName = plantMatch[1].trim();
-                    if (diseaseMatch && diseaseMatch[1]) result.diseaseName = diseaseMatch[1].trim();
-                    if (treatmentMatch && treatmentMatch[1]) result.treatmentRecommended = treatmentMatch[1].trim();
-              }
-
+              const result = { plantName: 'Unknown', diseaseName: 'Not Apparent', treatmentRecommended: 'Could not determine specific treatment.' }; if (!text) { this.parsedAnalysis = result; return; }
+              const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0); let currentPlant = null; let currentDisease = null; let currentTreatment = [];
+              lines.forEach(line => { const lowerLine = line.toLowerCase(); if (lowerLine.startsWith('plant:')) { currentPlant = line.substring('plant:'.length).trim(); } else if (lowerLine.startsWith('disease:')) { currentDisease = line.substring('disease:'.length).trim(); } else if (lowerLine.startsWith('treatment:')) { currentTreatment.push(line.substring('treatment:'.length).trim()); } else if (currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentDisease && !currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentPlant && !currentDisease && !currentTreatment.length > 0) { if (lowerLine.includes("healthy") || lowerLine.includes("not apparent") || lowerLine.includes("unknown disease")) { currentDisease = line; } } });
+              if (currentPlant) result.plantName = currentPlant; if (currentDisease) result.diseaseName = currentDisease; if (currentTreatment.length > 0) result.treatmentRecommended = currentTreatment.join('\n');
+              if (result.plantName === 'Unknown' && result.diseaseName === 'Not Apparent' && result.treatmentRecommended === 'Could not determine specific treatment.') { const plantMatch = text.match(/Plant:\s*(.*)/i); const diseaseMatch = text.match(/Disease:\s*(.*)/i); const treatmentMatch = text.match(/Treatment:\s*(.*?)(?:\n|$)/is); if (plantMatch && plantMatch[1]) result.plantName = plantMatch[1].trim(); if (diseaseMatch && diseaseMatch[1]) result.diseaseName = diseaseMatch[1].trim(); if (treatmentMatch && treatmentMatch[1]) result.treatmentRecommended = treatmentMatch[1].trim(); }
               this.parsedAnalysis = result;
           }
-
         },
         mounted() {
-          console.log("PestiVid (Merged Auth & Gemini) App Mounted. Ensure API keys and callback URL are set.");
-
-          if (this.bedrockConfig.authCallbackUrl.includes('<your-actual-domain-and-port-here>')) {
-              console.error("CRITICAL CONFIG ERROR: `authCallbackUrl` in bedrockConfig has not been updated. Orange ID login will fail. Please replace `<your-actual-domain-and-port-here>` with your actual domain/port and path.");
-              alert("CRITICAL CONFIG ERROR: `authCallbackUrl` in bedrockConfig has not been updated. Orange ID login will fail. Check console and update the script.");
+          console.log("PestiVid (Orange ID & Solana) App Mounted.");
+          if (!this.initializeOrangeIdSDK()) {
+            console.warn("Orange ID SDK failed to initialize. Orange ID login will not be available.");
           }
+
           if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) { console.warn("CONFIG WARNING: Pinata JWT not set. Video uploads WILL FAIL."); alert("Config Warning: Pinata JWT not set. Video uploads will fail."); }
           if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); alert("Config Warning: OpenWeatherMap API Key not set. Weather will not work."); }
-
-          // Check for placeholder Gemini Key on mount
-          if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE') {
-              console.error("CONFIG ERROR: Gemini API Key is still set to placeholder 'YOUR_GEMINI_API_KEY_HERE'. Plant recommendation WILL FAIL.");
-              alert("Config Error: Gemini API Key not set. Plant recommendation will fail. Please update the `geminiApiKey` in the script.");
-          } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { // A basic check for a typical Google API key format
-             console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active, has billing enabled for the Generative Language API in your Google Cloud Project, and understand that client-side keys are insecure for production.");
-          }
-
+          if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE') { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder. Plant recommendation WILL FAIL."); alert("Config Error: Gemini API Key not set. Plant recommendation will fail.");
+          } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for Generative Language API."); }
 
           if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
 
-          this.loadDataFromLocalStorage();
+          this.loadDataFromLocalStorage(); // Load global data first
 
+          // Check for Orange ID callback before trying to auto-login with Solana or anything else
+          if (this.checkOrangeIdCallback()) {
+              // Callback is being handled, don't do other auth checks yet.
+              // The callback processor will call handleAuthenticationSuccess.
+              return;
+          }
+
+          // Attempt to auto-reconnect Solana if no Orange ID callback and not already authenticated
           const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
-          let bedrockCheckCount = 0;
-          const self = this;
-          const bedrockInterval = setInterval(() => {
-              bedrockCheckCount++;
-              if (typeof Bedrock !== 'undefined' && typeof ReactDOM !== 'undefined' && Bedrock.BedrockPassportProvider && ReactDOM.createRoot) {
-                  clearInterval(bedrockInterval);
-                  console.log("Bedrock SDK ready. Initializing Orange ID state listener.");
-                  this.initializeOrangeIdStateListener();
-
-                  setTimeout(() => {
-                      if (!self.isUserAuthenticated && !self.isAuthProcessing && window.solana && window.solana.isPhantom) {
-                           const lastUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
-                           if (lastUserId) {
-                              window.solana.request({ method: 'connect', params: { onlyIfTrusted: true } })
-                                  .then(resp => {
-                                      if (resp && resp.publicKey && resp.publicKey.toString() === lastUserId) {
-                                          self.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
-                                      }
-                                  })
-                                  .catch(err => console.log("Solana auto-reconnect failed or not trusted:", err.message));
-                           }
-                      }
-                  }, 2500);
-
-              } else if (bedrockCheckCount > 40) {
-                  clearInterval(bedrockInterval);
-                  console.error("Bedrock SDK (React/ReactDOM) did not load correctly. Orange ID features may not work.");
-                  this.isAuthProcessing = false; this.bedrockSDKError = true;
-                  this.addNotification("Orange ID authentication service failed to load. Please refresh page or check console.", "error");
-                  if (!self.isUserAuthenticated && !self.isAuthProcessing && window.solana && window.solana.isPhantom) {
-                       const lastUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
-                       if (lastUserId) {
-                          window.solana.request({ method: 'connect', params: { onlyIfTrusted: true } })
-                              .then(resp => {
-                                   if (resp && resp.publicKey && resp.publicKey.toString() === lastUserId) {
-                                      self.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
-                                  }
-                              })
-                              .catch(err => console.log("Solana auto-reconnect after Bedrock fail:", err.message));
-                       }
-                  }
+          if (!this.isUserAuthenticated && !this.isAuthProcessing && window.solana && window.solana.isPhantom) {
+               const lastSolanaUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
+               if (lastSolanaUserId) {
+                  window.solana.request({ method: 'connect', params: { onlyIfTrusted: true } })
+                      .then(resp => {
+                          if (resp && resp.publicKey && resp.publicKey.toString() === lastSolanaUserId) {
+                              console.log("Auto-reconnected to Solana wallet.");
+                              this.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana');
+                          }
+                      })
+                      .catch(err => console.log("Solana auto-reconnect failed or not trusted:", err.message));
+               }
+          } else if (this.isUserAuthenticated) {
+              // If already authenticated (e.g. from localStorage/session), ensure UI reflects it
+              this.filterDataForCurrentUser();
+              if (this.loginMethod === 'orangeId') {
+                  this.renderOrangeIdSignOutButton('orange-id-signout-button-container');
               }
-          }, 500);
+          }
 
           setInterval(() => { if(this.isUserAuthenticated && this.role==='investor') this.updateInvestmentProgress(); }, 30000);
         }
       });
-
     window.vueApp = app;
 </script>
 </body>
