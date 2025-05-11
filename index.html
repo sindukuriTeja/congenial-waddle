@@ -804,7 +804,6 @@
     <span>© {{ new Date().getFullYear() }} PestiVid • Blockchain Agricultural Platform (Web3 Demo)</span>
   </footer>
 </div>
-
 <script>
     const app = new Vue({
         el: "#app",
@@ -871,7 +870,7 @@
           showLoadingModal: false, loadingMessage: '',
           targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
 
-          geminiApiKey: 'AIzaSyDTLMDYq3eoBCUJ-d0Z45HOKh8KKilzgcc', // Replace with your Gemini API Key
+          geminiApiKey: 'YOUR_GEMINI_API_KEY_HERE', // Replace with your Gemini API Key. IMPORTANT: For demo only. Secure this on a backend in production.
           plantImageFile: null,
           plantImageUrl: null,
           plantImageMimeType: null,
@@ -961,7 +960,28 @@
         methods: {
           switchPage(page) { this.current = page; this.showMobileMenu = false; },
           navigateToPageWithParam(page, paramName, paramValue) { if (page === 'farmerSell' && paramName === 'cid') { this.listingForm.cid = paramValue; } else if (page === 'farmerFunding' && paramName === 'cid') { this.fundingForm.cid = paramValue; } else if (page === 'farmerAgriStream' && paramName === 'highlightCid') { this.targetAgriStreamVideoCid = paramValue; } this.switchPage(page); },
-          getStarted() { if (!this.isUserAuthenticated) { this.current = 'loginChoice'; } else if (!this.role) { this.current = 'roleSelection'; } else if (this.role === 'farmer') { this.switchPage('farmerPestiVid'); } else if (this.role === 'buyer') { this.switchPage('buyerAgriSell'); } else if (this.role === 'investor') { this.switchPage('investorProjects'); } else { this.switchPage('landing'); } },
+          getStarted() {
+              // console.log(`getStarted called. Authenticated: ${this.isUserAuthenticated}, Role: ${this.role}`);
+              if (!this.isUserAuthenticated) {
+                  // console.log("getStarted: Not authenticated, switching to loginChoice.");
+                  this.switchPage('loginChoice');
+              } else if (!this.role) {
+                  // console.log("getStarted: No role, switching to roleSelection.");
+                  this.switchPage('roleSelection');
+              } else if (this.role === 'farmer') {
+                  // console.log("getStarted: Role is farmer, switching to farmerPestiVid.");
+                  this.switchPage('farmerPestiVid');
+              } else if (this.role === 'buyer') {
+                  // console.log("getStarted: Role is buyer, switching to buyerAgriSell.");
+                  this.switchPage('buyerAgriSell');
+              } else if (this.role === 'investor') {
+                  // console.log("getStarted: Role is investor, switching to investorProjects.");
+                  this.switchPage('investorProjects');
+              } else {
+                  // console.log(`getStarted: Fallback, unknown role '${this.role}', switching to landing.`);
+                  this.switchPage('landing');
+              }
+          },
 
           handleAuthenticationSuccess(identifier, method, orangeUserDetails = null) {
               console.log("PestiVid Auth Success (Original Call):", method, identifier, orangeUserDetails);
@@ -1239,6 +1259,7 @@
           completeOnboarding() {
               if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Please fill in Full Name, PestiVid Email, and select a Role."); return; }
               if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Please enter a valid PestiVid email address."); return; }
+              // console.log(`Completing onboarding. User: ${this.currentUserIdentifier}, Role selected: ${this.selectedRoleOnboarding}, PestiVid Name: ${this.userNameOnboarding}`);
 
               this.role = this.selectedRoleOnboarding;
               this.userName = this.userNameOnboarding.trim();
@@ -1247,6 +1268,7 @@
               this.memberSince = new Date().toLocaleDateString();
               if (this.role === 'farmer') { this.farmerLocationCity = this.farmerLocationCityOnboarding.trim() || ''; }
               else { this.farmerLocationCity = ''; }
+              // console.log(`PestiVid role set to: ${this.role}`);
 
               const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
               userProfiles[this.currentUserIdentifier] = {
@@ -1464,6 +1486,7 @@ Be concise and focus on actionable recommendations. If the image is not clear or
           if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE') { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder. Plant recommendation WILL FAIL."); alert("Config Error: Gemini API Key not set. Plant recommendation will fail.");
           } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for Generative Language API."); }
 
+
           if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
 
           this.loadDataFromLocalStorage(); // Load global data first
@@ -1504,4 +1527,3 @@ Be concise and focus on actionable recommendations. If the image is not clear or
 </script>
 </body>
 </html>
-```
