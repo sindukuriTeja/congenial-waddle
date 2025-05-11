@@ -71,36 +71,36 @@
     .login-panel-wrapper { background-color: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); width: 100%; max-width: 450px; text-align: center; }
     .login-panel-wrapper h2 { font-size: 1.5rem; font-weight: 700; color: #166534; /* green-800 */ margin-bottom: 0.5rem; }
     .login-panel-wrapper .tagline { color: #4b5563; /* gray-600 */ margin-bottom: 1.5rem; font-size: 0.9rem; }
-    
+
     #bedrock-login-widget-container { margin: 0 auto; }
-    #bedrock-login-widget-container > div > div { 
+    #bedrock-login-widget-container > div > div { /* Targets the direct child of BedrockPassportProvider which is the LoginPanel's main container */
         display: flex !important;
-        justify-content: center !important; 
-        gap: 1rem !important; 
-        flex-wrap: nowrap !important; 
+        justify-content: center !important;
+        gap: 1rem !important;
+        flex-wrap: nowrap !important;
     }
     #bedrock-login-widget-container button {
-        padding: 0.5rem !important; 
-        min-width: 50px !important; 
-        width: 60px !important; 
-        height: 60px !important; 
+        padding: 0.5rem !important;
+        min-width: 50px !important;
+        width: 60px !important;
+        height: 60px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        background-color: #fff !important; 
-        border: 1px solid #e5e7eb !important; 
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; 
+        background-color: #fff !important;
+        border: 1px solid #e5e7eb !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
     #bedrock-login-widget-container button:hover {
-        border-color: #d1d5db !important; 
+        border-color: #d1d5db !important;
     }
-    #bedrock-login-widget-container button > svg { 
-        width: 32px !important; 
+    #bedrock-login-widget-container button > svg { /* Targets the SVG icon inside the button */
+        width: 32px !important;
         height: 32px !important;
-        margin-right: 0 !important; 
+        margin-right: 0 !important; /* Remove default margin if any */
     }
-    #bedrock-login-widget-container button > span { 
-        display: none !important; 
+    #bedrock-login-widget-container button > span { /* Hides the text span like "Sign in with Google" */
+        display: none !important;
     }
 
     #orange-id-signout-button-container, #orange-id-signout-button-container-mobile { display: inline-block; }
@@ -130,6 +130,7 @@
           <a href="#" @click.prevent="switchPage('farmerAgriStream')" :class="{'font-bold text-green-700': current==='farmerAgriStream'}" class="hover:text-green-600">AgriStream</a>
           <a href="#" @click.prevent="switchPage('farmerSell')" :class="{'font-bold text-green-700': current==='farmerSell'}" class="hover:text-green-600">Sell</a>
           <a href="#" @click.prevent="switchPage('farmerFunding')" :class="{'font-bold text-green-700': current==='farmerFunding'}" class="hover:text-green-600">Get Funding</a>
+          <a v-if="isUserAuthenticated && role==='farmer'" href="#" @click.prevent="switchPage('plantRecomendation')" :class="{'font-bold text-green-700': current==='plantRecomendation'}" class="hover:text-green-600">PlantRecomend</a>
         </template>
         <!-- Buyer Menu -->
         <template v-if="isUserAuthenticated && role==='buyer'">
@@ -168,6 +169,7 @@
           <a href="#" @click.prevent="switchPage('farmerAgriStream');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerAgriStream'}">AgriStream</a>
           <a href="#" @click.prevent="switchPage('farmerSell');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerSell'}">Sell</a>
           <a href="#" @click.prevent="switchPage('farmerFunding');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerFunding'}">Get Funding</a>
+          <a v-if="isUserAuthenticated && role==='farmer'" href="#" @click.prevent="switchPage('plantRecomendation');showMobileMenu=false" :class="{'font-bold text-green-700': current==='plantRecomendation'}">PlantRecomend</a>
         </template>
         <template v-if="isUserAuthenticated && role==='buyer'">
           <a href="#" @click.prevent="switchPage('buyerAgriSell');showMobileMenu=false" :class="{'font-bold text-green-700': current==='buyerAgriSell'}">AgriSell</a>
@@ -281,7 +283,7 @@
             </div>
             <h2 class="text-xl font-bold text-green-800 mb-2">Login or Sign Up</h2>
             <p class="text-gray-600 mb-6 text-sm">Choose your preferred method to access PestiVid.</p>
-            
+
             <div class="mb-4">
                 <p class="text-xs text-gray-500 mb-2 text-left ml-1">Sign in with your social account:</p>
                 <div id="bedrock-login-widget-container" class="flex justify-center space-x-2">
@@ -303,7 +305,7 @@
 
             <div class="mb-4">
                  <p class="text-xs text-gray-500 mb-2 text-left ml-1">Connect with your Solana wallet:</p>
-                <button @click="connectWallet" 
+                <button @click="connectWallet"
                         class="w-full flex items-center justify-center px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                     <i class="fas fa-wallet mr-2"></i> Connect Solana Wallet
                 </button>
@@ -697,6 +699,62 @@
       </div>
     </section>
 
+    <!-- Plant Disease Recommendation Section -->
+    <section v-if="current==='plantRecomendation'" class="max-w-3xl mx-auto mt-6">
+      <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-leaf mr-2"></i>Plant Disease Detection & Recommendation</h2>
+      <div class="bg-white rounded shadow-md p-6 space-y-6">
+        <p class="text-sm text-gray-600">Upload an image of an affected plant. Gemini AI will attempt to identify the plant, detect diseases, and suggest treatments.</p>
+
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+          <p class="font-bold">Developer Note:</p>
+          <p class="text-sm">The Gemini API key is currently embedded in the client-side code for this demo. In a production environment, this is insecure and should be handled via a backend proxy.</p>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1 text-sm">Upload Plant Image</label>
+          <input type="file" @change="handlePlantImageUpload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+        </div>
+
+        <div v-if="plantImageUrl" class="mt-4">
+          <h4 class="text-md font-semibold text-gray-700 mb-2">Image Preview:</h4>
+          <img :src="plantImageUrl" alt="Plant Preview" class="max-w-xs md:max-w-sm rounded-md border shadow mx-auto">
+        </div>
+
+        <button @click="analyzePlant" :disabled="!plantImageFile || analysisInProgress" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm flex items-center justify-center" :class="{'opacity-50 cursor-not-allowed': !plantImageFile || analysisInProgress}">
+          <i :class="analysisInProgress ? 'fas fa-spinner fa-spin' : 'fas fa-search-plus'" class="mr-2"></i>
+          {{ analysisInProgress ? 'Analyzing...' : 'Analyze Plant with Gemini AI' }}
+        </button>
+
+        <div v-if="analysisErrorText" class="mt-4 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded text-sm">
+          <p class="font-bold">Analysis Error:</p>
+          <p>{{ analysisErrorText }}</p>
+        </div>
+
+        <div v-if="parsedAnalysis.plantName && !analysisInProgress && !analysisErrorText" class="mt-6 border-t pt-6 space-y-4">
+          <h3 class="text-xl font-semibold text-green-700">Analysis Results:</h3>
+          <div>
+            <p class="text-sm font-medium text-gray-500">Identified Plant:</p>
+            <p class="text-lg text-gray-800">{{ parsedAnalysis.plantName || 'Could not identify plant.' }}</p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500">Detected Disease:</p>
+            <p class="text-lg text-gray-800 font-semibold" :class="{'text-red-600': parsedAnalysis.diseaseName && parsedAnalysis.diseaseName.toLowerCase() !== 'healthy' && parsedAnalysis.diseaseName.toLowerCase() !== 'not apparent' && parsedAnalysis.diseaseName.toLowerCase() !== 'unknown', 'text-green-600': parsedAnalysis.diseaseName && (parsedAnalysis.diseaseName.toLowerCase() === 'healthy' || parsedAnalysis.diseaseName.toLowerCase() === 'not apparent')}">
+              {{ parsedAnalysis.diseaseName || 'Could not determine disease.' }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500">Recommended Treatment / Pesticides:</p>
+            <p class="text-md text-gray-700 whitespace-pre-wrap">{{ parsedAnalysis.treatmentRecommended || 'No specific treatment recommended.' }}</p>
+          </div>
+           <div v-if="analysisResultText && (!parsedAnalysis.plantName || parsedAnalysis.plantName === 'Unknown' || parsedAnalysis.plantName === '-')" class="mt-4 bg-gray-50 p-3 rounded border text-xs">
+                <p class="font-semibold mb-1">Raw Gemini Output (for debugging if parsing failed):</p>
+                <pre class="whitespace-pre-wrap overflow-x-auto">{{ analysisResultText }}</pre>
+            </div>
+        </div>
+      </div>
+    </section>
+
+
     <!-- Modals (Purchase Video, Buy Listing, Investment Details, Farmer Profile) -->
      <!-- Purchase Video Modal -->
     <div v-if="selectedPurchase && showPurchaseVideo" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -750,46 +808,77 @@
 </div>
 
 <script>
+    // =======================================================================
+    // ORANGE ID INTEGRATION - IMPORTANT NOTES FOR PestiVid
+    // =======================================================================
+    // 1. The `tenantId` and `subscriptionKey` in `bedrockConfig` below
+    //    have been updated with your new Orange ID credentials.
+    //
+    // 2. **CRITICAL STEP:** You MUST update the `authCallbackUrl` in
+    //    `bedrockConfig`.
+    //    - Replace `<your-actual-domain-and-port-here>` with the actual
+    //      domain and port where your PestiVid application will be running.
+    //      Examples:
+    //        - Local testing: 'http://localhost:8000/auth/callback' (if your server is on port 8000)
+    //        - Production:    'https://pestivid.yourdomain.com/auth/callback'
+    //
+    // 3. **CRITICAL STEP:** You MUST add the *exact* URL you set for
+    //    `authCallbackUrl` to the "Allowed Callback URLs" in your
+    //    Orange ID project settings for Project ID 'orange-h0zmx5nf44'.
+    //
+    // Failure to complete steps 2 and 3 correctly will cause Orange ID login to fail.
+    // Your Vue app's `initializeOrangeIdStateListener` is designed to handle
+    // the tokens when the user is redirected to this `authCallbackUrl`.
+    // =======================================================================
+
     const app = new Vue({
         el: "#app",
         data: {
           current: 'landing',
           showMobileMenu: false,
-      
+
           // Authentication State
-          loginMethod: null, 
-          currentUserIdentifier: null, 
-          isAuthProcessing: false, 
-          
+          loginMethod: null,
+          currentUserIdentifier: null,
+          isAuthProcessing: false,
+
           // Orange ID Specific State
-          orangeUser: null, 
-          isOrangeIdPanelRendering: false, 
+          orangeUser: null,
+          isOrangeIdPanelRendering: false,
           bedrockSDKError: false,
           bedrockConfig: {
             baseUrl: 'https://api.bedrockpassport.com',
-            authCallbackUrl: window.location.origin, 
-            tenantId: 'orange-zcjan3p9n2', // Replace with your actual Tenant ID if different
-            subscriptionKey: '2c3b9cc1c8b2436e9ceae5d857bdcd8b', // Replace with your actual Subscription Key
+            // =================== CRITICAL ORANGE ID CONFIGURATION ==================
+            // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+            //      YOU MUST UPDATE THE DOMAIN AND PORT IN THE URL BELOW
+            //      AND ENSURE THIS EXACT URL IS WHITELISTED IN ORANGE ID
+            // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+            authCallbackUrl: 'https://sindukuriteja.github.io',  // <<< --- !!! REPLACE AND WHITELIST !!!
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            // =======================================================================
+            tenantId: 'orange-h0zmx5nf44', // Your assigned tenant ID
+            subscriptionKey: '8646bf58ff1d4c109adf123addd2c364', // Your assigned API Key
           },
-      
+
           // Solana Wallet Specific State
-          walletAddress: null, 
-      
+          walletAddress: null,
+
           // Unified PestiVid User Profile Data
-          role: '', 
-          userName: '', 
-          userEmail: '', 
-          userPhone: '', 
+          role: '',
+          userName: '',
+          userEmail: '',
+          userPhone: '',
           memberSince: '',
           farmerLocationCity: '',
-      
+
           // Onboarding State
-          selectedRoleOnboarding: '', 
-          userNameOnboarding: '', 
-          userEmailOnboarding: '', 
-          userPhoneOnboarding: '', 
+          selectedRoleOnboarding: '',
+          userNameOnboarding: '',
+          userEmailOnboarding: '',
+          userPhoneOnboarding: '',
           farmerLocationCityOnboarding: '',
-      
+
           // PestiVid Feature State
           recordForm: {crop:'', pesticide:'', location:'', pesticideCompany: '', purpose: 'agristream'}, recordStream: null, recordMediaRecorder: null, recording: false, recordBlob: null, recordBlobUrl: '', showLive: false, uploadCid: '', uploading: false, uploadError: '', lastUploadedVideoPurpose: '',
           farmerVideos: [], farmerListings: [], listingForm: {cid:'', minPrice:'', maxPrice:'', notifyBuyers: true}, createdListingId: null, listingNotificationSent: false,
@@ -798,33 +887,43 @@
           allListings: [], buyerFilters: {crop:'', location:'', pesticideCompany: ''}, showBuyModal: false, selectedListing: null, purchaseAmount: null, purchaseStatus: '', purchaseError: '',
           investorInvestments: [], investorTransactions: [], investorFilters: {crop: '', method: '', minRoi: null, maxAmount: null}, allFundingRequests: [], investmentAmounts: {}, investmentErrors: {}, showInvestmentDetailsModal: false, selectedInvestment: null, selectedInvestmentProject: null,
           showFarmerProfileModal: false, selectedFarmerProfile: null,
-          
-          pinataJwt: 'YOUR_PINATA_JWT', 
+
+          pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM',
           pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud',
-          
-          weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', 
+
+          weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY',
           currentWeather: null, forecastWeather: [], weatherLoading: false, weatherError: '',
-          
+
           conversations: [], messages: [], activeConversationId: null, messageInputText: '',
           notifications: [], recentNotifications: [],
           showLoadingModal: false, loadingMessage: '',
           targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
+
+          // New Plant Recommendation Feature State
+          geminiApiKey: 'AIzaSyDTLMDYq3eoBCUJ-d0Z45HOKh8KKilzgcc', // YOUR ACTUAL GEMINI API KEY - INSECURE IN CLIENT-SIDE
+          plantImageFile: null,
+          plantImageUrl: null,
+          plantImageMimeType: null,
+          analysisInProgress: false,
+          analysisResultText: '',
+          parsedAnalysis: { plantName: null, diseaseName: null, treatmentRecommended: null },
+          analysisErrorText: '',
         },
         computed: {
-          isUserAuthenticated() { 
-              return !!this.currentUserIdentifier && !this.isAuthProcessing ; 
+          isUserAuthenticated() {
+              return !!this.currentUserIdentifier && !this.isAuthProcessing ;
           },
-          displayedUserIdentifier() { 
-              if (!this.currentUserIdentifier) return ''; 
-              if (this.userName) return this.userName.split(' ')[0]; 
-              if (this.loginMethod === 'orangeId' && this.orangeUser && (this.orangeUser.displayName || this.orangeUser.name)) { 
-                  return (this.orangeUser.displayName || this.orangeUser.name).split(' ')[0]; 
+          displayedUserIdentifier() {
+              if (!this.currentUserIdentifier) return '';
+              if (this.userName) return this.userName.split(' ')[0];
+              if (this.loginMethod === 'orangeId' && this.orangeUser && (this.orangeUser.displayName || this.orangeUser.name)) {
+                  return (this.orangeUser.displayName || this.orangeUser.name).split(' ')[0];
               }
-              const id = this.currentUserIdentifier.toString(); 
-              if (this.loginMethod === 'orangeId' && id.length > 20 && id.includes('-')) { 
-                  return `${id.substring(0, 4)}...${id.substring(id.length - 4)}`; 
+              const id = this.currentUserIdentifier.toString();
+              if (this.loginMethod === 'orangeId' && id.length > 20 && id.includes('-')) {
+                  return `${id.substring(0, 4)}...${id.substring(id.length - 4)}`;
               }
-              return `${id.substring(0, 6)}...${id.substring(id.length - 4)}`; 
+              return `${id.substring(0, 6)}...${id.substring(id.length - 4)}`;
           },
           uniqueCrops() { const crops = this.allListings.map(l=>l.crop).filter(Boolean); return [...new Set(crops)].sort(); },
           filteredListings() { const oneDayAgo = Date.now() - (24*60*60*1000); return this.allListings.map(l => ({...l, isNew: new Date(l.createdAt) > oneDayAgo })).filter(l => { const cropMatch = !this.buyerFilters.crop || (l.crop || '').toLowerCase() === this.buyerFilters.crop.toLowerCase(); const locMatch = !this.buyerFilters.location || (l.location || '').toLowerCase().includes(this.buyerFilters.location.toLowerCase()); const companyMatch = !this.buyerFilters.pesticideCompany || (l.pesticideCompany || '').toLowerCase().includes(this.buyerFilters.pesticideCompany.toLowerCase()); return cropMatch && locMatch && companyMatch; }); },
@@ -844,41 +943,49 @@
           unreadMessageCount() { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.receiver === this.currentUserIdentifier && !msg.read).length; },
         },
         watch: {
-          current(newPage, oldPage) { 
-              window.scrollTo(0,0); 
-              if (newPage === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { this.scrollToAndHighlightAgriStreamVideo(); } 
-              else if (newPage !== 'farmerAgriStream') { this.highlightedAgriStreamVideoCid = null; } 
-              
-              if (newPage === 'investorPortfolio' && this.isUserAuthenticated && this.role === 'investor') { this.updateInvestmentProgress(); } 
-              if (newPage === 'userProfile' && this.isUserAuthenticated && this.role === 'farmer' && this.farmerLocationCity && !this.currentWeather) { this.fetchWeather(); } 
-              if (newPage === 'messaging' && this.activeConversationId) { this.scrollToMessageBottom(); this.markConversationAsRead(this.activeConversationId); } 
-              
+          current(newPage, oldPage) {
+              window.scrollTo(0,0);
+              if (newPage === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { this.scrollToAndHighlightAgriStreamVideo(); }
+              else if (newPage !== 'farmerAgriStream') { this.highlightedAgriStreamVideoCid = null; }
+
+              if (newPage === 'investorPortfolio' && this.isUserAuthenticated && this.role === 'investor') { this.updateInvestmentProgress(); }
+              if (newPage === 'userProfile' && this.isUserAuthenticated && this.role === 'farmer' && this.farmerLocationCity && !this.currentWeather) { this.fetchWeather(); }
+              if (newPage === 'messaging' && this.activeConversationId) { this.scrollToMessageBottom(); this.markConversationAsRead(this.activeConversationId); }
+
               if (newPage === 'loginChoice' && !this.isUserAuthenticated) {
                   this.isOrangeIdPanelRendering = true;
                   this.$nextTick(() => {
                       if (document.getElementById('bedrock-login-widget-container')) {
                           this.renderOrangeIdLoginPanel();
                       } else {
-                          this.isOrangeIdPanelRendering = false; 
+                          this.isOrangeIdPanelRendering = false;
                       }
                   });
               }
+              if (oldPage === 'plantRecomendation' && newPage !== 'plantRecomendation') {
+                  this.plantImageFile = null;
+                  this.plantImageUrl = null;
+                  this.plantImageMimeType = null;
+                  this.analysisResultText = '';
+                  this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
+                  this.analysisErrorText = '';
+              }
           },
-          isUserAuthenticated(isAuthenticated) { 
-              this.$nextTick(() => { 
-                  if (isAuthenticated && this.loginMethod === 'orangeId') { 
-                      this.renderOrangeIdSignOutButton('orange-id-signout-button-container'); 
-                      if (this.showMobileMenu) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } 
+          isUserAuthenticated(isAuthenticated) {
+              this.$nextTick(() => {
+                  if (isAuthenticated && this.loginMethod === 'orangeId') {
+                      this.renderOrangeIdSignOutButton('orange-id-signout-button-container');
+                      if (this.showMobileMenu) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); }
                   } else if (!isAuthenticated) {
-                      const desktopContainer = document.getElementById('orange-id-signout-button-container'); if(desktopContainer) desktopContainer.innerHTML = ''; 
-                      const mobileContainer = document.getElementById('orange-id-signout-button-container-mobile'); if(mobileContainer) mobileContainer.innerHTML = ''; 
+                      const desktopContainer = document.getElementById('orange-id-signout-button-container'); if(desktopContainer) desktopContainer.innerHTML = '';
+                      const mobileContainer = document.getElementById('orange-id-signout-button-container-mobile'); if(mobileContainer) mobileContainer.innerHTML = '';
                   }
-              }); 
+              });
           },
-          showMobileMenu(isShown) { 
-              if (isShown && this.isUserAuthenticated && this.loginMethod === 'orangeId') { 
-                  this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); }); 
-              } 
+          showMobileMenu(isShown) {
+              if (isShown && this.isUserAuthenticated && this.loginMethod === 'orangeId') {
+                  this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); });
+              }
           },
           farmerVideos: { handler(newVideos) { if (this.current === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { if (newVideos.some(v => v.cid === this.targetAgriStreamVideoCid)) { this.scrollToAndHighlightAgriStreamVideo(); } } }, deep: true }
         },
@@ -886,185 +993,185 @@
           switchPage(page) { this.current = page; this.showMobileMenu = false; },
           navigateToPageWithParam(page, paramName, paramValue) { if (page === 'farmerSell' && paramName === 'cid') { this.listingForm.cid = paramValue; } else if (page === 'farmerFunding' && paramName === 'cid') { this.fundingForm.cid = paramValue; } else if (page === 'farmerAgriStream' && paramName === 'highlightCid') { this.targetAgriStreamVideoCid = paramValue; } this.switchPage(page); },
           getStarted() { if (!this.isUserAuthenticated) { this.current = 'loginChoice'; } else if (!this.role) { this.current = 'roleSelection'; } else if (this.role === 'farmer') { this.switchPage('farmerPestiVid'); } else if (this.role === 'buyer') { this.switchPage('buyerAgriSell'); } else if (this.role === 'investor') { this.switchPage('investorProjects'); } else { this.switchPage('landing'); } },
-          
+
           handleAuthenticationSuccess(identifier, method, orangeUserDetails = null) {
               this.currentUserIdentifier = identifier;
               this.loginMethod = method;
               if (method === 'orangeId' && orangeUserDetails) {
                   this.orangeUser = orangeUserDetails;
-                  this.walletAddress = null; 
+                  this.walletAddress = null;
               } else if (method === 'solana') {
-                  this.walletAddress = identifier; 
-                  this.orangeUser = null; 
+                  this.walletAddress = identifier;
+                  this.orangeUser = null;
               }
-              this.isAuthProcessing = false; // Mark auth processing as finished
-              this.showLoadingModal = false; // Hide loading modal if it was shown
-              this.isOrangeIdPanelRendering = false; 
+              this.isAuthProcessing = false;
+              this.showLoadingModal = false;
+              this.isOrangeIdPanelRendering = false;
               this.addNotification(`${method === 'orangeId' ? 'Orange ID' : 'Solana Wallet'} authentication successful!`, 'success');
-              
-              // Clean URL if tokens were present (typically after Orange ID callback)
-              if (window.location.search.includes('token=') || window.location.search.includes('refreshToken=')) {
-                  const cleanUrl = window.location.origin + window.location.pathname;
-                  window.history.replaceState({}, document.title, cleanUrl);
+
+              const isOnCallbackPath = window.location.pathname.endsWith('/auth/callback');
+              const hasTokensInUrl = window.location.search.includes('token=') || window.location.search.includes('refreshToken=');
+
+              if (hasTokensInUrl) {
+                  if (isOnCallbackPath) {
+                      const cleanUrl = window.location.origin + (window.location.pathname.replace(/\/auth\/callback$/, '') || '/');
+                      window.history.replaceState({}, document.title, cleanUrl);
+                      if (window.location.href !== cleanUrl) {
+                          window.location.href = cleanUrl;
+                          return;
+                      }
+                  } else {
+                      const cleanUrl = window.location.origin + window.location.pathname;
+                      window.history.replaceState({}, document.title, cleanUrl);
+                  }
               }
               this.loadOrSetupPestiVidProfile();
           },
-          
+
           initializeOrangeIdStateListener() {
-            const bedrockConfig = this.bedrockConfig; 
+            const bedrockConfig = this.bedrockConfig;
             const self = this;
-            
+
             function OrangeIdStateUpdater() {
-              if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) { 
-                console.warn("Orange ID SDK not fully ready. Retrying state listener init."); 
-                setTimeout(() => self.initializeOrangeIdStateListener(), 1000); 
-                return null; 
+              if (typeof Bedrock === 'undefined' || !Bedrock.useBedrockPassport || typeof ReactDOM === 'undefined' || !ReactDOM.createRoot) {
+                console.warn("Orange ID SDK not fully ready. Retrying state listener init.");
+                setTimeout(() => self.initializeOrangeIdStateListener(), 1000);
+                return null;
               }
               const { user, isLoading, loginCallback } = Bedrock.useBedrockPassport();
-              
-              // Effect to handle user state changes from SDK (login/logout/session resumption)
-              React.useEffect(() => { 
-                  const params = new URLSearchParams(window.location.search);
-                  const isCallbackUrl = params.has('token') && params.has('refreshToken');
 
-                  // Update Vue's isAuthProcessing based on SDK's isLoading,
-                  // but only if it's an Orange ID flow or no login method is yet determined.
+              React.useEffect(() => {
+                  const params = new URLSearchParams(window.location.search);
+                  const isConfiguredCallbackPathWithTokens = (window.location.href.startsWith(bedrockConfig.authCallbackUrl) || window.location.pathname.endsWith('/auth/callback')) && params.has('token') && params.has('refreshToken');
+
                   if (self.loginMethod === 'orangeId' || !self.loginMethod) {
                       self.isAuthProcessing = isLoading;
                   }
 
-                  if (!isLoading) { // SDK is not loading
-                      if (user) { // Orange ID user exists in SDK
-                          // If Vue doesn't know about this user yet, or thought it was a different login method/user
+                  if (!isLoading) {
+                      if (user) {
                           if (self.currentUserIdentifier !== user.id || self.loginMethod !== 'orangeId') {
                              self.handleAuthenticationSuccess(user.id, 'orangeId', user);
                           }
-                      } else { // No Orange ID user in SDK
-                          // If Vue thought we were logged in with Orange ID, it's a logout/session expiry.
-                          // Also ensure we are not in the middle of processing a callback from URL.
-                          if (self.loginMethod === 'orangeId' && !isCallbackUrl) { 
-                             self.clearUserSession(false); // Silently update Vue state
-                             self.current = 'landing'; // Go to landing if session lost
+                      } else {
+                          if (self.loginMethod === 'orangeId' && !isConfiguredCallbackPathWithTokens) {
+                             self.clearUserSession(false);
+                             if (self.current !== 'landing' && self.current !== 'loginChoice') {
+                                 self.current = 'landing';
+                             }
                           }
                       }
                   }
               }, [user, isLoading]);
 
-              // Effect to handle the authentication callback from URL parameters
-              React.useEffect(() => { 
-                  const params = new URLSearchParams(window.location.search); 
-                  const token = params.get('token'); 
+              React.useEffect(() => {
+                  const params = new URLSearchParams(window.location.search);
+                  const token = params.get('token');
                   const refreshToken = params.get('refreshToken');
 
-                  if (token && refreshToken) { 
-                      // If tokens are in URL, process them using Bedrock's loginCallback
-                      self.showLoadingModal = true; 
-                      self.loadingMessage = "Processing Orange ID authentication..."; 
-                      self.isAuthProcessing = true; 
+                  if ( (window.location.href.startsWith(bedrockConfig.authCallbackUrl) || window.location.pathname.endsWith('/auth/callback')) && token && refreshToken) {
+                      self.showLoadingModal = true;
+                      self.loadingMessage = "Processing Orange ID authentication...";
+                      self.isAuthProcessing = true;
 
                       async function processCallback() {
-                          let success = false;
-                          try { 
-                              success = await loginCallback(token, refreshToken); 
-                              if (success) { 
+                          try {
+                              const success = await loginCallback(token, refreshToken);
+                              if (success) {
                                   console.log("Orange ID loginCallback successful. User state will update via other effect.");
-                                  // Important: Do not set isAuthProcessing or showLoadingModal to false here.
-                                  // The other useEffect (listening to `user` changes) will trigger
-                                  // `handleAuthenticationSuccess`, which will correctly update these states.
-                                  // URL cleaning also happens in `handleAuthenticationSuccess`.
-                              } else { 
-                                  self.addNotification('Orange ID login failed to process callback.', 'error'); 
-                                  self.isAuthProcessing = false; 
+                              } else {
+                                  self.addNotification('Orange ID login failed to process callback.', 'error');
+                                  self.isAuthProcessing = false;
                                   self.showLoadingModal = false;
-                                  const cleanUrl = window.location.origin + window.location.pathname;
+                                  const currentPath = window.location.pathname;
+                                  const cleanUrl = window.location.origin + currentPath;
                                   window.history.replaceState({}, document.title, cleanUrl);
-                              } 
-                          }
-                          catch (e) { 
-                            self.addNotification('Orange ID login error during callback: ' + (e.message || 'Try again.'), 'error'); 
-                            self.isAuthProcessing = false; 
+                              }
+                          } catch (e) {
+                            self.addNotification('Orange ID login error during callback: ' + (e.message || 'Try again.'), 'error');
+                            self.isAuthProcessing = false;
                             self.showLoadingModal = false;
-                            const cleanUrl = window.location.origin + window.location.pathname;
+                            const currentPath = window.location.pathname;
+                            const cleanUrl = window.location.origin + currentPath;
                             window.history.replaceState({}, document.title, cleanUrl);
                           }
-                      } 
+                      }
                       processCallback();
-                  } 
-              }, [loginCallback]); // This effect should run once on mount or if loginCallback instance changes (rare).
+                  }
+              }, [loginCallback]);
 
-              return null; // This component doesn't render anything visible
+              return null;
             }
 
-            const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div'); 
-            tempContainer.id = 'orange-id-state-updater-container'; 
-            if (!document.body.contains(tempContainer)) { 
-              document.body.appendChild(tempContainer); 
+            const tempContainer = document.getElementById('orange-id-state-updater-container') || document.createElement('div');
+            tempContainer.id = 'orange-id-state-updater-container';
+            if (!document.body.contains(tempContainer)) {
+              document.body.appendChild(tempContainer);
             }
-            const root = ReactDOM.createRoot(tempContainer); 
+            const root = ReactDOM.createRoot(tempContainer);
             root.render(React.createElement(Bedrock.BedrockPassportProvider, bedrockConfig, React.createElement(OrangeIdStateUpdater)));
           },
-          
+
           renderOrangeIdLoginPanel() {
             this.isOrangeIdPanelRendering = true;
-            const container = document.getElementById('bedrock-login-widget-container'); 
-            if (!container) { console.error("Login widget container missing."); this.isOrangeIdPanelRendering = false; return; } 
+            const container = document.getElementById('bedrock-login-widget-container');
+            if (!container) { console.error("Login widget container missing."); this.isOrangeIdPanelRendering = false; return; }
             container.innerHTML = '';
-            if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) { 
-                this.bedrockSDKError = true; 
-                this.isOrangeIdPanelRendering = false; 
-                return; 
-            } 
+            if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) {
+                this.bedrockSDKError = true;
+                this.isOrangeIdPanelRendering = false;
+                return;
+            }
             this.bedrockSDKError = false;
             const root = ReactDOM.createRoot(container);
-            root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(Bedrock.LoginPanel, { 
-                title: "", logo: "", logoAlt: "", walletButtonText: "Connect Wallet", showConnectWallet: false, separatorText: "", 
-                features: { enableWalletConnect: false, enableAppleLogin: true, enableGoogleLogin: true, enableEmailLogin: false, }, 
-                panelClass: "bg-transparent shadow-none p-0", titleClass: "hidden", logoClass: "hidden", headerClass: "justify-center mb-0", 
-                buttonClass: "flex items-center justify-center p-2 border border-gray-200 rounded-md hover:border-green-400 focus:ring-1 focus:ring-green-400 w-auto min-w-[60px] h-[60px]", 
-                separatorTextClass: "hidden", 
-                separatorClass: "hidden", 
+            root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(Bedrock.LoginPanel, {
+                title: "", logo: "", logoAlt: "", walletButtonText: "Connect Wallet", showConnectWallet: false, separatorText: "",
+                features: { enableWalletConnect: false, enableAppleLogin: true, enableGoogleLogin: true, enableEmailLogin: false, },
+                panelClass: "bg-transparent shadow-none p-0", titleClass: "hidden", logoClass: "hidden", headerClass: "justify-center mb-0",
+                buttonClass: "flex items-center justify-center p-2 border border-gray-200 rounded-md hover:border-green-400 focus:ring-1 focus:ring-green-400 w-auto min-w-[60px] h-[60px]",
+                separatorTextClass: "hidden",
+                separatorClass: "hidden",
             })));
-            this.isOrangeIdPanelRendering = false; 
+            this.isOrangeIdPanelRendering = false;
           },
           renderOrangeIdSignOutButton(containerId) {
               const container = document.getElementById(containerId); if (!container) return; if (container.querySelector('button') || container.querySelector('i.fa-sign-out-alt')) return; container.innerHTML = '';
               if (typeof Bedrock === 'undefined' || typeof ReactDOM === 'undefined' || !Bedrock.BedrockPassportProvider || !ReactDOM.createRoot) { console.error("Cannot render Orange ID signout, SDK missing."); return; }
               const root = ReactDOM.createRoot(container); const self = this;
               function SignOutButtonComponent() {
-                if (!Bedrock.useBedrockPassport) return null; 
-                const { user } = Bedrock.useBedrockPassport(); 
-                
-                if (!user && self.isUserAuthenticated && self.loginMethod === 'orangeId') { 
-                     self.clearUserSession(false); 
-                     return null; 
-                } 
+                if (!Bedrock.useBedrockPassport) return null;
+                const { user } = Bedrock.useBedrockPassport();
+
+                if (!user && self.isUserAuthenticated && self.loginMethod === 'orangeId') {
+                     self.clearUserSession(false);
+                     return null;
+                }
                 if (!user) return null;
 
-                return React.createElement('button', { 
-                    className: 'text-gray-400 hover:text-red-500 ml-2 focus:outline-none', 
-                    title: "Sign Out", 
-                    onClick: () => self.logoutUser() // Calls the main Vue logoutUser method
+                return React.createElement('button', {
+                    className: 'text-gray-400 hover:text-red-500 ml-2 focus:outline-none',
+                    title: "Sign Out",
+                    onClick: () => self.logoutUser()
                 }, React.createElement('i', {className: 'fas fa-sign-out-alt text-lg'}));
-              } 
+              }
               root.render(React.createElement(Bedrock.BedrockPassportProvider, this.bedrockConfig, React.createElement(SignOutButtonComponent)));
           },
-          promptOrangeIdLogin() { 
+          promptOrangeIdLogin() {
               if (this.isUserAuthenticated && this.loginMethod === 'orangeId') { this.addNotification("Already logged in with Orange ID.", "info"); return; }
-              if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); } 
-              this.loginMethod = 'orangeId'; // Tentatively set, will be confirmed by SDK
-              this.isAuthProcessing = true; 
+              if (this.isUserAuthenticated && this.loginMethod === 'solana') { if(!confirm("You are logged in with a Solana Wallet. Switch to Orange ID?")) return; this.logoutUser(false); }
+              this.loginMethod = 'orangeId';
+              this.isAuthProcessing = true;
               if(this.current !== 'loginChoice') {
                   this.switchPage('loginChoice');
               } else {
-                  this.$nextTick(() => { 
+                  this.$nextTick(() => {
                       if (document.getElementById('bedrock-login-widget-container')) {
                            this.renderOrangeIdLoginPanel();
                       }
                   });
               }
           },
-      
-          // --- Solana Wallet Methods ---
+
           async connectWallet() {
               if (typeof window.solana === 'undefined' || typeof window.solana.connect === 'undefined') {
                   alert("Solana wallet (e.g., Phantom) not found. Please install Phantom and try again.");
@@ -1072,8 +1179,8 @@
                   return;
               }
               if (this.isUserAuthenticated && this.loginMethod === 'solana') { this.addNotification("Solana Wallet already connected.", "info"); return; }
-              if (this.isUserAuthenticated && this.loginMethod === 'orangeId') { if(!confirm("You are logged in with Orange ID. Switch to Solana Wallet?")) return; this.logoutUser(false); } 
-      
+              if (this.isUserAuthenticated && this.loginMethod === 'orangeId') { if(!confirm("You are logged in with Orange ID. Switch to Solana Wallet?")) return; this.logoutUser(false); }
+
               this.isAuthProcessing = true;
               try {
                   const resp = await window.solana.connect();
@@ -1081,22 +1188,21 @@
               } catch (err) {
                   console.error("Solana Wallet connection error:", err);
                   alert("Could not connect to Solana wallet. " + (err.message || ''));
-                  this.loginMethod = null; 
+                  this.loginMethod = null;
                   this.isAuthProcessing = false;
               }
           },
-          async disconnectWallet() { 
+          async disconnectWallet() {
               if (window.solana && window.solana.isConnected) {
                   try { await window.solana.disconnect(); } catch (err) { console.error("Error disconnecting Solana wallet:", err); }
               }
               this.walletAddress = null;
           },
-      
-          // --- Unified Profile & Logout ---
+
           loadOrSetupPestiVidProfile() {
               const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
               const pestividProfile = userProfiles[this.currentUserIdentifier];
-      
+
               if (pestividProfile && pestividProfile.role) {
                   this.role = pestividProfile.role;
                   this.userName = pestividProfile.name;
@@ -1115,40 +1221,42 @@
               }
               this.filterDataForCurrentUser();
               this.showMobileMenu = false;
-              if (this.current === 'loginChoice' || (this.current === 'landing' && !this.role && this.isUserAuthenticated) ) {
+              if ( (this.current === 'loginChoice' || this.current === 'landing') && this.isUserAuthenticated && this.role) {
                   this.getStarted();
+              } else if (this.isUserAuthenticated && !this.role) {
+                  this.current = 'roleSelection';
               }
           },
-          completeOnboarding() { 
-              if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Fill: Name, PestiVid Email, Role."); return; } 
-              if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Valid PestiVid email."); return; } 
-              
-              this.role = this.selectedRoleOnboarding; 
-              this.userName = this.userNameOnboarding.trim(); 
-              this.userEmail = this.userEmailOnboarding.trim(); 
-              this.userPhone = this.userPhoneOnboarding.trim() || ''; 
-              this.memberSince = new Date().toLocaleDateString(); 
-              if (this.role === 'farmer') { this.farmerLocationCity = this.farmerLocationCityOnboarding.trim() || ''; } 
-              else { this.farmerLocationCity = ''; } 
-              
-              const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; 
-              userProfiles[this.currentUserIdentifier] = { 
-                  role: this.role, name: this.userName, email: this.userEmail, phone: this.userPhone, 
-                  memberSince: this.memberSince, 
-                  farmerLocationCity: this.role === 'farmer' ? this.farmerLocationCity : undefined, 
-                  authMethod: this.loginMethod, 
-                  orangeAuthEmail: (this.loginMethod === 'orangeId' && this.orangeUser) ? this.orangeUser.email : null 
-              }; 
-              localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); 
-              this.filterDataForCurrentUser(); 
-              this.getStarted(); 
-              this.addNotification(`Profile for ${this.userName} setup!`, 'success'); 
+          completeOnboarding() {
+              if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Fill: Name, PestiVid Email, Role."); return; }
+              if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Valid PestiVid email."); return; }
+
+              this.role = this.selectedRoleOnboarding;
+              this.userName = this.userNameOnboarding.trim();
+              this.userEmail = this.userEmailOnboarding.trim();
+              this.userPhone = this.userPhoneOnboarding.trim() || '';
+              this.memberSince = new Date().toLocaleDateString();
+              if (this.role === 'farmer') { this.farmerLocationCity = this.farmerLocationCityOnboarding.trim() || ''; }
+              else { this.farmerLocationCity = ''; }
+
+              const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
+              userProfiles[this.currentUserIdentifier] = {
+                  role: this.role, name: this.userName, email: this.userEmail, phone: this.userPhone,
+                  memberSince: this.memberSince,
+                  farmerLocationCity: this.role === 'farmer' ? this.farmerLocationCity : undefined,
+                  authMethod: this.loginMethod,
+                  orangeAuthEmail: (this.loginMethod === 'orangeId' && this.orangeUser) ? this.orangeUser.email : null
+              };
+              localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles));
+              this.filterDataForCurrentUser();
+              this.getStarted();
+              this.addNotification(`Profile for ${this.userName} setup!`, 'success');
           },
           async logoutUser(notify = true) {
               this.showLoadingModal = true;
               this.loadingMessage = "Signing out...";
-              const currentLoginMethod = this.loginMethod; // Store before clearing
-              
+              const currentLoginMethod = this.loginMethod;
+
               if (currentLoginMethod === 'orangeId') {
                   if (typeof Bedrock !== 'undefined' && Bedrock.BedrockPassportProvider && ReactDOM.createRoot) {
                       const tempSignOutContainer = document.createElement('div');
@@ -1161,7 +1269,7 @@
                                       if (user && bedrockSignOut) {
                                           bedrockSignOut().then(resolve).catch(reject);
                                       } else {
-                                          resolve(); // No user to sign out, or signOut not available
+                                          resolve();
                                       }
                                   }, [bedrockSignOut, user]);
                                   return null;
@@ -1171,7 +1279,6 @@
                           console.log("Bedrock SDK signOut process completed.");
                       } catch (e) {
                           console.error("Orange ID sign out error via Bedrock SDK:", e);
-                          // Proceed with clearing local state anyway
                       }
                   } else {
                       console.warn("Bedrock SDK not available for Orange ID signout.");
@@ -1179,30 +1286,29 @@
               } else if (currentLoginMethod === 'solana') {
                   await this.disconnectWallet();
               }
-              
-              this.clearUserSession(notify); 
+
+              this.clearUserSession(notify);
               this.showLoadingModal = false;
               this.current = 'landing';
           },
-          clearUserSession(notify = true) { 
+          clearUserSession(notify = true) {
               this.currentUserIdentifier = null;
               this.loginMethod = null;
               this.walletAddress = null;
               this.orangeUser = null;
               this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerLocationCity = '';
-              
+
               this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = [];
               this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = [];
               this.activeConversationId = null; this.messages = []; this.conversations = [];
-              
-              this.showMobileMenu = false; 
-              this.isAuthProcessing = false; 
+
+              this.showMobileMenu = false;
+              this.isAuthProcessing = false;
               this.isOrangeIdPanelRendering = false;
-              
+
               if (notify) this.addNotification("You have been signed out.", 'info');
           },
-          
-          // --- PestiVid Core Methods (adapted to use currentUserIdentifier) ---
+
           async simulateTransaction(description = "Processing...") { this.showLoadingModal = true; this.loadingMessage = "Confirm action (Simulated)..."; await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500)); this.loadingMessage = `${description} on PestiVid (Simulated)...`; await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2500)); const txHash = 'sim_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2, 12); this.showLoadingModal = false; return txHash; },
           async startVideo() { if (!this.isUserAuthenticated) { alert("Please log in."); return; } if (this.recording || this.uploading) return; if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("HTTPS recommended for camera."); } this.recordBlob = null; this.recordBlobUrl = ''; this.uploadCid = ''; this.uploadError = ''; this.showLive = true; try { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); this.recordStream = stream; this.$refs.liveVideo.srcObject = stream; this.$refs.liveVideo.play(); let chunks = []; this.recording = true; const mimeTypes = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']; let selectedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || undefined; this.recordMediaRecorder = new MediaRecorder(stream, { mimeType: selectedMimeType }); this.recordMediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); }; this.recordMediaRecorder.onstop = () => { const blobType = this.recordMediaRecorder.mimeType || 'video/webm'; this.recordBlob = new Blob(chunks, { type: blobType }); if (this.recordBlobUrl) URL.revokeObjectURL(this.recordBlobUrl); this.recordBlobUrl = URL.createObjectURL(this.recordBlob); this.showLive = false; stream.getTracks().forEach(t => t.stop()); this.recordStream = null; this.recording = false; }; this.recordMediaRecorder.onerror = (e) => { this.uploadError = "Recording error: " + e.name; this.stopVideo(); }; this.recordMediaRecorder.start(1000); } catch (e) { let alertMsg = "Camera access failed."; if (e.name === 'NotAllowedError') alertMsg = "Camera denied."; else if (e.name === 'NotFoundError') alertMsg = "No camera found."; else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') alertMsg = "Camera in use."; if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') alertMsg += " HTTPS might be required."; alert(alertMsg); this.showLive = false; this.recording = false; } },
           stopVideo() { if (this.recordMediaRecorder && this.recordMediaRecorder.state === "recording") this.recordMediaRecorder.stop(); if (this.recordStream) { this.recordStream.getTracks().forEach(t => t.stop()); this.recordStream = null; } this.recording = false; this.showLive = false; },
@@ -1232,7 +1338,7 @@
           simulateUserEmail(id) { return id ? `${id.substring(0, 6)}@pestivid.xyz` : 'user@example.com'; },
           simulateMemberSince(id) { let hash = 0; for (let i = 0; i < (id || '').length; i++) { hash = (hash << 5) - hash + id.charCodeAt(i); hash |= 0; } const daysAgo = Math.abs(hash % 730) + 30; const joinDate = new Date(); joinDate.setDate(joinDate.getDate() - daysAgo); return joinDate.toLocaleDateString(); },
           simulateFarmName(id) { return id ? `Farm ${id.substring(0, 5)}` : "The Good Farm"; },
-          simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - bioHash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
+          simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - hash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
           async fetchWeather() { if (!this.farmerLocationCity) { this.weatherError = "Enter city."; return; } if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') { this.weatherError = "Weather API key needed. Please configure in script."; alert(this.weatherError); return; } this.weatherLoading = true; this.weatherError = ''; this.currentWeather = null; this.forecastWeather = []; const city = this.farmerLocationCity; const apiKey = this.weatherApiKey; const units = 'metric'; try { const currentResponse = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.currentWeather = currentResponse.data; const forecastResponse = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.forecastWeather = this.processForecastData(forecastResponse.data); } catch (error) { if (error.response) { this.weatherError = `Err ${error.response.status}: ${error.response.data.message || 'Weather error.'}`; if (error.response.status === 401) this.weatherError += " Check API key."; else if (error.response.status === 404) this.weatherError = `No weather for "${city}".`; } else if (error.request) { this.weatherError = "Network/CORS error."; } else { this.weatherError = "Unexpected weather error."; } alert(this.weatherError + " See console."); } finally { this.weatherLoading = false; } },
           processForecastData(data) { if (!data || !data.list) return []; const dailyData = {}; data.list.forEach(item => { const date = new Date(item.dt * 1000); const dateString = date.toISOString().split('T')[0]; if (!dailyData[dateString]) { dailyData[dateString] = { date: date, dateString: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), temps: [], icons: [], descriptions: [] }; } dailyData[dateString].temps.push(item.main.temp); dailyData[dateString].icons.push(item.weather[0].icon); dailyData[dateString].descriptions.push(item.weather[0].description); }); return Object.values(dailyData).map(day => { let repIcon = day.icons[0]; let repDesc = day.descriptions[0]; const middayIdx = data.list.findIndex(item => new Date(item.dt * 1000).toISOString().startsWith(day.date.toISOString().split('T')[0]) && new Date(item.dt*1000).getHours() >= 11 && new Date(item.dt*1000).getHours() <= 14); if (middayIdx !== -1) { repIcon = data.list[middayIdx].weather[0].icon; repDesc = data.list[middayIdx].weather[0].description; } return { date: day.date, dateString: day.dateString, minTemp: Math.min(...day.temps), maxTemp: Math.max(...day.temps), icon: repIcon, description: repDesc }; }).slice(0, 5); },
           getWeatherIconUrl(iconCode) { return `https://openweathermap.org/img/wn/${iconCode}@2x.png`; },
@@ -1270,7 +1376,7 @@
             const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString(); const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
             const demoFarmer1 = 'orangeid-demo-farmer1-uuid-string'; const demoFarmer2 = 'orangeid-demo-farmer2-uuid-string';
             const demoInvestor1 = 'orangeid-demo-investor1-uuid-str'; const demoBuyer1 = 'orangeid-demo-buyer1-uuid-string';
-            
+
             const demoFarmerVideos = [ { farmerWallet: demoFarmer1, cid: 'QmXyZDemoCIDListing1', crop: 'Tomatoes', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell'}, { farmerWallet: demoFarmer1, cid: 'QmYpUkLqrn4N1YgdNvT3zJbJnbZu4wcjGbDqrXKuL71L3V', crop: 'Strawberries', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding'}, { farmerWallet: demoFarmer2, cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', crop: 'Lettuce', pesticide: 'Nutrient Solution', location: 'Hydro Unit 1', pesticideCompany: 'HydroGrow', purpose: 'agristream'}, ];
             const demoBuyerPurchases = [ { id: 'pur_demo1', buyerWallet: demoBuyer1, farmerWallet: demoFarmer1, crop: 'Demo Tomatoes', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: 'QmXyZDemoCIDListing1', price: 0.9, date: 'March 10, 2024', txHash: 'sim_pur_tx_demo1' }, ];
             const demoInvestorInvestments = [ { id: 'inv_demo1', investorWallet: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion', farmerWallet: demoFarmer1, crop: 'Strawberries', method: 'organic', description: 'Expanding organic strawberry fields using best practices and new irrigation for higher yields.', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 10, cid: 'QmYpUkLqrn4N1YgdNvT3zJbJnbZu4wcjGbDqrXKuL71L3V', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', txHash: 'sim_inv_tx_demo1' } ];
@@ -1281,34 +1387,213 @@
             this.allFundingRequests = [ { id: 'fr_demo1', farmerWallet: demoFarmer1, title: 'Organic Strawberry Expansion', crop: 'Strawberries', acres: 2.5, amount: 25, method: 'organic', cid: 'QmYpUkLqrn4N1YgdNvT3zJbJnbZu4wcjGbDqrXKuL71L3V', description: 'Expanding organic strawberry fields using best practices and new irrigation for higher yields.', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 10, status: 'partially_funded', createdAt: oneDayAgo, investors: [{investorId: demoInvestor1, amount: 10, txHash:'sim_inv_tx_demo1'}], updates: [], txHash: 'sim_fr_tx_1' }, { id: 'fr_demo2', farmerWallet: demoFarmer2, title: 'Hydroponic Lettuce Setup', crop: 'Lettuce', acres: 0.5, amount: 40, method: 'hydroponic', cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', description: 'Setting up a new NFT hydroponic system for year-round high-quality lettuce production. Funds will be used for system components and initial setup.', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: oneDayAgo, investors: [], updates: [], txHash: 'sim_fr_tx_2' }, ];
             this.allListings = [ { id: 'lst_demo1', farmerWallet: demoFarmer1, crop: 'Tomatoes', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: 'QmXyZDemoCIDListing1', minPrice: 0.8, maxPrice: 1.2, status: 'active', createdAt: oneDayAgo, isNew: true, txHash: 'sim_lst_tx_1' }, { id: 'lst_demo2', farmerWallet: demoFarmer2, crop: 'Peppers', location: 'Greenhouse 3', pesticide: 'Neem Oil', pesticideCompany: 'Organics Inc.', cid: 'Qme6xrRfA1kqdqrRJgXqGsNebvX1hXeER4xwqUfz1m4vB1', minPrice: 1.0, maxPrice: 1.5, status: 'active', createdAt: threeDaysAgo, isNew: false, txHash: 'sim_lst_tx_2' }, ];
             localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: demoFarmerVideos, buyerPurchases: demoBuyerPurchases, investorInvestments: demoInvestorInvestments, investorTransactions: demoInvestorTransactions, messages: demoMessages, conversations: demoConversations }));
-            this.loadDataFromLocalStorage(); 
+            this.loadDataFromLocalStorage();
           },
           scrollToAndHighlightAgriStreamVideo() { if (!this.targetAgriStreamVideoCid) return; this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid; this.$nextTick(() => { const videoCardRef = this.$refs[`videoCard-${this.targetAgriStreamVideoCid}`]; if (videoCardRef && videoCardRef[0]) { videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; }, 2500); } else { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; } }); },
           getOtherParticipantInitial(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.charAt(0).toUpperCase(); if (otherP.length > 20 && otherP.includes('-')) return otherP.substring(0,1).toUpperCase(); return otherP.charAt(0).toUpperCase(); },
           getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; if (otherP.length > 20 && otherP.includes('-')) return `${otherP.substring(0,4)}...${otherP.substring(otherP.length-4)}`; return `${otherP.substring(0,6)}...${otherP.substring(otherP.length-4)}`; },
-          formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } }
+          formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } },
+
+          // --- New Plant Recommendation Methods ---
+          handlePlantImageUpload(event) {
+              const file = event.target.files[0];
+              if (file) {
+                  this.plantImageFile = file;
+                  this.plantImageMimeType = file.type;
+                  this.plantImageUrl = URL.createObjectURL(file);
+                  this.analysisResultText = '';
+                  this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
+                  this.analysisErrorText = '';
+              }
+          },
+          convertFileToBase64(file) {
+              return new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.readAsDataURL(file);
+                  reader.onload = () => {
+                      resolve(reader.result.split(',')[1]);
+                  };
+                  reader.onerror = error => reject(error);
+              });
+          },
+          async analyzePlant() {
+              if (!this.plantImageFile) {
+                  this.analysisErrorText = "Please upload an image first.";
+                  return;
+              }
+              if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) {
+                  this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script.";
+                  // No alert here, rely on the mounted check for initial loud alert
+                  return;
+              }
+
+              this.analysisInProgress = true;
+              this.analysisResultText = '';
+              this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
+              this.analysisErrorText = '';
+
+              try {
+                  const base64Image = await this.convertFileToBase64(this.plantImageFile);
+                  const apiKey = this.geminiApiKey;
+                  // THE MODEL IS CHANGED HERE
+                  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+                  const prompt = `Analyze this image of a plant. Identify the plant if possible, then detect any visible diseases. Based on your findings, provide the following information, each on a new line, formatted exactly as:
+Plant: [Plant Name or 'Unknown']
+Disease: [Disease Name or 'Healthy' or 'Not Apparent' or 'Unknown']
+Treatment: [Recommended treatment and/or types of pesticides. If healthy, state 'No treatment needed'. If disease is not apparent or unknown, state 'Cannot recommend treatment without clear disease identification.'].
+Be concise and focus on actionable recommendations. If the image is not clear or not a plant, state that.`;
+
+                  const payload = {
+                      contents: [{
+                          parts: [
+                              { text: prompt },
+                              {
+                                  inline_data: {
+                                      mime_type: this.plantImageMimeType,
+                                      data: base64Image
+                                  }
+                              }
+                          ]
+                      }],
+                      generationConfig: {
+                          "temperature": 0.4,
+                          "topK": 32,
+                          "topP": 1,
+                          "maxOutputTokens": 2048,
+                      },
+                      safetySettings: [
+                          { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+                          { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+                          { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+                          { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }
+                      ]
+                  };
+
+                  const response = await axios.post(url, payload);
+
+                  if (response.data && response.data.candidates && response.data.candidates.length > 0 &&
+                      response.data.candidates[0].content && response.data.candidates[0].content.parts &&
+                      response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) {
+
+                      this.analysisResultText = response.data.candidates[0].content.parts[0].text;
+                      this.parseGeminiResponse(this.analysisResultText);
+                  } else if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) {
+                      this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`;
+                      this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' };
+                  }
+                   else {
+                      console.error("Unexpected response structure from Gemini API:", response.data);
+                      throw new Error("Invalid or empty response structure from Gemini API.");
+                  }
+
+              } catch (error) {
+                  console.error("Error analyzing plant image with Gemini:", error);
+                  if (error.response) {
+                      this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`;
+                      if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) {
+                        this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project.";
+                      } else if (error.response.status === 429) {
+                        this.analysisErrorText += " You might have exceeded your API quota.";
+                      }
+                  } else if (error.request) {
+                      this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection.";
+                  } else {
+                      this.analysisErrorText = "An unexpected error occurred: " + error.message;
+                  }
+                  this.parsedAnalysis = { plantName: '-', diseaseName: '-', treatmentRecommended: '-' };
+              } finally {
+                  this.analysisInProgress = false;
+              }
+          },
+
+          parseGeminiResponse(text) {
+              const result = {
+                  plantName: 'Unknown',
+                  diseaseName: 'Not Apparent',
+                  treatmentRecommended: 'Could not determine specific treatment.'
+              };
+              if (!text) {
+                this.parsedAnalysis = result;
+                return;
+              }
+
+              const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+              let currentPlant = null;
+              let currentDisease = null;
+              let currentTreatment = [];
+
+              lines.forEach(line => {
+                  const lowerLine = line.toLowerCase();
+                  if (lowerLine.startsWith('plant:')) {
+                      currentPlant = line.substring('plant:'.length).trim();
+                  } else if (lowerLine.startsWith('disease:')) {
+                      currentDisease = line.substring('disease:'.length).trim();
+                  } else if (lowerLine.startsWith('treatment:')) {
+                      currentTreatment.push(line.substring('treatment:'.length).trim());
+                  } else if (currentTreatment.length > 0) {
+                     currentTreatment.push(line);
+                  } else if (currentDisease && !currentTreatment.length > 0) {
+                     currentTreatment.push(line);
+                  } else if (currentPlant && !currentDisease && !currentTreatment.length > 0) {
+                     if (lowerLine.includes("healthy") || lowerLine.includes("not apparent") || lowerLine.includes("unknown disease")) {
+                         currentDisease = line;
+                     }
+                  }
+              });
+
+              if (currentPlant) result.plantName = currentPlant;
+              if (currentDisease) result.diseaseName = currentDisease;
+              if (currentTreatment.length > 0) result.treatmentRecommended = currentTreatment.join('\n');
+
+              if (result.plantName === 'Unknown' && result.diseaseName === 'Not Apparent' && result.treatmentRecommended === 'Could not determine specific treatment.') {
+                    const plantMatch = text.match(/Plant:\s*(.*)/i);
+                    const diseaseMatch = text.match(/Disease:\s*(.*)/i);
+                    const treatmentMatch = text.match(/Treatment:\s*(.*)/is);
+
+                    if (plantMatch && plantMatch[1]) result.plantName = plantMatch[1].trim();
+                    if (diseaseMatch && diseaseMatch[1]) result.diseaseName = diseaseMatch[1].trim();
+                    if (treatmentMatch && treatmentMatch[1]) result.treatmentRecommended = treatmentMatch[1].trim();
+              }
+
+              this.parsedAnalysis = result;
+          }
+
         },
         mounted() {
-          console.log("PestiVid (Merged Auth) App Mounted. Ensure API keys are set.");
+          console.log("PestiVid (Merged Auth & Gemini) App Mounted. Ensure API keys and callback URL are set.");
+
+          if (this.bedrockConfig.authCallbackUrl.includes('<your-actual-domain-and-port-here>')) {
+              console.error("CRITICAL CONFIG ERROR: `authCallbackUrl` in bedrockConfig has not been updated. Orange ID login will fail. Please replace `<your-actual-domain-and-port-here>` with your actual domain/port and path.");
+              alert("CRITICAL CONFIG ERROR: `authCallbackUrl` in bedrockConfig has not been updated. Orange ID login will fail. Check console and update the script.");
+          }
           if (this.pinataJwt === 'YOUR_PINATA_JWT' || !this.pinataJwt) { console.warn("CONFIG WARNING: Pinata JWT not set. Video uploads WILL FAIL."); alert("Config Warning: Pinata JWT not set. Video uploads will fail."); }
           if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); alert("Config Warning: OpenWeatherMap API Key not set. Weather will not work."); }
+
+          // Check for placeholder Gemini Key on mount
+          if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE') {
+              console.error("CONFIG ERROR: Gemini API Key is still set to placeholder 'YOUR_GEMINI_API_KEY_HERE'. Plant recommendation WILL FAIL.");
+              alert("Config Error: Gemini API Key not set. Plant recommendation will fail. Please update the `geminiApiKey` in the script.");
+          } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { // A basic check for a typical Google API key format
+             console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active, has billing enabled for the Generative Language API in your Google Cloud Project, and understand that client-side keys are insecure for production.");
+          }
+
+
           if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
-          
-          this.loadDataFromLocalStorage(); 
-          
+
+          this.loadDataFromLocalStorage();
+
           const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
           let bedrockCheckCount = 0;
-          const self = this; // Make Vue instance available for timeout
+          const self = this;
           const bedrockInterval = setInterval(() => {
               bedrockCheckCount++;
               if (typeof Bedrock !== 'undefined' && typeof ReactDOM !== 'undefined' && Bedrock.BedrockPassportProvider && ReactDOM.createRoot) {
                   clearInterval(bedrockInterval);
                   console.log("Bedrock SDK ready. Initializing Orange ID state listener.");
-                  this.initializeOrangeIdStateListener(); 
-                  
-                  // Attempt Solana auto-reconnect *after* Orange ID state listener is initialized
-                  // to give Orange ID session resumption priority if tokens are in URL.
-                  setTimeout(() => { 
+                  this.initializeOrangeIdStateListener();
+
+                  setTimeout(() => {
                       if (!self.isUserAuthenticated && !self.isAuthProcessing && window.solana && window.solana.isPhantom) {
                            const lastUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
                            if (lastUserId) {
@@ -1321,14 +1606,13 @@
                                   .catch(err => console.log("Solana auto-reconnect failed or not trusted:", err.message));
                            }
                       }
-                  }, 2500); // Delay to allow Orange ID processing first if URL has tokens
-      
-              } else if (bedrockCheckCount > 40) { // Approx 20 seconds
+                  }, 2500);
+
+              } else if (bedrockCheckCount > 40) {
                   clearInterval(bedrockInterval);
                   console.error("Bedrock SDK (React/ReactDOM) did not load correctly. Orange ID features may not work.");
                   this.isAuthProcessing = false; this.bedrockSDKError = true;
                   this.addNotification("Orange ID authentication service failed to load. Please refresh page or check console.", "error");
-                  // Fallback to Solana auto-reconnect if Bedrock fails
                   if (!self.isUserAuthenticated && !self.isAuthProcessing && window.solana && window.solana.isPhantom) {
                        const lastUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
                        if (lastUserId) {
@@ -1343,12 +1627,12 @@
                   }
               }
           }, 500);
-      
+
           setInterval(() => { if(this.isUserAuthenticated && this.role==='investor') this.updateInvestmentProgress(); }, 30000);
         }
       });
-    
-    window.vueApp = app; // Keep global reference if needed elsewhere, though not used by current changes.
+
+    window.vueApp = app;
 </script>
 </body>
 </html>
