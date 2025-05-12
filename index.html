@@ -810,8 +810,10 @@
         baseUrl: 'https://api.bedrockpassport.com',
         // IMPORTANT: Ensure this authCallbackUrl EXACTLY MATCHES what you've set in your Orange ID project dashboard.
         authCallbackUrl: window.location.href.split('?')[0].split('#')[0], // Removes query params and hash for clean callback
-        tenantId: 'orange-oa35v00rhe', // YOUR PROJECT ID - This was provided by you
-        subscriptionKey: '48c86cc59a984f6c8962ece917c2d6ea' // YOUR API KEY - This was provided by you
+        // !!! REPLACE THESE WITH YOUR ACTUAL ORANGE ID PROJECT DETAILS !!!
+        tenantId: 'YOUR_ORANGE_ID_TENANT_ID', // e.g., 'orange-xxxxxxxxxx'
+        subscriptionKey: 'YOUR_ORANGE_ID_API_KEY' // e.g., 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+        // !!! END OF ORANGE ID PLACEHOLDERS !!!
       },
 
       // Solana Wallet Specific State
@@ -851,21 +853,20 @@
       showInvestmentDetailsModal: false, selectedInvestment: null, selectedInvestmentProject: null,
       showFarmerProfileModal: false, selectedFarmerProfile: null,
 
-      // IMPORTANT: REPLACE 'YOUR_PINATA_JWT' with your actual Pinata JWT. Video uploads WILL FAIL without it.
+      // !!! REPLACE 'YOUR_PINATA_JWT' with your actual Pinata JWT. Video uploads WILL FAIL without it. !!!
       pinataJwt: 'YOUR_PINATA_JWT',
-      // IMPORTANT: REPLACE 'YOUR_PINATA_GATEWAY_HOSTNAME' (e.g., 'your-gateway-name.mypinata.cloud'). Video playback WILL FAIL without it.
+      // !!! REPLACE 'YOUR_PINATA_GATEWAY_HOSTNAME' (e.g., 'your-gateway-name.mypinata.cloud' or 'gateway.pinata.cloud'). Video playback WILL FAIL without it. !!!
       pinataGateway: 'YOUR_PINATA_GATEWAY_HOSTNAME',
 
-      // IMPORTANT: REPLACE 'YOUR_OPENWEATHERMAP_API_KEY'. Weather feature WILL NOT WORK without it.
+      // !!! REPLACE 'YOUR_OPENWEATHERMAP_API_KEY'. Weather feature WILL NOT WORK without it. !!!
       weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY',
-      currentWeather: null, forecastWeather: [], weatherLoading: false, weatherError: '',
 
       conversations: [], messages: [], activeConversationId: null, messageInputText: '',
       notifications: [], recentNotifications: [],
       showLoadingModal: false, loadingMessage: '',
       targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
 
-      // IMPORTANT: REPLACE 'YOUR_GEMINI_API_KEY_HERE'. Plant recommendation WILL FAIL without it.
+      // !!! REPLACE 'YOUR_GEMINI_API_KEY_HERE'. Plant recommendation WILL FAIL without it. !!!
       // Client-side API keys are insecure for production. Use a backend proxy.
       geminiApiKey: 'YOUR_GEMINI_API_KEY_HERE',
       plantImageFile: null,
@@ -1063,16 +1064,14 @@
             this.addNotification("Orange ID login service failed to load.", "error");
             return false;
         }
-        // These checks assume that if the tenantId/subscriptionKey are the exact ones from your config,
-        // they are your *actual development keys* and not placeholders.
-        // A true placeholder like "YOUR_TENANT_ID" would be caught by includes("YOUR_").
-        if (!this.bedrockConfig.tenantId || (this.bedrockConfig.tenantId.toUpperCase().includes("YOUR_") && this.bedrockConfig.tenantId !== 'orange-oa35v00rhe') ) {
+
+        if (!this.bedrockConfig.tenantId || this.bedrockConfig.tenantId.toUpperCase().includes("YOUR_") ) {
             console.error("CONFIG ERROR: Orange ID Tenant ID not set or is placeholder. Orange ID login WILL FAIL.");
             this.orangeIdBedrockSDKError = true;
             this.addNotification("Orange ID Tenant ID config error. Login unavailable.", "error");
             return false;
         }
-        if (!this.bedrockConfig.subscriptionKey || (this.bedrockConfig.subscriptionKey.toUpperCase().includes("YOUR_") && this.bedrockConfig.subscriptionKey !== '48c86cc59a984f6c8962ece917c2d6ea') ) {
+        if (!this.bedrockConfig.subscriptionKey || this.bedrockConfig.subscriptionKey.toUpperCase().includes("YOUR_") ) {
             console.error("CONFIG ERROR: Orange ID Subscription Key (API Key) not set or is placeholder. Orange ID login WILL FAIL.");
             this.orangeIdBedrockSDKError = true;
             this.addNotification("Orange ID API Key config error. Login unavailable.", "error");
@@ -1605,7 +1604,8 @@
       if (this.pinataGateway === 'YOUR_PINATA_GATEWAY_HOSTNAME' || !this.pinataGateway) { console.warn("CONFIG WARNING: Pinata Gateway not set. Playback WILL FAIL."); this.addNotification("Playback service not configured.", "warning"); }
       if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap Key not set. Weather WILL NOT WORK."); this.addNotification("Weather service not configured.", "warning"); }
       if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE') { console.warn("CONFIG WARNING: Gemini Key not set. Plant AI WILL FAIL."); this.addNotification("Plant AI not configured.", "warning");
-      } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using 'AIzaSyC...' key. Ensure active & billing enabled for Gen Lang API."); }
+      } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC') && this.geminiApiKey.length < 35) { /* A common prefix for some Google API keys */ console.warn("GEMINI API KEY: Using a key that might be a generic example. Ensure it's your actual, active key with the Generative Language API enabled and billing configured in your Google Cloud Project if needed."); }
+
 
       if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Not HTTPS. Camera might fail/be insecure."); }
 
