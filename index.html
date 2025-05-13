@@ -306,7 +306,7 @@
                     <div class="w-full border-t border-gray-300"></div>
                 </div>
                 <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white text-gray-500">OR</span>
+                    <span class="px-2 bg-white text-gray-500">Step 2 Verfication</span>
                 </div>
             </div>
 
@@ -703,11 +703,11 @@
       <!-- Plant Recomendation content -->
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-leaf mr-2"></i>Plant Disease Detection & Recommendation</h2>
       <div class="bg-white rounded shadow-md p-6 space-y-6">
-        <p class="text-sm text-gray-600">Upload an image of an affected plant. Gemini AI will attempt to identify the plant, detect diseases, and suggest treatments.</p>
+        <p class="text-sm text-gray-600">Upload an image of an affected plant. it will attempt to identify the plant, detect diseases, and suggest treatments.</p>
 
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
           <p class="font-bold">Developer Note:</p>
-          <p class="text-sm">The Gemini API key is currently embedded in the client-side code for this demo. In a production environment, this is insecure and should be handled via a backend proxy.</p>
+          <p class="text-sm">we are take the image now we will be recomend the plant treatments we will take all the data from the farmers we will be automatical the treatments will be updata in the for every 40000 sameple we will be get accurs result </p>
         </div>
 
         <div>
@@ -747,7 +747,7 @@
             <p class="text-md text-gray-700 whitespace-pre-wrap">{{ parsedAnalysis.treatmentRecommended || 'No specific treatment recommended.' }}</p>
           </div>
            <div v-if="analysisResultText && (!parsedAnalysis.plantName || parsedAnalysis.plantName === 'Unknown' || parsedAnalysis.plantName === '-')" class="mt-4 bg-gray-50 p-3 rounded border text-xs">
-                <p class="font-semibold mb-1">Raw Gemini Output (for debugging if parsing failed):</p>
+                <p class="font-semibold mb-1">Output (for debugging if parsing failed):</p>
                 <pre class="whitespace-pre-wrap overflow-x-auto">{{ analysisResultText }}</pre>
             </div>
         </div>
@@ -859,8 +859,8 @@
           investorInvestments: [], investorTransactions: [], investorFilters: {crop: '', method: '', minRoi: null, maxAmount: null}, allFundingRequests: [], investmentAmounts: {}, investmentErrors: {}, showInvestmentDetailsModal: false, selectedInvestment: null, selectedInvestmentProject: null,
           showFarmerProfileModal: false, selectedFarmerProfile: null,
 
-          pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjZhMzg2NTg0YmY2OTA2MmEwMmRmIiwic2NvcGVkS2V5U2VjcmV0IjoiYzk3ZTdhMmQ5NWMxN2FlM2E1Y2E1M2I0NzdlY2U4MWNkMmRjZjZhZDEzNzYyYjQ4N2NlNTkwMzUzZTNhZTU3MyIsImV4cCI6MTc3NjQzMDUxMn0.U9RajZTNFCLXNcindLmjgNmpCtdNITJQqQlssCrJovM', // Replace with your actual Pinata JWT
-          pinataGateway: 'indigo-dear-baboon-356.mypinata.cloud', // Replace with your Pinata Gateway
+          pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiY2Q2N2EzMC1lYmVmLTRiMWYtYjZmMi02OTI1ZGM2OWUzZDUiLCJlbWFpbCI6InRlamFzaW5kdWt1cmk1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI4OTY1ODM2MDlhMzE4YjY1N2QzMSIsInNjb3BlZEtleVNlY3JldCI6ImFkNWQ2OTc5NDkwNmFjODAzOGYxOGExNmYwMmIwOTc2NjlhNjQwNDY3MDExODdiZWRmOTdjMmZiMTA2NzdiNmYiLCJleHAiOjE3NzYwOTU3OTF9.dbyd6dnaASvYze1j5zVmPkoiDuQhA3PBczy0LxsRO-U', // Replace with your actual Pinata JWT
+          pinataGateway: 'gateway.pinata.cloud', // Replace with your Pinata Gateway
 
           weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', // Replace with your OpenWeatherMap API Key
           currentWeather: null, forecastWeather: [], weatherLoading: false, weatherError: '',
