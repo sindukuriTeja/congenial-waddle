@@ -876,7 +876,7 @@
       showMobileMenu: false,
       loginMethod: null, currentUserIdentifier: null, isAuthProcessing: false,
       orangeIdUser: null, orangeIdBedrockSDK: null, orangeIdReactRootLogin: null, orangeIdReactRootCallback: null, orangeIdReactRootSignOut: null, orangeIdReactRootSignOutMobile: null, orangeIdWidgetMounted: false, orangeIdBedrockSDKError: false, isOrangeIdCallback: false,
-      bedrockConfig: { baseUrl: 'https://api.bedrockpassport.com', authCallbackUrl: window.location.href.split('?')[0].split('#')[0], tenantId: 'orange-h0zmx5nf44', },
+      bedrockConfig: { baseUrl: 'https://api.bedrockpassport.com', authCallbackUrl: window.location.href.split('?')[0].split('#')[0], tenantId: 'orange-h0zmx5nf44', }, // Replace with your Orange ID Tenant ID if different
       walletAddress: null,
       role: '', userName: '', userEmail: '', userPhone: '', memberSince: '', farmerLocationCity: '',
       selectedRoleOnboarding: '', userNameOnboarding: '', userEmailOnboarding: '', userPhoneOnboarding: '', farmerLocationCityOnboarding: '',
@@ -892,22 +892,46 @@
       showFarmerProfileModal: false, selectedFarmerProfile: null,
       // ========================================================================
       // !!! CRITICAL: REPLACE THIS PINATA JWT WITH YOUR OWN !!!
+      // This token is essential for video uploads to IPFS via Pinata.
       // Get your JWT from https://app.pinata.cloud/keys
       // Video uploads WILL FAIL if this is not your valid JWT.
+      // Example: 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE'
       // ========================================================================
-      pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiY2Q2N2EzMC1lYmVmLTRiMWYtYjZmMi02OTI1ZGM2OWUzZDUiLCJlbWFpbCI6InRlamFzaW5kdWt1cmk1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI4OTY1ODM2MDlhMzE4YjY1N2QzMSIsInNjb3BlZEtleVNlY3JldCI6ImFkNWQ2OTc5NDkwNmFjODAzOGYxOGExNmYwMmIwOTc2NjlhNjQwNDY3MDExODdiZWRmOTdjMmZiMTA2NzdiNmYiLCJleHAiOjE3NzYwOTU3OTF9.dbyd6dnaASvYze1j5zVmPkoiDuQhA3PBczy0LxsRO-U', // Example: 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE'
-      pinataGateway: 'gateway.pinata.cloud',
-      weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', // <-- REPLACE THIS WITH YOUR ACTUAL OpenWeatherMap API KEY
+      pinataJwt: 'YOUR_PINATA_JWT_REPLACE_ME', // <-- REPLACE THIS WITH YOUR ACTUAL PINATA JWT
+      pinataGateway: 'gateway.pinata.cloud', // This is a common public gateway
+  
+      // ========================================================================
+      // !!! CRITICAL: REPLACE WITH YOUR OpenWeatherMap API KEY !!!
+      // For the farmer's weather station feature.
+      // Get your key from https://openweathermap.org/api
+      // Example: 'YOUR_OPENWEATHERMAP_API_KEY_REPLACE_ME'
+      // ========================================================================
+      weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY_REPLACE_ME', // <-- REPLACE THIS
+  
+      // ========================================================================
+      // !!! CRITICAL: REPLACE WITH YOUR Google Gemini API KEY !!!
+      // For the plant recommendation feature.
+      // Get your key from Google AI Studio or Google Cloud Console.
+      // Example: 'YOUR_GEMINI_API_KEY_REPLACE_ME'
+      // ========================================================================
+      geminiApiKey: 'YOUR_GEMINI_API_KEY_REPLACE_ME', // <-- REPLACE THIS
+  
+      // ========================================================================
+      // !!! CRITICAL: REPLACE WITH YOUR Groq API KEY !!!
+      // For the AgriBot chatbot feature.
+      // Get your key from https://console.groq.com/keys
+      // Example: 'YOUR_GROQ_API_KEY_REPLACE_ME'
+      // ========================================================================
+      groqApiKey: "YOUR_GROQ_API_KEY_REPLACE_ME", // <-- REPLACE THIS
+  
       currentWeather: null, forecastWeather: [], weatherLoading: false, weatherError: '',
       conversations: [], messages: [], activeConversationId: null, messageInputText: '',
       notifications: [], recentNotifications: [],
       showLoadingModal: false, loadingMessage: '',
       targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
-      geminiApiKey: 'YOUR_GEMINI_API_KEY_HERE', // <-- REPLACE THIS WITH YOUR ACTUAL Google Gemini API KEY
       plantImageFile: null, plantImageUrl: null, plantImageMimeType: null, analysisInProgress: false, analysisResultText: '', parsedAnalysis: { plantName: null, diseaseName: null, treatmentRecommended: null }, analysisErrorText: '',
   
       // Groq Chatbot State
-      groqApiKey: "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", // Your Groq API Key (as provided)
       chatMessages: [],
       chatInput: '',
       isGroqLoading: false,
@@ -1013,7 +1037,7 @@
           if (!this.recordBlob) { alert("No video."); return; }
           if (!this.recordForm.crop || !this.recordForm.pesticide || !this.recordForm.location || !this.recordForm.pesticideCompany || !this.recordForm.purpose) { alert("Fill details & purpose."); return; }
   
-          if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE' || !this.pinataJwt || this.pinataJwt.length < 50) {
+          if (this.pinataJwt === 'YOUR_PINATA_JWT_REPLACE_ME' || !this.pinataJwt || this.pinataJwt.length < 50) {
               const errorMsg = "CRITICAL ERROR: Pinata JWT is not configured correctly. Video uploads WILL FAIL. Please update 'pinataJwt' in the script.";
               this.uploadError = errorMsg;
               alert(errorMsg);
@@ -1307,7 +1331,7 @@
       simulateMemberSince(id) { let hash = 0; for (let i = 0; i < (id || '').length; i++) { hash = (hash << 5) - hash + id.charCodeAt(i); hash |= 0; } const daysAgo = Math.abs(hash % 730) + 30; const joinDate = new Date(); joinDate.setDate(joinDate.getDate() - daysAgo); return joinDate.toLocaleDateString(); },
       simulateFarmName(id) { return id ? `Farm ${id.substring(0, 5)}` : "The Good Farm"; },
       simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - bioHash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
-      async fetchWeather() { if (!this.farmerLocationCity) { this.weatherError = "Enter city."; return; } if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') { this.weatherError = "Weather API key needed. Please configure in script."; alert(this.weatherError); return; } this.weatherLoading = true; this.weatherError = ''; this.currentWeather = null; this.forecastWeather = []; const city = this.farmerLocationCity; const apiKey = this.weatherApiKey; const units = 'metric'; try { const currentResponse = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.currentWeather = currentResponse.data; const forecastResponse = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.forecastWeather = this.processForecastData(forecastResponse.data); } catch (error) { if (error.response) { this.weatherError = `Err ${error.response.status}: ${error.response.data.message || 'Weather error.'}`; if (error.response.status === 401) this.weatherError += " Check API key."; else if (error.response.status === 404) this.weatherError = `No weather for "${city}".`; } else if (error.request) { this.weatherError = "Network/CORS error."; } else { this.weatherError = "Unexpected weather error."; } console.error(this.weatherError); alert(this.weatherError); } finally { this.weatherLoading = false; } },
+      async fetchWeather() { if (!this.farmerLocationCity) { this.weatherError = "Enter city."; return; } if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY_REPLACE_ME') { this.weatherError = "Weather API key needed. Please configure in script."; alert(this.weatherError); return; } this.weatherLoading = true; this.weatherError = ''; this.currentWeather = null; this.forecastWeather = []; const city = this.farmerLocationCity; const apiKey = this.weatherApiKey; const units = 'metric'; try { const currentResponse = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.currentWeather = currentResponse.data; const forecastResponse = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.forecastWeather = this.processForecastData(forecastResponse.data); } catch (error) { if (error.response) { this.weatherError = `Err ${error.response.status}: ${error.response.data.message || 'Weather error.'}`; if (error.response.status === 401) this.weatherError += " Check API key."; else if (error.response.status === 404) this.weatherError = `No weather for "${city}".`; } else if (error.request) { this.weatherError = "Network/CORS error."; } else { this.weatherError = "Unexpected weather error."; } console.error(this.weatherError); alert(this.weatherError); } finally { this.weatherLoading = false; } },
       processForecastData(data) { if (!data || !data.list) return []; const dailyData = {}; data.list.forEach(item => { const date = new Date(item.dt * 1000); const dateString = date.toISOString().split('T')[0]; if (!dailyData[dateString]) { dailyData[dateString] = { date: date, dateString: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), temps: [], icons: [], descriptions: [] }; } dailyData[dateString].temps.push(item.main.temp); dailyData[dateString].icons.push(item.weather[0].icon); dailyData[dateString].descriptions.push(item.weather[0].description); }); return Object.values(dailyData).map(day => { let repIcon = day.icons[0]; let repDesc = day.descriptions[0]; const middayIdx = data.list.findIndex(item => new Date(item.dt * 1000).toISOString().startsWith(day.date.toISOString().split('T')[0]) && new Date(item.dt*1000).getHours() >= 11 && new Date(item.dt*1000).getHours() <= 14); if (middayIdx !== -1) { repIcon = data.list[middayIdx].weather[0].icon; repDesc = data.list[middayIdx].weather[0].description; } return { date: day.date, dateString: day.dateString, minTemp: Math.min(...day.temps), maxTemp: Math.max(...day.temps), icon: repIcon, description: repDesc }; }).slice(0, 5); },
       getWeatherIconUrl(iconCode) { return `https://openweathermap.org/img/wn/${iconCode}@2x.png`; },
       saveFarmerCity() { if (this.isUserAuthenticated && this.role === 'farmer') { const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; if (userProfiles[this.currentUserIdentifier]) { userProfiles[this.currentUserIdentifier].farmerLocationCity = this.farmerLocationCity; localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); } } },
@@ -1465,7 +1489,7 @@
       formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } },
       handlePlantImageUpload(event) { const file = event.target.files[0]; if (file) { this.plantImageFile = file; this.plantImageMimeType = file.type; this.plantImageUrl = URL.createObjectURL(file); this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; } },
       convertFileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => { resolve(reader.result.split(',')[1]); }; reader.onerror = error => reject(error); }); },
-      async analyzePlant() { if (!this.plantImageFile) { this.analysisErrorText = "Please upload an image first."; return; } if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script."; return; } this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; try { const base64Image = await this.convertFileToBase64(this.plantImageFile); const apiKey = this.geminiApiKey; const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; const prompt = `Analyze this image of a plant. Identify the plant if possible, then detect any visible diseases. Based on your findings, provide the following information, each on a new line, formatted exactly as: Plant: [Plant Name or 'Unknown'] Disease: [Disease Name or 'Healthy' or 'Not Apparent' or 'Unknown'] Treatment: [Recommended treatment and/or types of pesticides. If healthy, state 'No treatment needed'. If disease is not apparent or unknown, state 'Cannot recommend treatment without clear disease identification.']. Be concise and focus on actionable recommendations. If the image is not clear or not a plant, state that.`; const payload = { contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: this.plantImageMimeType, data: base64Image } } ] }], generationConfig: { "temperature": 0.4, "topK": 32, "topP": 1, "maxOutputTokens": 2048, }, safetySettings: [ { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" } ] }; const response = await axios.post(url, payload); if (response.data && response.data.candidates && response.data.candidates.length > 0 && response.data.candidates[0].content && response.data.candidates[0].content.parts && response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) { this.analysisResultText = response.data.candidates[0].content.parts[0].text; this.parseGeminiResponse(this.analysisResultText); } else if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) { this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`; this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' }; } else { console.error("Unexpected response structure from Gemini API:", response.data); throw new Error("Invalid or empty response structure from Gemini API."); } } catch (error) { console.error("Error analyzing plant image with Gemini:", error); if (error.response) { this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`; if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) { this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project."; } else if (error.response.status === 429) { this.analysisErrorText += " You might have exceeded your API quota."; } } else if (error.request) { this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection."; } else { this.analysisErrorText = "An unexpected error occurred: " + error.message; } this.parsedAnalysis = { plantName: '-', diseaseName: '-', treatmentRecommended: '-' }; } finally { this.analysisInProgress = false; } },
+      async analyzePlant() { if (!this.plantImageFile) { this.analysisErrorText = "Please upload an image first."; return; } if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_REPLACE_ME' || !this.geminiApiKey || this.geminiApiKey.length < 30) { this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script."; return; } this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; try { const base64Image = await this.convertFileToBase64(this.plantImageFile); const apiKey = this.geminiApiKey; const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; const prompt = `Analyze this image of a plant. Identify the plant if possible, then detect any visible diseases. Based on your findings, provide the following information, each on a new line, formatted exactly as: Plant: [Plant Name or 'Unknown'] Disease: [Disease Name or 'Healthy' or 'Not Apparent' or 'Unknown'] Treatment: [Recommended treatment and/or types of pesticides. If healthy, state 'No treatment needed'. If disease is not apparent or unknown, state 'Cannot recommend treatment without clear disease identification.']. Be concise and focus on actionable recommendations. If the image is not clear or not a plant, state that.`; const payload = { contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: this.plantImageMimeType, data: base64Image } } ] }], generationConfig: { "temperature": 0.4, "topK": 32, "topP": 1, "maxOutputTokens": 2048, }, safetySettings: [ { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" } ] }; const response = await axios.post(url, payload); if (response.data && response.data.candidates && response.data.candidates.length > 0 && response.data.candidates[0].content && response.data.candidates[0].content.parts && response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) { this.analysisResultText = response.data.candidates[0].content.parts[0].text; this.parseGeminiResponse(this.analysisResultText); } else if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) { this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`; this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' }; } else { console.error("Unexpected response structure from Gemini API:", response.data); throw new Error("Invalid or empty response structure from Gemini API."); } } catch (error) { console.error("Error analyzing plant image with Gemini:", error); if (error.response) { this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`; if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) { this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project."; } else if (error.response.status === 429) { this.analysisErrorText += " You might have exceeded your API quota."; } } else if (error.request) { this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection."; } else { this.analysisErrorText = "An unexpected error occurred: " + error.message; } this.parsedAnalysis = { plantName: '-', diseaseName: '-', treatmentRecommended: '-' }; } finally { this.analysisInProgress = false; } },
       parseGeminiResponse(text) { const result = { plantName: 'Unknown', diseaseName: 'Not Apparent', treatmentRecommended: 'Could not determine specific treatment.' }; if (!text) { this.parsedAnalysis = result; return; } const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0); let currentPlant = null; let currentDisease = null; let currentTreatment = []; lines.forEach(line => { const lowerLine = line.toLowerCase(); if (lowerLine.startsWith('plant:')) { currentPlant = line.substring('plant:'.length).trim(); } else if (lowerLine.startsWith('disease:')) { currentDisease = line.substring('disease:'.length).trim(); } else if (lowerLine.startsWith('treatment:')) { currentTreatment.push(line.substring('treatment:'.length).trim()); } else if (currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentDisease && !currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentPlant && !currentDisease && !currentTreatment.length > 0) { if (lowerLine.includes("healthy") || lowerLine.includes("not apparent") || lowerLine.includes("unknown disease")) { currentDisease = line; } } }); if (currentPlant) result.plantName = currentPlant; if (currentDisease) result.diseaseName = currentDisease; if (currentTreatment.length > 0) result.treatmentRecommended = currentTreatment.join('\n'); if (result.plantName === 'Unknown' && result.diseaseName === 'Not Apparent' && result.treatmentRecommended === 'Could not determine specific treatment.') { const plantMatch = text.match(/Plant:\s*(.*)/i); const diseaseMatch = text.match(/Disease:\s*(.*)/i); const treatmentMatch = text.match(/Treatment:\s*(.*?)(?:\n|$)/is); if (plantMatch && plantMatch[1]) result.plantName = plantMatch[1].trim(); if (diseaseMatch && diseaseMatch[1]) result.diseaseName = diseaseMatch[1].trim(); if (treatmentMatch && treatmentMatch[1]) result.treatmentRecommended = treatmentMatch[1].trim(); } this.parsedAnalysis = result; },
   
       // Groq Chatbot Methods
@@ -1485,6 +1509,12 @@
           this.chatInput = '';
           this.isGroqLoading = true;
   
+          if (this.groqApiKey === 'YOUR_GROQ_API_KEY_REPLACE_ME' || !this.groqApiKey || this.groqApiKey.length < 30) {
+              this.chatMessages.push({ id: Date.now(), sender: 'bot', text: "Sorry, AgriBot is not configured. Please contact support (Developer: Check Groq API Key)." });
+              this.isGroqLoading = false;
+              return;
+          }
+  
           const messagesForApi = [{ role: 'system', content: this.groqSystemPrompt }];
           const recentHistory = this.chatMessages
               .slice(-7) // Take last 7 messages (user + bot responses)
@@ -1497,11 +1527,11 @@
           try {
               const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
                   messages: messagesForApi,
-                  model: 'llama3-8b-8192', // Updated model
+                  model: 'llama3-8b-8192', // Model as provided
                   temperature: 0.7,
                   max_tokens: 1024,
-                  // top_p: 1, // Optional, can be omitted
-                  // stream: false // Optional, default is false
+                  // top_p: 1, // Optional
+                  // stream: false // Optional
               }, {
                   headers: {
                       'Authorization': `Bearer ${this.groqApiKey}`,
@@ -1551,16 +1581,24 @@
       if (!this.initializeOrangeIdSDK()) { console.warn("Orange ID SDK failed to initialize. Orange ID login will not be available."); }
   
       // --- API KEY WARNINGS ---
-      if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE' || !this.pinataJwt || this.pinataJwt.length < 50) {
-           console.warn("CONFIG WARNING: Pinata JWT not set or is placeholder. Video uploads WILL FAIL until a valid JWT is provided.");
+      if (this.pinataJwt === 'YOUR_PINATA_JWT_REPLACE_ME' || !this.pinataJwt || this.pinataJwt.length < 50) {
+           console.error("CRITICAL CONFIG ERROR: Pinata JWT not set or is placeholder. Video uploads WILL FAIL until a valid JWT is provided in the script's `pinataJwt` data property.");
+           alert("DEVELOPER WARNING: Pinata JWT is not configured. Video uploads will fail. See console.");
       }
-      if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); }
-      if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder or invalid. Plant recommendation WILL FAIL.");
-      } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for Generative Language API."); }
-      if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY_REPLACE_ME" || this.groqApiKey.length < 30) { console.error("CONFIG ERROR: Groq API Key is missing or invalid. AgriBot WILL FAIL."); }
+      if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY_REPLACE_ME' || !this.weatherApiKey) {
+          console.warn("CONFIG WARNING: OpenWeatherMap API Key not set or is placeholder. Weather feature WILL NOT WORK. Update `weatherApiKey` in the script.");
+      }
+      if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_REPLACE_ME' || !this.geminiApiKey || this.geminiApiKey.length < 30) {
+          console.error("CRITICAL CONFIG ERROR: Gemini API Key is not set or is placeholder. Plant recommendation feature WILL FAIL. Update `geminiApiKey` in the script.");
+      } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { // Common prefix for Google keys
+          console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for the Generative Language API in your Google Cloud Project.");
+      }
+      if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY_REPLACE_ME" || this.groqApiKey.length < 30) {
+          console.error("CRITICAL CONFIG ERROR: Groq API Key is missing or invalid. AgriBot WILL FAIL. Update `groqApiKey` in the script.");
+      }
       // --- END API KEY WARNINGS ---
   
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail on some browsers/devices."); }
       this.loadDataFromLocalStorage(); // This will call loadDemoDataIfNeeded if necessary
       if (this.checkOrangeIdCallback()) { return; } // If it's an Orange ID callback, let it process
       // Attempt to auto-reconnect Solana wallet if previously connected
