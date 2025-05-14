@@ -1142,7 +1142,15 @@
           };
           this.farmerListings.unshift({ ...newListing });
           this.allListings.unshift({ ...newListing });
-          if (this.listingForm.notifyBuyers) { this.notifyBuyersAboutListing(newListing, true); this.listingNotificationSent = true; }
+          if (this.listingForm.notifyBuyers) {
+              this.notifyBuyersAboutListing(newListing, true); // Marks listing.notificationSent = true
+              this.listingNotificationSent = true; // For immediate UI feedback on this form
+              // Global broadcast simulation
+              this.addNotification(
+                `Marketplace Update: New listing for "${newListing.crop}" by ${this.getFarmerDisplayIdentifier(newListing.farmerWallet)}.`,
+                'info', null, true
+              );
+          }
           this.createdListingId = txHash;
           this.listingForm = { cid: '', minPrice: '', maxPrice: '', notifyBuyers: true };
           this.saveDataToLocalStorage();
@@ -1181,6 +1189,11 @@
           this.farmerFundingRequests.unshift({ ...newRequest });
           this.allFundingRequests.unshift({ ...newRequest });
           this.createdFundingRequest = true;
+          // Global broadcast simulation
+          this.addNotification(
+            `Investment Opportunity: New project "${newRequest.title}" by ${this.getFarmerDisplayIdentifier(newRequest.farmerWallet)}.`,
+            'info', null, true
+          );
           this.fundingForm = { title: '', crop: '', acres: null, amount: null, method: '', cid: '', description: '', timeline: null, roi: null, investorShare: null, notifyInvestors: true };
           this.saveDataToLocalStorage();
           setTimeout(() => this.createdFundingRequest = false, 3000);
@@ -1217,7 +1230,7 @@
               this.allListings = this.allListings.filter(l => l.id !== this.selectedListing.id);
               if (this.role === 'farmer' && this.selectedListing.farmerWallet === this.currentUserIdentifier) { this.farmerListings = this.farmerListings.filter(l => l.id !== this.selectedListing.id); }
               this.addNotification(`Listing "${newPurchase.crop}" purchased!`, 'success');
-              this.addNotification(`Your listing "${newPurchase.crop}" purchased by ${newPurchase.buyerWallet.substring(0,6)}...`, 'success', newPurchase.farmerWallet);
+              this.addNotification(`Your listing "${newPurchase.crop}" purchased by ${this.getFarmerDisplayIdentifier(newPurchase.buyerWallet, 6)}...`, 'success', newPurchase.farmerWallet);
               this.purchaseStatus = "Purchase successful!";
               this.saveDataToLocalStorage();
               setTimeout(() => { this.closeBuyModal(); }, 2500);
@@ -1305,7 +1318,24 @@
       scrollToMessageBottom() { const el = this.$refs.messageContainer; if (el) setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50); },
       getUnreadCountForConversation(convId) { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.conversationId === convId && msg.receiver === this.currentUserIdentifier && !msg.read).length; },
       markConversationAsRead(convId) { let changed = false; this.messages.forEach(msg => { if (msg.conversationId === convId && msg.receiver === this.currentUserIdentifier && !msg.read) { msg.read = true; changed = true; } }); if (changed) this.saveDataToLocalStorage(); },
-      addNotification(message, type = 'info', recipientIdentifier = null) { if (recipientIdentifier === null || recipientIdentifier === this.currentUserIdentifier) { const newNotification = { id: 'notif_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if(this.recentNotifications.length === 0) { this.showNextToastNotification(); } } else { console.log(`(SIM) Notif for ${recipientIdentifier}: "${message}" by ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`); } },
+      addNotification(message, type = 'info', recipientIdentifier = null, globalBroadcast = false) {
+          if (globalBroadcast && this.isUserAuthenticated) {
+              const newNotification = { id: 'notif_global_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false };
+              this.notifications.push(newNotification);
+              if (this.recentNotifications.length === 0 || !this.recentNotifications.some(n => n.message === message && Date.now() - n.timestamp < 10000)) { // Avoid spamming same global notif
+                  this.showNextToastNotification();
+              }
+              console.log(`GLOBAL BROADCAST (Demo): ${message}`);
+          } else if (recipientIdentifier === null || recipientIdentifier === this.currentUserIdentifier) {
+              const newNotification = { id: 'notif_user_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false };
+              this.notifications.push(newNotification);
+              if (this.recentNotifications.length === 0) {
+                  this.showNextToastNotification();
+              }
+          } else if (recipientIdentifier) {
+              console.log(`(SIM) Targeted Notif for ${recipientIdentifier}: "${message}" by ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`);
+          }
+      },
       showNextToastNotification() { if (this.recentNotifications.length >= 3 || this.notifications.length === 0) return; const notificationToShow = this.notifications.shift(); this.recentNotifications.push(notificationToShow); this.$nextTick(() => { setTimeout(() => { const index = this.recentNotifications.findIndex(n => n.id === notificationToShow.id); if(index > -1) { this.$set(this.recentNotifications[index], 'show', true); } }, 50); }); notificationToShow.timeoutId = setTimeout(() => this.dismissNotification(notificationToShow.id), 4500); },
       dismissNotification(id) { const index = this.recentNotifications.findIndex(n => n.id === id); if (index > -1) { if (this.recentNotifications[index].timeoutId) clearTimeout(this.recentNotifications[index].timeoutId); this.$set(this.recentNotifications[index], 'show', false); setTimeout(() => { const removeIndex = this.recentNotifications.findIndex(n => n.id === id); if (removeIndex > -1) this.recentNotifications.splice(removeIndex, 1); this.$nextTick(() => this.showNextToastNotification()); }, 400); } },
       notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${this.getFarmerDisplayIdentifier(listing.farmerWallet)}... available!`, 'info'); if (this.role === 'buyer' && this.currentUserIdentifier !== listing.farmerWallet) this.addNotification(`Check new listing for "${listing.crop}"!`, 'info'); console.log(`SIM: Notifying buyers about listing ${listing.id}`); },
@@ -1357,14 +1387,14 @@
   
         if (loadFreshDemo) {
           console.log("Loading/Reloading PestiVid Demo Data with videoFileHash.");
-          const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u';
+          const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u'; // Example CID for placeholder video
           const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString();
           const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
   
-          const demoFarmer1 = 'oid_farmer_1_sub';
-          const demoFarmer2 = 'sol_farmer_2_addr';
-          const demoInvestor1 = 'oid_investor_1_sub';
-          const demoBuyer1 = 'sol_buyer_1_addr';
+          const demoFarmer1 = 'oid_farmer_1_sub'; // Simulated Orange ID for Farmer 1
+          const demoFarmer2 = 'sol_farmer_2_addr'; // Simulated Solana address for Farmer 2
+          const demoInvestor1 = 'oid_investor_1_sub'; // Simulated Orange ID for Investor 1
+          const demoBuyer1 = 'sol_buyer_1_addr'; // Simulated Solana address for Buyer 1
   
           const demoFarmerVideos = [
               { farmerWallet: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', crop: 'Tomatoes (Demo Video)', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell', uploadTimestamp: oneDayAgo},
@@ -1378,8 +1408,8 @@
           ];
   
           this.allFundingRequests = [
-              { id: 'fr_demo1', farmerWallet: demoFarmer1, title: 'Organic Strawberry Expansion (Demo)', crop: 'Strawberries (Demo Video)', acres: 2.5, amount: 25, method: 'organic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', description: 'Expanding organic strawberry fields...', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 10, status: 'partially_funded', createdAt: oneDayAgo, investors: [{investorId: demoInvestor1, amount: 10, txHash:'sim_inv_tx_demo1'}], updates: [], txHash: 'sim_fr_tx_1' },
-              { id: 'fr_demo2', farmerWallet: demoFarmer2, title: 'Hydroponic Lettuce Setup (Demo)', crop: 'Lettuce (Demo Video)', acres: 0.5, amount: 40, method: 'hydroponic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', description: 'Setting up a new NFT hydroponic system...', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: oneDayAgo, investors: [], updates: [], txHash: 'sim_fr_tx_2' },
+              { id: 'fr_demo1', farmerWallet: demoFarmer1, title: 'Organic Strawberry Expansion (Demo)', crop: 'Strawberries (Demo Video)', acres: 2.5, amount: 25, method: 'organic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 10, status: 'partially_funded', createdAt: oneDayAgo, investors: [{investorId: demoInvestor1, amount: 10, txHash:'sim_inv_tx_demo1'}], updates: [{id:'upd1', date: '1 week ago', text:'Initial tilling complete.'}], txHash: 'sim_fr_tx_1' },
+              { id: 'fr_demo2', farmerWallet: demoFarmer2, title: 'Hydroponic Lettuce Setup (Demo)', crop: 'Lettuce (Demo Video)', acres: 0.5, amount: 40, method: 'hydroponic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', description: 'Setting up a new state-of-the-art NFT hydroponic system for year-round lettuce production. Focus on water efficiency and rapid growth cycles.', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: oneDayAgo, investors: [], updates: [], txHash: 'sim_fr_tx_2' },
           ];
   
           const demoBuyerPurchases = [
@@ -1387,7 +1417,7 @@
           ];
   
           const demoInvestorInvestments = [
-              { id: 'inv_demo1', investorWallet: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)', farmerWallet: demoFarmer1, crop: 'Strawberries (Demo Video)', method: 'organic', description: 'Expanding organic strawberry fields...', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 10, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', txHash: 'sim_inv_tx_demo1' }
+              { id: 'inv_demo1', investorWallet: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)', farmerWallet: demoFarmer1, crop: 'Strawberries (Demo Video)', method: 'organic', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 10, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', txHash: 'sim_inv_tx_demo1' }
           ];
   
           const demoInvestorTransactions = [
@@ -1416,7 +1446,7 @@
               investorTransactions: demoInvestorTransactions,
               messages: demoMessages,
               conversations: demoConversations,
-              chatMessages: []
+              chatMessages: [] // Initialize empty chat messages for AgriBot
           }));
   
           const demoProfiles = {};
@@ -1523,14 +1553,11 @@
       // --- API KEY WARNINGS ---
       if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE' || !this.pinataJwt || this.pinataJwt.length < 50) {
            console.warn("CONFIG WARNING: Pinata JWT not set or is placeholder. Video uploads WILL FAIL until a valid JWT is provided.");
-           // You might want to alert the user/developer more visibly if this is a development environment.
-           // For a production app, this kind of check should ideally happen server-side or during a build step.
-           // alert("Configuration Incomplete: Pinata JWT is missing or invalid. Video uploads will not work. Please check the console and update the script.");
       }
       if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); }
       if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder or invalid. Plant recommendation WILL FAIL.");
       } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for Generative Language API."); }
-      if (this.groqApiKey === 'YOUR_GROQ_API_KEY_REPLACE_ME' || !this.groqApiKey || this.groqApiKey.length < 30) { console.error("CONFIG ERROR: Groq API Key is missing or invalid. AgriBot WILL FAIL."); }
+      if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY_REPLACE_ME" || this.groqApiKey.length < 30) { console.error("CONFIG ERROR: Groq API Key is missing or invalid. AgriBot WILL FAIL."); }
       // --- END API KEY WARNINGS ---
   
       if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
@@ -1553,6 +1580,6 @@
     }
   });
   window.vueApp = app;
-  </script>
-  </body>
-  </html>
+</script>
+</body>
+</html>
