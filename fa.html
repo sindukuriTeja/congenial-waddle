@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>PestiVid - Agricultural Platform (Web3 Demo)</title>
+  <meta name="description" content="A Web3 demo platform for video-verified agricultural produce, marketplace, and funding.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Tailwind CSS -->
@@ -345,7 +346,12 @@
     <!-- Farmer PestiVid Section -->
     <section v-if="current==='farmerPestiVid' && !isOrangeIdCallback" class="max-w-3xl mx-auto mt-6">
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-video mr-2"></i>PestiVid: Record Crop Video</h2>
-      <div class="bg-white rounded shadow-md p-6 space-y-6">
+      <div v-if="!isUserAuthenticated || role !== 'farmer'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as a Farmer to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+      <div v-else class="bg-white rounded shadow-md p-6 space-y-6">
         <form @submit.prevent>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div> <label class="block text-gray-600 mb-1 text-sm">Crop Type</label> <input v-model="recordForm.crop" class="w-full px-2 py-2 border rounded text-sm" required placeholder="e.g., Tomatoes"> </div>
@@ -378,7 +384,6 @@
             <div v-if="uploading && !showLoadingModal" class="flex items-center text-blue-600 text-sm ml-3"> <i class="fas fa-spinner fa-spin mr-2"></i> Uploading... Please wait. </div>
           </div>
           <p class="text-xs mt-2 text-gray-500">Allow camera access. Video file is stored locally until upload.</p>
-          <div v-if="!isUserAuthenticated" class="text-red-500 mt-3 bg-red-50 p-2 rounded border border-red-200 text-sm"> <i class="fas fa-exclamation-triangle mr-1"></i> Please log in to record and upload videos. </div>
           <div v-if="uploadCid" class="text-green-600 mt-3 bg-green-50 p-3 rounded border border-green-200 text-sm">
               <div class="flex items-center mb-2"> <i class="fas fa-check-circle mr-2"></i> Uploaded to IPFS! CID: <span class="font-mono bg-green-100 px-1 py-0.5 rounded break-all ml-1">{{ uploadCid }}</span> </div>
               <div v-if="lastUploadedVideoFileHash" class="flex items-center mb-2 text-xs"> <i class="fas fa-fingerprint mr-2 text-gray-500"></i> Video File Hash (SHA256): <span class="font-mono bg-green-100 px-1 py-0.5 rounded break-all ml-1 text-gray-700">{{ lastUploadedVideoFileHash }}</span> </div>
@@ -393,7 +398,12 @@
     <!-- Farmer AgriStream Section -->
     <section v-if="current==='farmerAgriStream' && !isOrangeIdCallback" class="max-w-4xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-5"><i class="fas fa-stream mr-2"></i>AgriStream: My Crop Videos</h2>
-        <div class="bg-white rounded shadow-md p-6">
+         <div v-if="!isUserAuthenticated || role !== 'farmer'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as a Farmer to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+        <div v-else class="bg-white rounded shadow-md p-6">
             <div v-if="farmerVideos.length===0" class="text-gray-600 text-center p-6 bg-gray-50 rounded"> <i class="fas fa-film text-4xl text-gray-400 mb-3"></i><br> No uploads yet. Go to <a href="#" class="text-green-700 underline" @click.prevent="switchPage('farmerPestiVid')">PestiVid</a> to upload. </div>
             <div v-else class="space-y-6">
             <div v-for="vid in farmerVideos" :key="vid.cid" class="flex flex-col md:flex-row items-start border-b last:border-b-0 pb-6 gap-6 transition-all duration-500" :ref="'videoCard-' + vid.cid" :class="{'bg-yellow-50 border-l-4 border-yellow-400 shadow-lg transform scale-102': vid.cid === highlightedAgriStreamVideoCid}">
@@ -419,7 +429,12 @@
     <!-- Farmer Sell Section -->
     <section v-if="current==='farmerSell' && !isOrangeIdCallback" class="max-w-2xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-tags mr-2"></i>Sell Farm Crop on Marketplace</h2>
-      <div class="bg-white rounded shadow-md p-6">
+         <div v-if="!isUserAuthenticated || role !== 'farmer'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as a Farmer to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+      <div v-else class="bg-white rounded shadow-md p-6">
         <form @submit.prevent="createListing">
           <div class="mb-4">
             <label class="block text-gray-600 mb-1">Select Uploaded Video (Unlisted only)</label>
@@ -437,7 +452,6 @@
           </div>
           <div class="mb-4"> <label class="flex items-center"> <input type="checkbox" v-model="listingForm.notifyBuyers" class="form-checkbox h-4 w-4 text-green-600"> <span class="ml-2 text-sm text-gray-700">Notify potential buyers about this listing</span> </label> </div>
           <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!listingForm.cid || !isUserAuthenticated"> <i class="fas fa-plus-circle mr-1"></i>Create Listing </button>
-          <div v-if="!isUserAuthenticated" class="text-red-500 mt-3 text-sm text-center">Log in to create listings.</div>
         </form>
         <div v-if="createdListingId" class="bg-green-100 text-green-700 px-4 py-3 mt-4 rounded font-medium text-sm"> <i class="fas fa-check mr-1"></i> Listing created successfully! Platform ID: <span class="font-mono text-xs">{{ createdListingId.substring(0,10) }}...</span> <div v-if="listingNotificationSent" class="mt-1 text-sm"> <i class="fas fa-bell mr-1"></i> Buyers have been notified about your new listing. </div> </div>
         <div class="mt-8">
@@ -446,7 +460,7 @@
           <ul v-else class="space-y-3">
             <li v-for="l in farmerListings" :key="l.id" class="py-3 px-4 border rounded flex flex-col sm:flex-row justify-between sm:items-center text-sm bg-white shadow-sm">
               <div> <span class="font-medium">{{ l.crop }}</span> <span class="text-xs text-gray-500 ml-1"> ({{l.location}})</span> <br> <span class="text-xs text-gray-500"> CID: {{l.cid.substring(0, 8)}}...</span> | <span class="text-xs text-gray-500"> Pest. Co: {{ l.pesticideCompany || 'N/A' }}</span> <div v-if="l.notificationSent" class="text-xs text-green-600 mt-1"> <i class="fas fa-bell mr-1"></i> Buyers notified </div> </div>
-              <div class="mt-2 sm:mt-0 text-right"> <span>Min: <span class="font-mono font-semibold">{{ l.minPrice }}</span></span><br> <span>Max: <span class="font-mono font-semibold">{{ l.maxPrice }}</span></span> <button v-if="!l.notificationSent" @click="notifyBuyersAboutListing(l)" class="ml-2 text-xs text-blue-600 border border-blue-300 rounded px-2 py-1 hover:bg-blue-50"> <i class="fas fa-bell-slash mr-1"></i> Notify </button> </div>
+              <div class="mt-2 sm:mt-0 text-right"> <span>Min: <span class="font-mono font-semibold">{{ l.minPrice }}</span></span><br> <span>Max: <span class="font-mono font-semibold">{{ l.maxPrice }}</span></span> <button v-if="!l.notificationSent" @click="notifyBuyersAboutListing(l, true)" class="ml-2 text-xs text-blue-600 border border-blue-300 rounded px-2 py-1 hover:bg-blue-50"> <i class="fas fa-bell-slash mr-1"></i> Notify </button> </div>
             </li>
           </ul>
         </div>
@@ -455,7 +469,12 @@
     <!-- Farmer Funding Section -->
     <section v-if="current==='farmerFunding' && !isOrangeIdCallback" class="max-w-3xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-money-bill-wave mr-2"></i>Request Funding for Your Farm</h2>
-        <div class="bg-white rounded shadow-md p-6">
+         <div v-if="!isUserAuthenticated || role !== 'farmer'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as a Farmer to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+        <div v-else class="bg-white rounded shadow-md p-6">
             <form @submit.prevent="createFundingRequest_V1">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div> <label class="block text-gray-600 mb-1 text-sm">Project Title</label> <input v-model="fundingForm.title" class="w-full px-3 py-2 border rounded text-sm" required placeholder="e.g., Organic Tomato Expansion"> </div>
@@ -469,7 +488,6 @@
             <div class="mb-4"> <label class="block text-gray-600 mb-1 text-sm">Project Description</label> <textarea v-model="fundingForm.description" class="w-full px-3 py-2 border rounded text-sm" rows="4" required placeholder="Describe your project, growing practices, and how funds will be used..."></textarea> </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"> <div> <label class="block text-gray-600 mb-1 text-sm">Timeline (Months)</label> <input type="number" v-model.number="fundingForm.timeline" class="w-full px-3 py-2 border rounded text-sm" min="1" max="36" required placeholder="How many months until harvest?"> </div> <div> <label class="block text-gray-600 mb-1 text-sm">Investor Share (%)</label> <input type="number" v-model.number="fundingForm.investorShare" class="w-full px-3 py-2 border rounded text-sm" min="1" max="80" required placeholder="Percentage of harvest profit for investors"> </div> </div>
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full" :disabled="!fundingForm.cid || !isUserAuthenticated"> <i class="fas fa-paper-plane mr-1"></i> Create Funding Request </button>
-            <div v-if="!isUserAuthenticated" class="text-red-500 mt-3 text-sm text-center">Log in to create funding requests.</div>
             </form>
             <div v-if="createdFundingRequest" class="bg-green-100 text-green-700 px-4 py-2 mt-4 rounded font-medium text-sm"> <i class="fas fa-check mr-1"></i> Funding request created and is now visible to investors! </div>
             <div class="mt-8">
@@ -492,6 +510,12 @@
     <!-- Buyer AgriSell Section -->
     <section v-if="current==='buyerAgriSell' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-shopping-basket mr-2"></i>AgriSell: Marketplace</h2>
+         <div v-if="!isUserAuthenticated || role !== 'buyer'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as a Buyer to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+      <div v-else>
       <div class="bg-white rounded shadow-md p-6 mb-7">
         <div class="flex flex-col md:flex-row md:items-end gap-5">
           <div class="w-full md:w-48"> <label class="text-gray-600 text-sm">Crop Type</label> <select v-model="buyerFilters.crop" class="w-full px-2 py-1 border rounded bg-white text-sm"> <option value="">All</option> <option v-for="c in uniqueCrops" :key="c">{{c}}</option> </select> </div>
@@ -515,10 +539,17 @@
           <button @click="startOrGoToConversation(l.farmerId)" v-if="isUserAuthenticated && currentUserIdentifier !== l.farmerId" class="mt-2 text-xs text-blue-600 hover:text-blue-700 border border-blue-400 rounded-full px-3 py-1 hover:bg-blue-50 flex items-center justify-center"> <i class="fas fa-envelope mr-1"></i> Message Seller </button>
         </div>
       </div>
+      </div>
     </section>
     <!-- Investor Projects Section -->
     <section v-if="current==='investorProjects' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-3"><i class="fas fa-project-diagram mr-2"></i>Investment Opportunities</h2>
+         <div v-if="!isUserAuthenticated || role !== 'investor'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as an Investor to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+      <div v-else>
       <div class="bg-white rounded shadow-md p-6 mb-7">
         <div class="flex flex-col md:flex-row md:items-end gap-5">
           <div class="w-full md:w-48"> <label class="text-gray-600 text-sm">Crop Type</label> <select v-model="investorFilters.crop" class="w-full px-2 py-1 border rounded bg-white text-sm"> <option value="">All Crops</option> <option v-for="c in uniqueFundingCrops" :key="c">{{c}}</option> </select> </div>
@@ -552,10 +583,17 @@
         </div>
       </div>
       <div v-if="filteredFundingRequests.length === 0" class="bg-gray-50 p-8 text-center rounded-lg mt-4"> <i class="fas fa-seedling text-gray-300 text-4xl mb-3"></i> <h3 class="text-gray-600 text-lg mb-2">No Projects Found</h3> <p class="text-gray-500">Try adjusting your filters or check back later for new investment opportunities.</p> </div>
+      </div>
     </section>
     <!-- Investor Portfolio Section -->
     <section v-if="current==='investorPortfolio' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
         <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-chart-pie mr-2"></i>Investment Portfolio</h2>
+         <div v-if="!isUserAuthenticated || role !== 'investor'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as an Investor to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+      <div v-else>
         <div class="bg-white rounded-lg shadow p-6 mb-8">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Portfolio Overview</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6"> <div class="mb-4 md:mb-0"> <div class="text-xs text-gray-500">Total Invested</div> <div class="text-2xl font-bold text-green-700">{{ totalInvestedAmount }} Units</div> </div> <div> <div class="text-xs text-gray-500">Active Projects</div> <div class="text-xl font-bold">{{ investorActiveProjects }}</div> </div> <div> <div class="text-xs text-gray-500">Completed</div> <div class="text-xl font-bold">{{ investorCompletedProjects }}</div> </div> <div> <div class="text-xs text-gray-500">Avg. ROI</div> <div class="text-xl font-bold text-green-700">{{ investorAvgRoi }}%</div> </div> </div>
@@ -569,8 +607,8 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-for="investment in investorInvestments" :key="investment.id">
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ investment.projectTitle }}</div> <div class="text-xs text-gray-500">{{ investment.crop }}</div> </td>
-                    <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900">{{ getFarmerDisplayIdentifier(investment.farmerId, 10) }}</div> <button @click="showFarmerProfile(investment.farmerId)" class="text-blue-500 hover:text-blue-700 text-xs focus:outline-none mr-2" title="View Farmer Info"> <i class="fas fa-info-circle mr-1"></i>View Info </button> <button @click="startOrGoToConversation(investment.farmerId)" v-if="isUserAuthenticated && currentUserIdentifier !== investment.farmerId" class="text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope mr-1"></i>Message </button> </td>
-                    <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ investment.amount }}</div> <div class="text-xs text-gray-500">{{ investment.investmentDate }}</div> </td>
+                    <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900">{{ getFarmerDisplayIdentifier(investment.farmerId, 10) }}</div> <button @click="showFarmerProfile(investment.farmerId)" class="text-blue-500 hover:text-blue-700 text-xs focus:outline-none mr-2" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(investment.farmerId)" v-if="isUserAuthenticated && currentUserIdentifier !== investment.farmerId" class="text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope mr-1"></i>Message </button> </td>
+                    <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-mono text-gray-900">{{ investment.amount }}</div> <div class="text-xs text-gray-500">{{ investment.investmentDate }}</div> </td>
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="w-24 bg-gray-200 rounded-full h-2.5"> <div class="bg-green-600 h-2.5 rounded-full" :style="{width: investment.progress+'%'}"></div> </div> <div class="text-xs text-gray-500 mt-1">{{ investment.progress }}% Complete</div> </td>
                     <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ calculateExpectedReturn(investment) }}</div> <div class="text-xs text-gray-500">{{ investment.roi }}% ROI</div> </td>
                     <td class="px-6 py-4 whitespace-nowrap"> <span :class="{ 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-blue-100 text-blue-800': investment.status === 'active', 'bg-green-100 text-green-800': investment.status === 'harvested', 'bg-yellow-100 text-yellow-800': investment.status === 'growing' }"> {{ investment.status.charAt(0).toUpperCase() + investment.status.slice(1) }} </span> </td>
@@ -598,6 +636,7 @@
             </table>
             </div>
         </div>
+      </div>
     </section>
     <!-- User Profile Section -->
     <section v-if="current==='userProfile' && !isOrangeIdCallback" class="max-w-6xl mx-auto mt-6">
@@ -633,7 +672,7 @@
               </div>
             </div>
           </div>
-          
+
           <div v-if="role === 'farmer'" class="mb-8">
             <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-map-marker-alt mr-2"></i>Farm Information </h3>
              <p class="text-sm text-gray-600">General farm information can be displayed here (e.g., location, size, certifications if any). This section is a placeholder.</p>
@@ -683,7 +722,12 @@
     <!-- Plant Recommendation Section -->
     <section v-if="current==='plantRecommendation' && !isOrangeIdCallback" class="max-w-3xl mx-auto mt-6">
       <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-leaf mr-2"></i>Plant Disease Detection & Recommendation</h2>
-      <div class="bg-white rounded shadow-md p-6 space-y-6">
+       <div v-if="!isUserAuthenticated || role !== 'farmer'" class="bg-white rounded shadow-md p-6 text-center text-gray-600">
+          <i class="fas fa-exclamation-circle fa-2x text-yellow-500 mb-3"></i>
+          <p>Please log in as a Farmer to access this feature.</p>
+           <button v-if="!isUserAuthenticated" @click="switchPage('loginChoice')" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Login</button>
+      </div>
+      <div v-else class="bg-white rounded shadow-md p-6 space-y-6">
         <p class="text-sm text-gray-600">Upload an image of an affected plant. Our AI model will attempt to identify the plant, detect diseases, and suggest treatments.</p>
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
           <p class="font-bold">Developer Note:</p>
@@ -805,7 +849,7 @@
         <div class="text-xs text-gray-500 mb-1">Pesticide: <span class="font-mono">{{ selectedListing.pesticide }}</span></div>
         <div class="text-xs text-gray-500 mb-2">Pesticide Co.: <span class="font-mono">{{ selectedListing.pesticideCompany || 'N/A' }}</span></div>
         <div class="text-xs text-gray-400 mb-2">File Hash: <span class="font-mono break-all" :title="selectedListing.videoFileHash || 'N/A'">{{ selectedListing.videoFileHash ? selectedListing.videoFileHash.substring(0,10) + '...' : 'N/A' }}</span></div>
-        <div class="text-sm mb-2">Price Range: <span class="mx-1 font-mono font-semibold">{{ selectedListing.minPrice }}</span> - <span class="ml-1 font-mono font-semibold">{{ selectedListing.maxPrice }}</span> Units </div>
+        <div class="text-sm my-2">Price Range: <br><span class="mx-1 font-mono font-semibold">{{ selectedListing.minPrice }}</span> - <span class="ml-1 font-mono font-semibold">{{ selectedListing.maxPrice }}</span> Units </div>
         <form @submit.prevent="processPurchase"> <label class="text-sm block text-gray-600 mb-1">Your Offer (Units)</label> <input type="number" v-model.number="purchaseAmount" :min="selectedListing.minPrice" :max="selectedListing.maxPrice" step="0.01" required :placeholder="`Enter amount (${selectedListing.minPrice}-${selectedListing.maxPrice})`" class="w-full px-3 py-2 border rounded mb-3 text-sm"> <button type="submit" class="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-sm" :disabled="!isUserAuthenticated"> <i class="fas fa-check mr-1"></i>Confirm Purchase (Simulated) </button> </form>
         <div v-if="purchaseStatus" class="text-green-700 font-semibold mt-3 text-sm bg-green-50 p-2 rounded border border-green-200">{{purchaseStatus}}</div> <div v-if="purchaseError" class="text-red-600 font-semibold mt-3 text-sm bg-red-50 p-2 rounded border border-red-200">{{purchaseError}}</div>
       </div>
@@ -845,7 +889,11 @@
       showMobileMenu: false,
       currentUserIdentifier: null, isAuthProcessing: false, // loginMethod is always 'orangeId' implicitly now
       orangeIdUser: null, orangeIdBedrockSDK: null, orangeIdReactRootLogin: null, orangeIdReactRootCallback: null, orangeIdReactRootSignOut: null, orangeIdReactRootSignOutMobile: null, orangeIdWidgetMounted: false, orangeIdBedrockSDKError: false, isOrangeIdCallback: false,
-      bedrockConfig: { baseUrl: 'https://api.bedrockpassport.com', authCallbackUrl: window.location.href.split('?')[0].split('#')[0], tenantId: 'orange-h0zmx5nf44', }, // Replace 'your-tenant-id' with your actual Orange ID tenant ID
+      // =====================================================================================
+      // !!! ORANGE ID CONFIGURATION: REPLACE 'orange-h0zmx5nf44' WITH YOUR ACTUAL TENANT ID !!!
+      // =====================================================================================
+      bedrockConfig: { baseUrl: 'https://api.bedrockpassport.com', authCallbackUrl: window.location.href.split('?')[0].split('#')[0], tenantId: 'orange-h0zmx5nf44', },
+      // =====================================================================================
       role: '', userName: '', userEmail: '', userPhone: '', memberSince: '',
       selectedRoleOnboarding: '', userNameOnboarding: '', userEmailOnboarding: '', userPhoneOnboarding: '',
       recordForm: {crop:'', pesticide:'', location:'', pesticideCompany: '', purpose: 'agristream'}, recordStream: null, recordMediaRecorder: null, recording: false, recordBlob: null, recordBlobUrl: '', showLive: false,
@@ -858,19 +906,30 @@
       allListings: [], buyerFilters: {crop:'', location:'', pesticideCompany: ''}, showBuyModal: false, selectedListing: null, purchaseAmount: null, purchaseStatus: '', purchaseError: '',
       investorInvestments: [], investorTransactions: [], investorFilters: {crop: '', method: '', minRoi: null, maxAmount: null}, allFundingRequests: [], investmentAmounts: {}, investmentErrors: {}, showInvestmentDetailsModal: false, selectedInvestment: null, selectedInvestmentProject: null,
       showFarmerProfileModal: false, selectedFarmerProfile: null,
-      // ========================================================================
-      // !!! CRITICAL: REPLACE THIS PINATA JWT WITH YOUR OWN !!!
-      // ========================================================================
+      // =====================================================================================
+      // !!! PINATA CONFIGURATION: REPLACE THIS JWT WITH YOUR OWN !!!
+      // (Get from Pinata Cloud API Keys -> New Key -> Select "pinning")
+      // =====================================================================================
       pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiY2Q2N2EzMC1lYmVmLTRiMWYtYjZmMi02OTI1ZGM2OWUzZDUiLCJlbWFpbCI6InRlamFzaW5kdWt1cmk1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI4OTY1ODM2MDlhMzE4YjY1N2QzMSIsInNjb3BlZEtleVNlY3JldCI6ImFkNWQ2OTc5NDkwNmFjODAzOGYxOGExNmYwMmIwOTc2NjlhNjQwNDY3MDExODdiZWRmOTdjMmZiMTA2NzdiNmYiLCJleHAiOjE3NzYwOTU3OTF9.dbyd6dnaASvYze1j5zVmPkoiDuQhA3PBczy0LxsRO-U', // Example: 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE'
-      pinataGateway: 'gateway.pinata.cloud',
+      pinataGateway: 'gateway.pinata.cloud', // Default gateway
+      // =====================================================================================
       conversations: [], messages: [], activeConversationId: null, messageInputText: '',
       notifications: [], recentNotifications: [],
       showLoadingModal: false, loadingMessage: '',
       targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
-      geminiApiKey: 'AIzaSyDK-CIafImL53t0GjL6zGWP10lA0yYcaSs', // <-- REPLACE THIS WITH YOUR ACTUAL Google Gemini API KEY
+      // =====================================================================================
+      // !!! GOOGLE GEMINI CONFIGURATION: REPLACE THIS KEY WITH YOUR OWN !!!
+      // (Get from Google AI Studio or Google Cloud Generative Language API)
+      // =====================================================================================
+      geminiApiKey: 'AIzaSyDK-CIafImL6zGWP10lA0yYcaSs', // <-- REPLACE THIS WITH YOUR ACTUAL Google Gemini API KEY
+      // =====================================================================================
       plantImageFile: null, plantImageUrl: null, plantImageMimeType: null, analysisInProgress: false, analysisResultText: '', parsedAnalysis: { plantName: null, diseaseName: null, treatmentRecommended: null }, analysisErrorText: '',
-      
-      groqApiKey: "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", // Your Groq API Key
+      // =====================================================================================
+      // !!! GROQ CONFIGURATION: REPLACE THIS KEY WITH YOUR OWN !!!
+      // (Get from Groq Cloud console)
+      // =====================================================================================
+      groqApiKey: "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", // Your Groq API Key
+      // =====================================================================================
       chatMessages: [],
       chatInput: '',
       isGroqLoading: false,
@@ -902,11 +961,11 @@
           if (newPage === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { this.scrollToAndHighlightAgriStreamVideo(); }
           else if (newPage !== 'farmerAgriStream') { this.highlightedAgriStreamVideoCid = null; }
           if (newPage === 'investorPortfolio' && this.isUserAuthenticated && this.role === 'investor') { this.updateInvestmentProgress(); }
-          if (newPage === 'messaging' && this.activeConversationId) { this.scrollToMessageBottom(); this.markConversationAsRead(this.activeConversationId); }
+          if (newPage === 'messaging' && this.activeConversationId) { this.$nextTick(() => { this.scrollToMessageBottom(); this.markConversationAsRead(this.activeConversationId); }); }
           if (newPage === 'loginChoice' && !this.isOrangeIdCallback && !this.isUserAuthenticated) { this.$nextTick(() => this.renderOrangeIdLoginWidget()); }
           else if (oldPage === 'loginChoice' && newPage !== 'loginChoice') { this.$nextTick(() => this.unmountOrangeIdLoginWidget()); }
           if (oldPage === 'plantRecommendation' && newPage !== 'plantRecommendation') { this.plantImageFile = null; this.plantImageUrl = null; this.plantImageMimeType = null; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; }
-          if (newPage === 'farmerChatbot') { this.initializeChatbot(); this.$nextTick(() => this.scrollToChatBottom()); }
+          if (newPage === 'farmerChatbot') { this.initializeChatbot(); this.$nextTick(() => this.scrollToChatBottom()); } else if (oldPage === 'farmerChatbot' && newPage !== 'farmerChatbot') { /* Potentially clear chatbot state if needed, but keeping history is fine */ }
       },
       isUserAuthenticated(isAuthenticated) { this.$nextTick(() => { if (isAuthenticated) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container'); if (this.showMobileMenu) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); } } else { this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } }); },
       showMobileMenu(isShown) { if (isShown && this.isUserAuthenticated) { this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); }); } else if (!isShown) { this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } },
@@ -930,7 +989,7 @@
               this.currentUserIdentifier = identifier;
               if (orangeUserDetails) { this.orangeIdUser = orangeUserDetails; }
               this.addNotification(`Orange ID authentication successful!`, 'success');
-              this.loadOrSetupPestiVidProfile();
+              this.loadOrSetupPestiVidProfile(); // This method handles routing to roleSelection or getting started page
           });
       },
       initializeOrangeIdSDK() { if (!window.React || !window.ReactDOM || !window.Bedrock) { console.error('Error: Orange ID - Required libraries (React, ReactDOM, Bedrock) failed to load.'); this.orangeIdBedrockSDKError = true; this.addNotification("Orange ID login service failed to load.", "error"); return false; } this.orangeIdBedrockSDKError = false; return true; },
@@ -945,7 +1004,7 @@
           const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
           const pestividProfile = userProfiles[this.currentUserIdentifier];
           let proceedToGetStarted = false;
-
+  
           if (pestividProfile && pestividProfile.role) {
               this.role = pestividProfile.role;
               this.userName = pestividProfile.name;
@@ -961,19 +1020,20 @@
               this.userEmailOnboarding = (this.orangeIdUser && this.orangeIdUser.email) ? this.orangeIdUser.email :
                                         (pestividProfile && pestividProfile.email) ? pestividProfile.email : '';
               this.userPhoneOnboarding = (pestividProfile && pestividProfile.phone) ? pestividProfile.phone : ''; // Phone is optional, prefill if available
-
+  
               this.selectedRoleOnboarding = ''; // Always force role selection if not present or re-confirming
               this.current = 'roleSelection'; // Send to onboarding/details fill page
-              
+  
               if (this.isUserAuthenticated) {
                   this.addNotification( (pestividProfile ? "Please complete or confirm " : "Welcome! Please complete ") + "your PestiVid profile.", 'info');
               }
               // proceedToGetStarted remains false, user will go through completeOnboarding
           }
-
+  
           this.filterDataForCurrentUser();
+          this.saveDataToLocalStorage(); // Save the potentially updated profile data to localStorage
           this.showMobileMenu = false;
-
+  
           if (proceedToGetStarted) {
               this.getStarted();
           } else if (this.current !== 'roleSelection' && this.isUserAuthenticated && !this.role) {
@@ -991,7 +1051,8 @@
         this.showLoadingModal = false;
         if (this.current !== 'landing') this.current = 'landing';
       },
-      clearUserSession(notify = true) { this.currentUserIdentifier = null; this.orangeIdUser = null; this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.chatMessages = []; this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); this.showMobileMenu = false; this.isAuthProcessing = false; this.isOrangeIdCallback = false; if (notify) this.addNotification("You have been signed out from PestiVid.", 'info'); },
+      clearUserSession(notify = true) { this.currentUserIdentifier = null; this.orangeIdUser = null; this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.messages = []; this.conversations = []; this.chatMessages = []; // Clearing messages on logout might be too aggressive, maybe filter instead? For this demo, clearing is simpler.
+      this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-mobile-container'); this.showMobileMenu = false; this.isAuthProcessing = false; this.isOrangeIdCallback = false; if (notify) this.addNotification("You have been signed out from PestiVid.", 'info'); },
       getFarmerDisplayIdentifier(userId, length = 6) { if (!userId) return 'N/A'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const profile = userProfiles[userId]; if (profile && profile.name) return profile.name.split(' ')[0]; return `${userId.substring(0, length)}...`; },
       getSellerDisplayIdentifier(userId, length = 6) { return this.getFarmerDisplayIdentifier(userId, length); },
       async simulatePlatformTransaction(description = "Processing...") { this.showLoadingModal = true; this.loadingMessage = "Confirm action (Simulated)..."; await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500)); this.loadingMessage = `${description} on PestiVid Platform (Simulated)...`; await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2500)); const platformTxId = 'pestivid_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2, 12); this.showLoadingModal = false; return platformTxId; },
@@ -1045,8 +1106,9 @@
           if (!form.cid) { alert("Select video."); return; } if (required.some(field => !form[field])) { alert("Fill all fields."); return; }
           if (form.acres <= 0 || form.amount <= 0 || form.timeline <= 0 || form.roi <= 0 || form.investorShare <= 0 || form.investorShare > 80) { alert("Valid numbers. Investor share 1-80%."); return; }
           const vid = this.farmerVideos.find(v => v.cid === form.cid && v.farmerId === this.currentUserIdentifier); if (!vid) { alert("Video not found."); return; }
+          if (this.isUsedInFunding(vid.cid)) { alert("Video already used for funding."); return; }
           const platformTxId = 'sim_fr_tx_' + Date.now(); // Simplified platform ID for this
-          const newRequest = { id: 'fr' + Date.now(), farmerId: this.currentUserIdentifier, title: form.title.trim(), crop: form.crop.trim(), acres: form.acres, amount: form.amount, method: form.method, cid: form.cid, videoFileHash: vid.videoFileHash, description: form.description.trim(), timeline: form.timeline, roi: form.roi, investorShare: form.investorShare, fundedAmount: 0, status: 'pending', createdAt: new Date().toISOString(), investors: [], platformTxId: platformTxId };
+          const newRequest = { id: 'fr' + Date.now(), farmerId: this.currentUserIdentifier, title: form.title.trim(), crop: form.crop.trim(), acres: form.acres, amount: form.amount, method: form.method, cid: form.cid, videoFileHash: vid.videoFileHash, description: form.description.trim(), timeline: form.timeline, roi: form.roi, investorShare: form.investorShare, fundedAmount: 0, status: 'pending', createdAt: new Date().toISOString(), investors: [], updates: [], platformTxId: platformTxId };
           this.farmerFundingRequests.unshift({ ...newRequest }); this.allFundingRequests.unshift({ ...newRequest }); this.createdFundingRequest = true;
           this.addNotification( `Investment Opportunity: New project "${newRequest.title}" by ${this.getFarmerDisplayIdentifier(newRequest.farmerId)}.`, 'info', null, true );
           this.fundingForm = { title: '', crop: '', acres: null, amount: null, method: '', cid: '', description: '', timeline: null, roi: null, investorShare: null, notifyInvestors: true }; this.saveDataToLocalStorage(); setTimeout(() => this.createdFundingRequest = false, 3000);
@@ -1059,13 +1121,20 @@
           if (!this.isUserAuthenticated || !this.selectedListing || !this.purchaseAmount) return; this.purchaseStatus = ''; this.purchaseError = '';
           const amount = parseFloat(this.purchaseAmount); const minP = this.selectedListing.minPrice; const maxP = this.selectedListing.maxPrice;
           if (isNaN(amount) || amount < minP || amount > maxP) { this.purchaseError = `Offer ${minP}-${maxP} Units.`; return; }
+          const preciseAmount = parseFloat(amount.toFixed(2));
           const platformTxId = await this.simulatePlatformTransaction(`Purchasing ${this.selectedListing.crop}`); if (!platformTxId) { this.purchaseError = "Purchase transaction failed."; this.purchaseStatus = ''; return; }
-          this.purchaseStatus = `Processing for ${amount} Units... Platform ID: ${platformTxId.substring(0,10)}...`;
+          this.purchaseStatus = `Processing for ${preciseAmount} Units... Platform ID: ${platformTxId.substring(0,10)}...`;
           try {
-              const newPurchase = { id: 'pur' + Date.now(), buyerId: this.currentUserIdentifier, farmerId: this.selectedListing.farmerId, crop: this.selectedListing.crop, location: this.selectedListing.location, pesticide: this.selectedListing.pesticide, pesticideCompany: this.selectedListing.pesticideCompany || '', cid: this.selectedListing.cid, videoFileHash: this.selectedListing.videoFileHash, price: amount, date: new Date().toLocaleDateString(), platformTxId: platformTxId };
+              const newPurchase = { id: 'pur' + Date.now(), buyerId: this.currentUserIdentifier, farmerId: this.selectedListing.farmerId, crop: this.selectedListing.crop, location: this.selectedListing.location, pesticide: this.selectedListing.pesticide, pesticideCompany: this.selectedListing.pesticideCompany || '', cid: this.selectedListing.cid, videoFileHash: this.selectedListing.videoFileHash, price: preciseAmount, date: new Date().toLocaleDateString(), platformTxId: platformTxId };
               this.buyerPurchases.unshift(newPurchase); this.allListings = this.allListings.filter(l => l.id !== this.selectedListing.id);
+              // Remove listing from farmer's view as well if they are currently logged in as the seller
               if (this.role === 'farmer' && this.selectedListing.farmerId === this.currentUserIdentifier) { this.farmerListings = this.farmerListings.filter(l => l.id !== this.selectedListing.id); }
-              this.addNotification(`Listing "${newPurchase.crop}" purchased!`, 'success'); this.addNotification(`Your listing "${newPurchase.crop}" purchased by ${this.getFarmerDisplayIdentifier(newPurchase.buyerId, 6)}...`, 'success', newPurchase.farmerId); this.purchaseStatus = "Purchase successful!"; this.saveDataToLocalStorage(); setTimeout(() => { this.closeBuyModal(); }, 2500);
+              this.addNotification(`Listing "${newPurchase.crop}" purchased!`, 'success');
+               // Send notification to the seller (farmer)
+              this.addNotification(`Your listing "${newPurchase.crop}" purchased by ${this.getFarmerDisplayIdentifier(newPurchase.buyerId, 6)}... for ${preciseAmount} Units.`, 'success', newPurchase.farmerId);
+              this.purchaseStatus = "Purchase successful!";
+              this.saveDataToLocalStorage();
+              setTimeout(() => { this.closeBuyModal(); }, 2500);
           } catch(err) { this.purchaseError = "Purchase simulation failed."; this.purchaseStatus = ''; }
       },
       viewPurchaseVideo(purchase) { this.selectedPurchase = purchase; this.showPurchaseVideo = true; },
@@ -1081,7 +1150,7 @@
           const platformTxId = await this.simulatePlatformTransaction(`Investing ${preciseAmount} Units`); if (!platformTxId) { this.$set(this.investmentErrors, project.id, 'Investment transaction failed.'); return; }
           try {
               const projectInAllIdx = this.allFundingRequests.findIndex(p => p.id === project.id); if (projectInAllIdx === -1) throw new Error("Project not found");
-              const updatedProject = { ...this.allFundingRequests[projectInAllIdx] }; updatedProject.fundedAmount = (updatedProject.fundedAmount || 0) + preciseAmount; updatedProject.investors = [...(updatedProject.investors || []), { investorId: this.currentUserIdentifier, amount: preciseAmount, platformTxId: platformTxId }];
+              const updatedProject = { ...this.allFundingRequests[projectInAllIdx] }; updatedProject.fundedAmount = (updatedProject.fundedAmount || 0) + preciseAmount; updatedProject.investors = [...(updatedProject.investors || []), { investorId: this.currentUserIdentifier, amount: preciseAmount, platformTxId: platformTxId, investmentDate: new Date().toLocaleDateString() }]; // Add date to investor entry
               if (updatedProject.fundedAmount >= updatedProject.amount - tolerance) { updatedProject.status = 'funded'; updatedProject.fundedAmount = updatedProject.amount; } else { updatedProject.status = 'partially_funded'; }
               this.$set(this.allFundingRequests, projectInAllIdx, updatedProject);
               const farmerProjectIndex = this.farmerFundingRequests.findIndex(p => p.id === project.id); if(farmerProjectIndex > -1) { this.$set(this.farmerFundingRequests, farmerProjectIndex, updatedProject); }
@@ -1089,19 +1158,57 @@
               this.investorInvestments.unshift(newInvestment);
               const newTransaction = { id: 'tx' + Date.now(), investorId: this.currentUserIdentifier, platformTxId: platformTxId, type: 'investment', amount: preciseAmount, date: new Date().toLocaleDateString(), projectId: project.id, projectTitle: project.title };
               this.investorTransactions.unshift(newTransaction); this.investorTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-              this.addNotification(`Investment ${preciseAmount} Units successful!`, 'success'); this.addNotification(`${preciseAmount} Units from ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)} for "${project.title}"!`, 'success', project.farmerId);
-              this.$set(this.investmentAmounts, project.id, null); alert(`Invested ${preciseAmount} Units in "${project.title}"!`); this.saveDataToLocalStorage();
+              this.addNotification(`Investment ${preciseAmount} Units successful!`, 'success');
+              // Notify the farmer
+              this.addNotification(`${preciseAmount} Units invested from ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)} for "${project.title}"!`, 'success', project.farmerId);
+  
+              this.$set(this.investmentAmounts, project.id, null);
+              alert(`Invested ${preciseAmount} Units in "${project.title}"!`);
+              this.saveDataToLocalStorage();
           } catch (err) { this.$set(this.investmentErrors, project.id, 'Invest simulation failed.'); alert("Invest simulation failed."); }
       },
-      updateInvestmentProgress() { const now = new Date(); this.investorInvestments.forEach(inv => { if (inv.status === 'active' || inv.status === 'growing') { const dateInvested = new Date(inv.investmentDate); const monthsElapsed = (now.getFullYear() - dateInvested.getFullYear())*12 + (now.getMonth() - dateInvested.getMonth()); let progress = 0; if (inv.timeline && inv.timeline > 0) { progress = Math.min(100, Math.max(0, Math.round((monthsElapsed/inv.timeline)*100))); } progress = Math.min(100, Math.max(inv.progress||0, progress + ((inv.progress||0)<95 ? Math.floor(Math.random()*3) : 0) )); inv.progress = progress; if (progress >= 100) { inv.status = 'harvested'; if (!inv.payoutNotified) { const expectedReturn = this.calculateExpectedReturn(inv); const payoutPlatformTxId = 'pestivid_payout_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2,10); this.investorTransactions.unshift({ id: 'txp' + Date.now(), investorId: inv.investorId, platformTxId: payoutPlatformTxId, type: 'payout', amount: parseFloat(expectedReturn), date: new Date().toLocaleDateString(), projectId: inv.projectId, projectTitle: inv.projectTitle }); this.investorTransactions.sort((a,b) => new Date(b.date) - new Date(a.date)); this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} Units!`, 'success', inv.investorId); this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} Units to ${this.getFarmerDisplayIdentifier(inv.investorId)}...`, 'info', inv.farmerId); inv.payoutNotified = true; this.saveDataToLocalStorage(); } } else if (progress > 0 && inv.status === 'active') { inv.status = 'growing'; } else if (progress === 0 && inv.status !== 'active') { inv.status = 'active'; } } }); },
+      updateInvestmentProgress() { const now = new Date(); this.investorInvestments.forEach(inv => { if (inv.status === 'active' || inv.status === 'growing') { const dateInvested = new Date(inv.investmentDate); const diffTime = Math.abs(now - dateInvested); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Use days for finer progress
+            let progress = 0; if (inv.timeline && inv.timeline > 0) { const totalDays = inv.timeline * 30; // Rough estimate of days
+                progress = Math.min(100, Math.max(0, Math.round((diffDays / totalDays) * 100)));
+            }
+            // Simulate some dynamic progress change for demo (adjust speed by changing 0.05)
+            progress = Math.min(100, Math.max(inv.progress||0, progress + parseFloat((Math.random()*0.5).toFixed(1)) )); // Add random small increment each check
+            inv.progress = Math.min(100, progress); // Ensure it doesn't exceed 100
+  
+            if (inv.progress >= 100) {
+                inv.status = 'harvested';
+                inv.progress = 100; // Cap at 100
+                if (!inv.payoutNotified) {
+                  const expectedReturn = parseFloat(this.calculateExpectedReturn(inv));
+                  const payoutPlatformTxId = 'pestivid_payout_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2,10);
+                  this.investorTransactions.unshift({ id: 'txp' + Date.now(), investorId: inv.investorId, platformTxId: payoutPlatformTxId, type: 'payout', amount: expectedReturn, date: new Date().toLocaleDateString(), projectId: inv.projectId, projectTitle: inv.projectTitle });
+                  this.investorTransactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+                  this.addNotification(`"${inv.projectTitle}" Payout ${expectedReturn} Units!`, 'success', inv.investorId);
+                  // Notify the farmer about payout to investor
+                  this.addNotification(`Payout of ${expectedReturn} Units simulated to ${this.getFarmerDisplayIdentifier(inv.investorId)}... for "${inv.projectTitle}"!`, 'info', inv.farmerId);
+  
+                  inv.payoutNotified = true;
+                  this.saveDataToLocalStorage();
+                }
+            } else if (inv.progress > 0 && inv.status === 'active') {
+                 inv.status = 'growing';
+            } else if (inv.progress === 0 && inv.status !== 'active') {
+                inv.status = 'active';
+            }
+            // Force reactivity update if needed (Vue 2)
+            this.$set(this.investorInvestments, this.investorInvestments.indexOf(inv), inv);
+          }
+        });
+        this.saveDataToLocalStorage(); // Save updated progress/status
+      },
       viewInvestmentDetails(investment) { this.selectedInvestmentProject = this.allFundingRequests.find(p => p.id === investment.projectId); this.selectedInvestment = { ...investment, description: this.selectedInvestmentProject ? this.selectedInvestmentProject.description : investment.description, updates: this.selectedInvestmentProject ? (this.selectedInvestmentProject.updates || []) : [] }; this.showInvestmentDetailsModal = true; },
       calculateExpectedReturn(investment) { if (!investment || !investment.amount || !investment.roi) return '0.00'; return (investment.amount * (investment.roi / 100)).toFixed(2); },
       showFarmerProfile(farmerIdentifier) { if (!farmerIdentifier) return; this.selectedFarmerProfile = null; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const farmerPestiVidProfile = userProfiles[farmerIdentifier] || {}; const profileData = { id: farmerIdentifier, farmName: this.simulateFarmName(farmerIdentifier), bio: this.simulateFarmerBio(farmerIdentifier), email: farmerPestiVidProfile.email || this.simulateUserEmail(farmerIdentifier), memberSince: farmerPestiVidProfile.memberSince || this.simulateMemberSince(farmerIdentifier), fundingRequestCount: this.allFundingRequests.filter(r => r.farmerId === farmerIdentifier && (r.status === 'pending' || r.status === 'partially_funded')).length, activeListingCount: this.allListings.filter(l => l.farmerId === farmerIdentifier).length, }; this.selectedFarmerProfile = profileData; this.showFarmerProfileModal = true; },
       closeFarmerProfileModal() { this.showFarmerProfileModal = false; this.selectedFarmerProfile = null; },
-      simulateUserEmail(id) { return id ? `${id.substring(0, 6)}@pestivid.sim` : 'user@example.com'; },
+      simulateUserEmail(id) { return id ? `${id.substring(0, 6).toLowerCase()}@pestivid.sim` : 'user@example.com'; },
       simulateMemberSince(id) { let hash = 0; for (let i = 0; i < (id || '').length; i++) { hash = (hash << 5) - hash + id.charCodeAt(i); hash |= 0; } const daysAgo = Math.abs(hash % 730) + 30; const joinDate = new Date(); joinDate.setDate(joinDate.getDate() - daysAgo); return joinDate.toLocaleDateString(); },
       simulateFarmName(id) { return id ? `Farm ${id.substring(0, 5)}` : "The Good Farm"; },
-      simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - bioHash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
+      simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus.", "Growing fresh produce."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - bioHash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
       selectConversation(convId) { this.activeConversationId = convId; this.markConversationAsRead(convId); this.$nextTick(() => this.scrollToMessageBottom()); },
       sendMessage() { if (!this.messageInputText.trim() || !this.activeConversationId || !this.isUserAuthenticated) return; const conversation = this.conversations.find(c => c.id === this.activeConversationId); if (!conversation) return; const receiverId = conversation.participants.find(p => p !== this.currentUserIdentifier); if (!receiverId) return; const newMessage = { id: 'msg' + Date.now(), conversationId: this.activeConversationId, sender: this.currentUserIdentifier, receiver: receiverId, text: this.messageInputText.trim(), timestamp: new Date().toISOString(), read: false }; this.messages.push(newMessage); conversation.lastMessageSnippet = newMessage.text.substring(0, 35) + (newMessage.text.length > 35 ? '...' : ''); conversation.lastMessageTimestamp = newMessage.timestamp; this.conversations.sort((a, b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.addNotification(`New message from ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`, 'info', receiverId); this.messageInputText = ''; this.$nextTick(() => this.scrollToMessageBottom()); this.saveDataToLocalStorage(); },
       startOrGoToConversation(targetIdentifier) { if (!this.isUserAuthenticated || !targetIdentifier ) { if (!this.isUserAuthenticated) { alert("Log in to message."); this.switchPage('loginChoice'); return;} if (!targetIdentifier) { alert("Target missing."); return;} } if (targetIdentifier === this.currentUserIdentifier) { alert("Cannot message self."); return; } const sortedParticipants = [this.currentUserIdentifier, targetIdentifier].sort(); let conversation = this.conversations.find(conv => conv.participants.length === 2 && conv.participants.join(',') === sortedParticipants.join(',')); if (!conversation) { const newConvId = 'conv' + Date.now(); conversation = { id: newConvId, participants: sortedParticipants, lastMessageSnippet: 'Conversation started.', lastMessageTimestamp: new Date().toISOString() }; this.conversations.unshift(conversation); this.conversations.sort((a,b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.saveDataToLocalStorage(); } this.switchPage('messaging'); this.$nextTick(() => this.selectConversation(conversation.id)); },
@@ -1109,111 +1216,337 @@
       scrollToMessageBottom() { const el = this.$refs.messageContainer; if (el) setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50); },
       getUnreadCountForConversation(convId) { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.conversationId === convId && msg.receiver === this.currentUserIdentifier && !msg.read).length; },
       markConversationAsRead(convId) { let changed = false; this.messages.forEach(msg => { if (msg.conversationId === convId && msg.receiver === this.currentUserIdentifier && !msg.read) { msg.read = true; changed = true; } }); if (changed) this.saveDataToLocalStorage(); },
-      addNotification(message, type = 'info', recipientIdentifier = null, globalBroadcast = false) { if (globalBroadcast && this.isUserAuthenticated) { const newNotification = { id: 'notif_global_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if (this.recentNotifications.length === 0 || !this.recentNotifications.some(n => n.message === message && Date.now() - n.timestamp < 10000)) { this.showNextToastNotification(); } console.log(`GLOBAL BROADCAST (Demo): ${message}`); } else if (recipientIdentifier === null || recipientIdentifier === this.currentUserIdentifier) { const newNotification = { id: 'notif_user_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if (this.recentNotifications.length === 0) { this.showNextToastNotification(); } } else if (recipientIdentifier) { console.log(`(SIM) Targeted Notif for ${recipientIdentifier}: "${message}" by ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`); } },
-      showNextToastNotification() { if (this.recentNotifications.length >= 3 || this.notifications.length === 0) return; const notificationToShow = this.notifications.shift(); this.recentNotifications.push(notificationToShow); this.$nextTick(() => { setTimeout(() => { const index = this.recentNotifications.findIndex(n => n.id === notificationToShow.id); if(index > -1) { this.$set(this.recentNotifications[index], 'show', true); } }, 50); }); notificationToShow.timeoutId = setTimeout(() => this.dismissNotification(notificationToShow.id), 4500); },
+      addNotification(message, type = 'info', recipientIdentifier = null, globalBroadcast = false) { if (globalBroadcast && this.isUserAuthenticated) { const newNotification = { id: 'notif_global_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if (this.recentNotifications.length === 0 || !this.recentNotifications.some(n => n.message === message && Date.now() - n.timestamp < 10000)) { this.showNextToastNotification(); } console.log(`GLOBAL BROADCAST (Demo): ${message}`); } else if (recipientIdentifier === null || recipientIdentifier === this.currentUserIdentifier) { const newNotification = { id: 'notif_user_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false }; this.notifications.push(newNotification); if (this.recentNotifications.length < 3) { // Only show toast if container is not full
+                this.showNextToastNotification();
+            }
+        } else if (recipientIdentifier) { console.log(`(SIM) Targeted Notif for ${recipientIdentifier}: "${message}" by ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`); } },
+      showNextToastNotification() { if (this.recentNotifications.length >= 3 || this.notifications.length === 0) return; const notificationToShow = this.notifications.shift(); this.recentNotifications.push(notificationToShow); this.$nextTick(() => { setTimeout(() => { const index = this.recentNotifications.findIndex(n => n.id === notificationToShow.id); if (index > -1) { this.$set(this.recentNotifications[index], 'show', true); } }, 50); }); notificationToShow.timeoutId = setTimeout(() => this.dismissNotification(notificationToShow.id), 4500); },
       dismissNotification(id) { const index = this.recentNotifications.findIndex(n => n.id === id); if (index > -1) { if (this.recentNotifications[index].timeoutId) clearTimeout(this.recentNotifications[index].timeoutId); this.$set(this.recentNotifications[index], 'show', false); setTimeout(() => { const removeIndex = this.recentNotifications.findIndex(n => n.id === id); if (removeIndex > -1) this.recentNotifications.splice(removeIndex, 1); this.$nextTick(() => this.showNextToastNotification()); }, 400); } },
-      notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${this.getFarmerDisplayIdentifier(listing.farmerId)}... available!`, 'info'); if (this.role === 'buyer' && this.currentUserIdentifier !== listing.farmerId) this.addNotification(`Check new listing for "${listing.crop}"!`, 'info'); console.log(`SIM: Notifying buyers about listing ${listing.id}`); },
-      notifyInvestorsAboutFunding(request, markAsSent = false) { if (markAsSent) {/* mark notificationSent */} this.addNotification(`New funding: "${request.title}" by ${this.getFarmerDisplayIdentifier(request.farmerId)}... seeking investors!`, 'info'); if (this.role === 'investor' && this.currentUserIdentifier !== request.farmerId) this.addNotification(`New project "${request.title}" needs funding!`, 'info'); console.log(`SIM: Notifying investors about funding ${request.id}`); },
+      notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${this.getFarmerDisplayIdentifier(listing.farmerId)}... available!`, 'info', null, true); /* Global broadcast */ },
+      notifyInvestorsAboutFunding(request, markAsSent = false) { if (markAsSent) {/* mark notificationSent */} this.addNotification(`New funding: "${request.title}" by ${this.getFarmerDisplayIdentifier(request.farmerId)}... seeking investors!`, 'info', null, true); /* Global broadcast */ },
       saveDataToLocalStorage() { localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: this.getAllFarmerVideos(), buyerPurchases: this.getAllBuyerPurchases(), investorInvestments: this.getAllInvestorInvestments(), investorTransactions: this.getAllInvestorTransactions(), messages: this.messages, conversations: this.conversations, chatMessages: this.chatMessages, })); },
-      getAllFarmerVideos() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.farmerVideos || []; if (this.isUserAuthenticated && this.farmerVideos.length > 0) { const userCIDs = new Set(this.farmerVideos.map(v => v.cid)); all = all.filter(v => !userCIDs.has(v.cid) || v.farmerId !== this.currentUserIdentifier); all.push(...this.farmerVideos); } return [...new Map(all.map(item => [item.cid + item.farmerId, item])).values()]; },
+      getAllFarmerVideos() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.farmerVideos || []; if (this.isUserAuthenticated && this.farmerVideos.length > 0) { const userCIDs = new Set(this.farmerVideos.map(v => v.cid)); all = all.filter(v => !userCIDs.has(v.cid) || v.farmerId !== this.currentUserIdentifier); all.push(...this.farmerVideos); } return [...new Map(all.map(item => [item.cid + item.farmerId, item])).values()]; }, // Use CID + farmerId as key
       getAllBuyerPurchases() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.buyerPurchases || []; if (this.isUserAuthenticated && this.buyerPurchases.length > 0) { const userIDs = new Set(this.buyerPurchases.map(p => p.id)); all = all.filter(p => !userIDs.has(p.id) || p.buyerId !== this.currentUserIdentifier); all.push(...this.buyerPurchases); } return [...new Map(all.map(item => [item.id, item])).values()]; },
       getAllInvestorInvestments() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorInvestments || []; if (this.isUserAuthenticated && this.investorInvestments.length > 0) { const userIDs = new Set(this.investorInvestments.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorId !== this.currentUserIdentifier); all.push(...this.investorInvestments); } return [...new Map(all.map(item => [item.id, item])).values()]; },
       getAllInvestorTransactions() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorTransactions || []; if (this.isUserAuthenticated && this.investorTransactions.length > 0) { const userIDs = new Set(this.investorTransactions.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorId !== this.currentUserIdentifier); all.push(...this.investorTransactions); } return [...new Map(all.map(item => [item.id, item])).values()]; },
-      loadDataFromLocalStorage() { const savedData = localStorage.getItem('pestiVidAppData'); if (savedData) { try { const appData = JSON.parse(savedData); this.allListings = appData.allListings || []; this.allFundingRequests = appData.allFundingRequests || []; this.messages = appData.messages || []; this.conversations = appData.conversations || []; this.chatMessages = appData.chatMessages || []; if (this.current === 'farmerChatbot') this.initializeChatbot(); if (!this.currentUserIdentifier) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; } else { this.filterDataForCurrentUser(); } } catch (e) { console.error("Error loading data from localStorage:", e); localStorage.removeItem('pestiVidAppData'); this.loadDemoDataIfNeeded(); } } else { this.loadDemoDataIfNeeded(); } const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; if (this.currentUserIdentifier && userProfiles[this.currentUserIdentifier]) { const profile = userProfiles[this.currentUserIdentifier]; this.role = profile.role; this.userName = profile.name; this.userEmail = profile.email; this.userPhone = profile.phone || ''; this.memberSince = profile.memberSince || new Date().toLocaleDateString(); } },
-      filterDataForCurrentUser() { const appData = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); if (!this.isUserAuthenticated) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.messages = appData.messages || []; this.conversations = appData.conversations || []; return; } if (this.role === 'farmer') { this.farmerVideos = (appData.farmerVideos || []).filter(v => v.farmerId === this.currentUserIdentifier).map(v => ({...v, purpose: v.purpose || 'agristream'})); this.farmerListings = this.allListings.filter(l => l.farmerId === this.currentUserIdentifier); this.farmerFundingRequests = this.allFundingRequests.filter(r => r.farmerId === this.currentUserIdentifier); } else { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; } if (this.role === 'buyer') { this.buyerPurchases = (appData.buyerPurchases || []).filter(p => p.buyerId === this.currentUserIdentifier); } else { this.buyerPurchases = []; } if (this.role === 'investor') { this.investorInvestments = (appData.investorInvestments || []).filter(i => i.investorId === this.currentUserIdentifier); this.investorTransactions = (appData.investorTransactions || []).filter(t => t.investorId === this.currentUserIdentifier); this.updateInvestmentProgress(); } else { this.investorInvestments = []; this.investorTransactions = []; } this.messages = (appData.messages || []).filter(msg => msg.sender === this.currentUserIdentifier || msg.receiver === this.currentUserIdentifier); this.conversations = (appData.conversations || []).filter(conv => conv.participants.includes(this.currentUserIdentifier)); if (this.activeConversationId) { const activeConv = this.conversations.find(c => c.id === this.activeConversationId); if (!activeConv || !activeConv.participants.includes(this.currentUserIdentifier)) { this.activeConversationId = null; } } },
-      loadDemoDataIfNeeded() {
-        let appDataString = localStorage.getItem('pestiVidAppData'); let loadFreshDemo = true;
-        if (appDataString) {
+      loadDataFromLocalStorage() {
+        const savedData = localStorage.getItem('pestiVidAppData');
+        let needsDemoData = true;
+        if (savedData) {
           try {
-            const existingData = JSON.parse(appDataString);
-            const hasHashStructure = (arr) => arr && arr.length > 0 && arr.every(item => typeof item.videoFileHash === 'string' || item.videoFileHash === undefined || item.videoFileHash === null);
-            if (hasHashStructure(existingData.allListings) && hasHashStructure(existingData.allFundingRequests) && hasHashStructure(existingData.farmerVideos) && hasHashStructure(existingData.buyerPurchases) && hasHashStructure(existingData.investorInvestments) && (existingData.allFundingRequests?.length > 0 || existingData.allListings?.length > 0 || existingData.farmerVideos?.length > 0)) {
-              this.allListings = existingData.allListings || []; this.allFundingRequests = existingData.allFundingRequests || []; this.messages = existingData.messages || []; this.conversations = existingData.conversations || []; this.chatMessages = existingData.chatMessages || [];
-              const allFarmerVideosFromStorage = existingData.farmerVideos || []; this.farmerVideos = allFarmerVideosFromStorage.filter(v => this.isUserAuthenticated && v.farmerId === this.currentUserIdentifier);
-              this.filterDataForCurrentUser(); loadFreshDemo = false; console.log("Existing PestiVid data with hash structure found. Loading from localStorage.");
-            } else { console.log("Existing PestiVid data missing hash structure or incomplete. Will load fresh demo data."); }
-          } catch(e) { console.error("Error parsing existing demo data, loading fresh demo.", e); }
+            const appData = JSON.parse(savedData);
+            // Basic check to see if it's likely previously saved demo or real data
+            // Check for keys and maybe presence of some data in core arrays
+             if (appData.allListings && appData.allFundingRequests && appData.farmerVideos &&
+                Array.isArray(appData.allListings) && Array.isArray(appData.allFundingRequests) && Array.isArray(appData.farmerVideos) &&
+                (appData.allListings.length > 0 || appData.allFundingRequests.length > 0 || appData.farmerVideos.length > 0) ) {
+                this.allListings = appData.allListings;
+                this.allFundingRequests = appData.allFundingRequests;
+                this.messages = appData.messages || [];
+                this.conversations = appData.conversations || [];
+                this.chatMessages = appData.chatMessages || [];
+                this.farmerVideos = appData.farmerVideos || [];
+                this.buyerPurchases = appData.buyerPurchases || [];
+                this.investorInvestments = appData.investorInvestments || [];
+                this.investorTransactions = appData.investorTransactions || [];
+                needsDemoData = false;
+                console.log("Existing PestiVid data found. Loading from localStorage.");
+            } else {
+               console.log("Existing PestiVid data structure seems incomplete or empty. Will try loading fresh demo data.");
+               // Don't clear local storage here, let loadDemoDataIfNeeded handle it if it decides to overwrite
+            }
+          } catch (e) {
+            console.error("Error loading data from localStorage:", e);
+             console.log("Corrupted localStorage data. Will try loading fresh demo data.");
+            // localStorage.removeItem('pestiVidAppData'); // Optionally clear corrupted data
+          }
         }
-        if (loadFreshDemo) {
-          console.log("Loading/Reloading PestiVid Demo Data with videoFileHash.");
-          const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u'; const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString(); const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
-          const demoFarmer1 = 'oid_farmer_1_sub'; const demoFarmer2 = 'oid_farmer_2_sub'; const demoInvestor1 = 'oid_investor_1_sub'; const demoBuyer1 = 'oid_buyer_1_sub';
-
-          const demoFarmerVideos = [
-              { farmerId: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', crop: 'Tomatoes (Demo Video)', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell', uploadTimestamp: oneDayAgo},
-              { farmerId: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', crop: 'Strawberries (Demo Video)', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding', uploadTimestamp: oneDayAgo},
-              { farmerId: demoFarmer2, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', crop: 'Lettuce (Demo Video)', pesticide: 'Nutrient Solution', location: 'Hydro Unit 1', pesticideCompany: 'HydroGrow', purpose: 'agristream', uploadTimestamp: oneDayAgo},
-          ];
-          this.allListings = [
-              { id: 'lst_demo1', farmerId: demoFarmer1, crop: 'Tomatoes (Demo Video)', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', minPrice: 0.8, maxPrice: 1.2, status: 'active', createdAt: oneDayAgo, isNew: true, platformTxId: 'pestivid_lst_tx_1' },
-              { id: 'lst_demo2', farmerId: demoFarmer2, crop: 'Peppers (Demo Video)', location: 'Greenhouse 3', pesticide: 'Neem Oil', pesticideCompany: 'Organics Inc.', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_peppers_placeholder_for_video4', minPrice: 1.0, maxPrice: 1.5, status: 'active', createdAt: threeDaysAgo, isNew: false, platformTxId: 'pestivid_lst_tx_2' },
-          ];
-          this.allFundingRequests = [
-              { id: 'fr_demo1', farmerId: demoFarmer1, title: 'Organic Strawberry Expansion (Demo)', crop: 'Strawberries (Demo Video)', acres: 2.5, amount: 2500, method: 'organic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 1000, status: 'partially_funded', createdAt: oneDayAgo, investors: [{investorId: demoInvestor1, amount: 1000, platformTxId:'pestivid_inv_tx_demo1'}], updates: [{id:'upd1', date: '1 week ago', text:'Initial tilling complete.'}], platformTxId: 'pestivid_fr_tx_1' },
-              { id: 'fr_demo2', farmerId: demoFarmer2, title: 'Hydroponic Lettuce Setup (Demo)', crop: 'Lettuce (Demo Video)', acres: 0.5, amount: 4000, method: 'hydroponic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', description: 'Setting up a new state-of-the-art NFT hydroponic system for year-round lettuce production. Focus on water efficiency and rapid growth cycles.', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: oneDayAgo, investors: [], updates: [], platformTxId: 'pestivid_fr_tx_2' },
-          ];
-          const demoBuyerPurchases = [ { id: 'pur_demo1', buyerId: demoBuyer1, farmerId: demoFarmer1, crop: 'Tomatoes (Demo Video)', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', price: 0.9, date: 'March 10, 2024', platformTxId: 'pestivid_pur_tx_demo1' }, ];
-          const demoInvestorInvestments = [ { id: 'inv_demo1', investorId: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)', farmerId: demoFarmer1, crop: 'Strawberries (Demo Video)', method: 'organic', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 1000, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', platformTxId: 'pestivid_inv_tx_demo1' } ];
-          const demoInvestorTransactions = [ { id: 'tx_demo1', investorId: demoInvestor1, platformTxId: 'pestivid_inv_tx_demo1', type: 'investment', amount: 1000, date: 'February 15, 2024', projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)' }, ];
-          const now = Date.now(); const minToMs = (min) => 1000 * 60 * min; const conv1Id = 'conv_demo_f1_i1';
-          const demoConversations = [ { id: conv1Id, participants: [demoFarmer1, demoInvestor1].sort(), lastMessageSnippet: 'Sounds good, will review the project terms tonight.', lastMessageTimestamp: new Date(now - minToMs(5)).toISOString() } ];
-          const demoMessages = [
-              { id: 'msg_demo1a', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'Hi Investor, thanks for showing interest in the Strawberry Expansion project. Let me know if you have questions.', timestamp: new Date(now - minToMs(10)).toISOString(), read: true },
-              { id: 'msg_demo1b', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Hello Farmer! Yes, the project looks promising. What are the projected returns again?', timestamp: new Date(now - minToMs(8)).toISOString(), read: true },
-              { id: 'msg_demo1c', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'We are projecting an 18% ROI over 6 months, with a 20% profit share for investors.', timestamp: new Date(now - minToMs(6)).toISOString(), read: true },
-              { id: 'msg_demo1d', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Sounds good, will review the project terms tonight.', timestamp: new Date(now - minToMs(5)).toISOString(), read: false }
-          ];
-          localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: demoFarmerVideos, buyerPurchases: demoBuyerPurchases, investorInvestments: demoInvestorInvestments, investorTransactions: demoInvestorTransactions, messages: demoMessages, conversations: demoConversations, chatMessages: [] }));
-          const demoProfiles = {};
-          demoProfiles[demoFarmer1] = { role: 'farmer', name: 'Alice Farmer (OID)', email: 'alice.oid@pestivid.sim', phone: '555-0101', memberSince: this.simulateMemberSince(demoFarmer1), authMethod: 'orangeId'};
-          demoProfiles[demoFarmer2] = { role: 'farmer', name: 'Bob Farmer (OID)', email: 'bob.oid@pestivid.sim', phone: '555-0102', memberSince: this.simulateMemberSince(demoFarmer2), authMethod: 'orangeId'};
-          demoProfiles[demoInvestor1] = { role: 'investor', name: 'Charlie Investor (OID)', email: 'charlie.oid@pestivid.sim', phone: '555-0103', memberSince: this.simulateMemberSince(demoInvestor1), authMethod: 'orangeId'};
-          demoProfiles[demoBuyer1] = { role: 'buyer', name: 'Dana Buyer (OID)', email: 'dana.oid@pestivid.sim', phone: '555-0104', memberSince: this.simulateMemberSince(demoBuyer1), authMethod: 'orangeId'};
-          localStorage.setItem('pestiVidUserProfiles', JSON.stringify(demoProfiles));
-          this.filterDataForCurrentUser();
+  
+        if (needsDemoData) {
+            this.loadDemoDataIfNeeded();
         }
+  
+        // Load user profile AFTER loading data, as filtering depends on the user
+        const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
+        // Check if currentUserIdentifier is already set (e.g., from a previous session or redirect)
+        // This is tricky in a single file app without robust session management.
+        // For this demo, we assume if `currentUserIdentifier` is null on mount, we're starting fresh or are unauthenticated.
+        // If it were a multi-page app, server-side session or proper client-side session check would be needed.
+  
+        // If the user is already authenticated (e.g., via Orange ID redirect processed on mount),
+        // filter the loaded data for that user.
+        if (this.currentUserIdentifier && userProfiles[this.currentUserIdentifier]) {
+             const profile = userProfiles[this.currentUserIdentifier];
+             this.role = profile.role;
+             this.userName = profile.name;
+             this.userEmail = profile.email;
+             this.userPhone = profile.phone || '';
+             this.memberSince = profile.memberSince || new Date().toLocaleDateString();
+             this.filterDataForCurrentUser();
+        } else {
+           // If no current user or profile, ensure we are on a public page
+            if (this.current !== 'landing' && this.current !== 'loginChoice' && !this.isOrangeIdCallback) {
+               this.current = 'landing'; // Redirect to landing if not authenticated
+            }
+        }
+      },
+      filterDataForCurrentUser() {
+          if (!this.isUserAuthenticated) {
+               // If user becomes unauthenticated, clear user-specific data views
+              this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = [];
+              this.buyerPurchases = [];
+              this.investorInvestments = []; this.investorTransactions = [];
+              this.activeConversationId = null;
+              // Do NOT clear all.messages and all.conversations here, as they hold global state
+              return;
+          }
+          // If user is authenticated, filter loaded data based on role and identifier
+          const allFarmerVideos = this.getAllFarmerVideos(); // Get the global list
+          this.farmerVideos = allFarmerVideos.filter(v => v.farmerId === this.currentUserIdentifier).map(v => ({...v, purpose: v.purpose || 'agristream'}));
+  
+          this.farmerListings = this.allListings.filter(l => l.farmerId === this.currentUserIdentifier);
+          this.farmerFundingRequests = this.allFundingRequests.filter(r => r.farmerId === this.currentUserIdentifier);
+  
+          const allBuyerPurchases = this.getAllBuyerPurchases(); // Get the global list
+          this.buyerPurchases = allBuyerPurchases.filter(p => p.buyerId === this.currentUserIdentifier);
+  
+          const allInvestorInvestments = this.getAllInvestorInvestments(); // Get the global list
+          this.investorInvestments = allInvestorInvestments.filter(i => i.investorId === this.currentUserIdentifier);
+          this.updateInvestmentProgress(); // Update progress only for current user's investments
+  
+          const allInvestorTransactions = this.getAllInvestorTransactions(); // Get the global list
+          this.investorTransactions = allInvestorTransactions.filter(t => t.investorId === this.currentUserIdentifier);
+  
+          const allMessages = this.messages; // Already global in data()
+          this.messages = allMessages.filter(msg => msg.sender === this.currentUserIdentifier || msg.receiver === this.currentUserIdentifier);
+  
+          const allConversations = this.conversations; // Already global in data()
+          this.conversations = allConversations.filter(conv => conv.participants.includes(this.currentUserIdentifier));
+  
+          // Ensure active conversation is still valid for the current user
+          if (this.activeConversationId) {
+              const activeConv = this.conversations.find(c => c.id === this.activeConversationId);
+              if (!activeConv || !activeConv.participants.includes(this.currentUserIdentifier)) {
+                  this.activeConversationId = null;
+              }
+          }
+           // Ensure AgriBot chat history is user-specific for the demo
+           const appData = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}');
+           const allChatMessages = appData.chatMessages || [];
+           this.chatMessages = allChatMessages.filter(msg => msg.userId === this.currentUserIdentifier);
+           if (this.current === 'farmerChatbot') { this.initializeChatbot(); }
+  
+      },
+      loadDemoDataIfNeeded() {
+        console.log("Loading/Reloading PestiVid Demo Data.");
+        const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u'; // Replace with a real CID if you want the video to play
+        const now = Date.now();
+        const oneDayAgo = new Date(now - (24*60*60*1000)).toISOString();
+        const threeDaysAgo = new Date(now - (3*24*60*60*1000)).toISOString();
+        const fiveDaysAgo = new Date(now - (5*24*60*60*1000)).toISOString();
+        const tenDaysAgo = new Date(now - (10*24*60*60*1000)).toISOString();
+  
+  
+        // Define demo user IDs (simulated Orange ID 'sub' identifiers)
+        const demoFarmer1 = 'oid_farmer_1_sub_abcdef';
+        const demoFarmer2 = 'oid_farmer_2_sub_ghijkl';
+        const demoInvestor1 = 'oid_investor_1_sub_mnopqr';
+        const demoBuyer1 = 'oid_buyer_1_sub_stuvwx';
+        const demoUsers = [ demoFarmer1, demoFarmer2, demoInvestor1, demoBuyer1 ]; // All demo user IDs
+  
+  
+        const demoFarmerVideos = [
+            { farmerId: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', crop: 'Tomatoes (Demo Video)', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell', uploadTimestamp: fiveDaysAgo},
+            { farmerId: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', crop: 'Strawberries (Demo Video)', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding', uploadTimestamp: tenDaysAgo},
+            { farmerId: demoFarmer2, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', crop: 'Lettuce (Demo Video)', pesticide: 'Nutrient Solution', location: 'Hydro Unit 1', pesticideCompany: 'HydroGrow', purpose: 'agristream', uploadTimestamp: threeDaysAgo},
+             { farmerId: demoFarmer2, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_peppers_placeholder_for_video4', crop: 'Peppers (Demo Video)', pesticide: 'Neem Oil', location: 'Greenhouse 3', pesticideCompany: 'Organics Inc.', purpose: 'sell', uploadTimestamp: fiveDaysAgo},
+        ];
+        this.allListings = [
+            { id: 'lst_demo1', farmerId: demoFarmer1, crop: 'Tomatoes (Demo Video)', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', minPrice: 0.8, maxPrice: 1.2, status: 'active', createdAt: fiveDaysAgo, isNew: true, platformTxId: 'pestivid_lst_tx_1', notificationSent: false },
+            { id: 'lst_demo2', farmerId: demoFarmer2, crop: 'Peppers (Demo Video)', location: 'Greenhouse 3', pesticide: 'Neem Oil', pesticideCompany: 'Organics Inc.', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_peppers_placeholder_for_video4', minPrice: 1.0, maxPrice: 1.5, status: 'active', createdAt: fiveDaysAgo, isNew: true, platformTxId: 'pestivid_lst_tx_2', notificationSent: false },
+             { id: 'lst_demo3_sold', farmerId: demoFarmer1, crop: 'Corn (Demo Video)', location: 'North Field', pesticide: 'Bt Corn', pesticideCompany: 'AgriCorp', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_corn_placeholder_for_video5', minPrice: 0.5, maxPrice: 0.7, status: 'sold', createdAt: tenDaysAgo, isNew: false, platformTxId: 'pestivid_lst_tx_3_sold' }, // Example of a sold listing
+        ];
+         // Simulate notifying buyers about the initial demo listings
+         this.allListings.filter(l => l.status === 'active').forEach(l => this.notifyBuyersAboutListing(l, true));
+  
+        this.allFundingRequests = [
+            { id: 'fr_demo1', farmerId: demoFarmer1, title: 'Organic Strawberry Expansion (Demo)', crop: 'Strawberries (Demo Video)', acres: 2.5, amount: 2500, method: 'organic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 1000, status: 'partially_funded', createdAt: tenDaysAgo, investors: [{investorId: demoInvestor1, amount: 1000, platformTxId:'pestivid_inv_tx_demo1', investmentDate: 'February 15, 2024'}], updates: [{id:'upd1', date: '1 week ago', text:'Initial tilling complete.'}, {id:'upd2', date:'3 days ago', text:'First batch of organic compost applied.'}], platformTxId: 'pestivid_fr_tx_1' },
+            { id: 'fr_demo2', farmerId: demoFarmer2, title: 'Hydroponic Lettuce Setup (Demo)', crop: 'Lettuce (Demo Video)', acres: 0.5, amount: 4000, method: 'hydroponic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', description: 'Setting up a new state-of-the-art NFT hydroponic system for year-round lettuce production. Focus on water efficiency and rapid growth cycles.', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: fiveDaysAgo, investors: [], updates: [], platformTxId: 'pestivid_fr_tx_2' },
+             { id: 'fr_demo3_funded', farmerId: demoFarmer1, title: 'Early Season Spinach (Demo)', crop: 'Spinach (Demo Video)', acres: 1, amount: 1000, method: 'conventional', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_spinach_placeholder_for_video6', description: 'Quick turnaround spinach crop.', timeline: 2, roi: 10, investorShare: 15, fundedAmount: 1000, status: 'funded', createdAt: tenDaysAgo, investors: [{investorId: demoInvestor1, amount: 500, platformTxId:'pestivid_inv_tx_demo2a', investmentDate: 'March 1, 2024'}, {investorId: demoBuyer1, amount: 500, platformTxId:'pestivid_inv_tx_demo2b', investmentDate: 'March 2, 2024'}], updates: [{id:'upd3',date:'5 days ago', text:'Planted.'}], platformTxId: 'pestivid_fr_tx_3_funded' }, // Example of a fully funded project
+        ];
+         // Simulate notifying investors about the initial demo requests
+         this.allFundingRequests.filter(req => req.status === 'pending' || req.status === 'partially_funded').forEach(req => this.notifyInvestorsAboutFunding(req, true));
+  
+        const demoBuyerPurchases = [ { id: 'pur_demo1', buyerId: demoBuyer1, farmerId: demoFarmer1, crop: 'Corn (Demo Video)', location: 'North Field', pesticide: 'Bt Corn', pesticideCompany: 'AgriCorp', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_corn_placeholder_for_video5', price: 0.65, date: 'March 10, 2024', platformTxId: 'pestivid_pur_tx_demo1' }, ];
+        const demoInvestorInvestments = [
+             { id: 'inv_demo1', investorId: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)', farmerId: demoFarmer1, crop: 'Strawberries (Demo Video)', method: 'organic', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 1000, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', platformTxId: 'pestivid_inv_tx_demo1', payoutNotified: false },
+             { id: 'inv_demo2a', investorId: demoInvestor1, projectId: 'fr_demo3_funded', projectTitle: 'Early Season Spinach (Demo)', farmerId: demoFarmer1, crop: 'Spinach (Demo Video)', method: 'conventional', description: 'Quick turnaround spinach crop.', acres: 1, timeline: 2, roi: 10, investorShare: 15, amount: 500, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_spinach_placeholder_for_video6', status: 'growing', progress: 80, investmentDate: 'March 1, 2024', platformTxId: 'pestivid_inv_tx_demo2a', payoutNotified: false },
+             { id: 'inv_demo2b', investorId: demoBuyer1, projectId: 'fr_demo3_funded', projectTitle: 'Early Season Spinach (Demo)', farmerId: demoFarmer1, crop: 'Spinach (Demo Video)', method: 'conventional', description: 'Quick turnaround spinach crop.', acres: 1, timeline: 2, roi: 10, investorShare: 15, amount: 500, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_spinach_placeholder_for_video6', status: 'growing', progress: 75, investmentDate: 'March 2, 2024', platformTxId: 'pestivid_inv_tx_demo2b', payoutNotified: false },
+        ]; // Note: investorinvestments need project details copied
+  
+        const demoInvestorTransactions = [
+             { id: 'tx_demo1', investorId: demoInvestor1, platformTxId: 'pestivid_inv_tx_demo1', type: 'investment', amount: 1000, date: 'February 15, 2024', projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)' },
+             { id: 'tx_demo2a', investorId: demoInvestor1, platformTxId: 'pestivid_inv_tx_demo2a', type: 'investment', amount: 500, date: 'March 1, 2024', projectId: 'fr_demo3_funded', projectTitle: 'Early Season Spinach (Demo)' },
+             { id: 'tx_demo2b', investorId: demoBuyer1, platformTxId: 'pestivid_inv_tx_demo2b', type: 'investment', amount: 500, date: 'March 2, 2024', projectId: 'fr_demo3_funded', projectTitle: 'Early Season Spinach (Demo)' },
+        ];
+        demoInvestorTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date desc
+  
+        const minToMs = (min) => 1000 * 60 * min;
+        const conv1Id = 'conv_demo_f1_i1'; // Farmer 1 and Investor 1
+        const conv2Id = 'conv_demo_f2_b1'; // Farmer 2 and Buyer 1
+  
+        const demoConversations = [
+             { id: conv1Id, participants: [demoFarmer1, demoInvestor1].sort(), lastMessageSnippet: 'Sounds good, will review the project terms tonight.', lastMessageTimestamp: new Date(now - minToMs(5)).toISOString() },
+             { id: conv2Id, participants: [demoFarmer2, demoBuyer1].sort(), lastMessageSnippet: 'Yes, the peppers are grown organically.', lastMessageTimestamp: new Date(now - minToMs(15)).toISOString() },
+        ];
+        demoConversations.sort((a, b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); // Sort by last message time
+  
+        const demoMessages = [
+            { id: 'msg_demo1a', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'Hi Investor, thanks for showing interest in the Strawberry Expansion project. Let me know if you have questions.', timestamp: new Date(now - minToMs(10)).toISOString(), read: true },
+            { id: 'msg_demo1b', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Hello Farmer! Yes, the project looks promising. What are the projected returns again?', timestamp: new Date(now - minToMs(8)).toISOString(), read: true },
+            { id: 'msg_demo1c', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'We are projecting an 18% ROI over 6 months, with a 20% profit share for investors.', timestamp: new Date(now - minToMs(6)).toISOString(), read: true },
+            { id: 'msg_demo1d', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Sounds good, will review the project terms tonight.', timestamp: new Date(now - minToMs(5)).toISOString(), read: false },
+  
+            { id: 'msg_demo2a', conversationId: conv2Id, sender: demoBuyer1, receiver: demoFarmer2, text: 'Hi! Are the peppers listed organic?', timestamp: new Date(now - minToMs(20)).toISOString(), read: true },
+            { id: 'msg_demo2b', conversationId: conv2Id, sender: demoFarmer2, receiver: demoBuyer1, text: 'Yes, the peppers are grown organically.', timestamp: new Date(now - minToMs(15)).toISOString(), read: true },
+        ];
+  
+        // Demo User Profiles for simulated display names, emails, etc.
+        const demoProfiles = {};
+        demoProfiles[demoFarmer1] = { id: demoFarmer1, role: 'farmer', name: 'Alice (Demo Farmer)', email: this.simulateUserEmail(demoFarmer1), phone: '555-0101', memberSince: this.simulateMemberSince(demoFarmer1), authMethod: 'orangeId'};
+        demoProfiles[demoFarmer2] = { id: demoFarmer2, role: 'farmer', name: 'Bob (Demo Farmer)', email: this.simulateUserEmail(demoFarmer2), phone: '555-0102', memberSince: this.simulateMemberSince(demoFarmer2), authMethod: 'orangeId'};
+        demoProfiles[demoInvestor1] = { id: demoInvestor1, role: 'investor', name: 'Charlie (Demo Investor)', email: this.simulateUserEmail(demoInvestor1), phone: '555-0103', memberSince: this.simulateMemberSince(demoInvestor1), authMethod: 'orangeId'};
+        demoProfiles[demoBuyer1] = { id: demoBuyer1, role: 'buyer', name: 'Dana (Demo Buyer)', email: this.simulateUserEmail(demoBuyer1), phone: '555-0104', memberSince: this.simulateMemberSince(demoBuyer1), authMethod: 'orangeId'};
+        localStorage.setItem('pestiVidUserProfiles', JSON.stringify(demoProfiles));
+  
+  
+        localStorage.setItem('pestiVidAppData', JSON.stringify({
+            allListings: this.allListings,
+            allFundingRequests: this.allFundingRequests,
+            farmerVideos: demoFarmerVideos, // Store all demo videos globally
+            buyerPurchases: demoBuyerPurchases, // Store all demo purchases globally
+            investorInvestments: demoInvestorInvestments, // Store all demo investments globally
+            investorTransactions: demoInvestorTransactions, // Store all demo transactions globally
+            messages: demoMessages, // Store all demo messages globally
+            conversations: demoConversations, // Store all demo conversations globally
+            chatMessages: [], // Chatbot messages start empty per user
+        }));
+  
+        // If a user is already authenticated (e.g., from a previous session),
+        // filter the demo data for *that* user immediately after loading it.
+        if (this.isUserAuthenticated) {
+             this.filterDataForCurrentUser();
+        } else {
+            // If no user is authenticated, load all demo data into the main arrays (except user-specific ones like farmerVideos, purchases, investments, transactions)
+             this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = [];
+             this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = [];
+             this.messages = demoMessages;
+             this.conversations = demoConversations;
+             this.chatMessages = [];
+        }
+         // Update investment progress based on potentially loaded demo data
+         if (this.role === 'investor' && this.isUserAuthenticated) {
+            this.updateInvestmentProgress();
+         }
       },
       scrollToAndHighlightAgriStreamVideo() { if (!this.targetAgriStreamVideoCid) return; this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid; this.$nextTick(() => { const videoCardRef = this.$refs[`videoCard-${this.targetAgriStreamVideoCid}`]; if (videoCardRef && videoCardRef[0]) { videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; }, 2500); } else { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; } }); },
       getOtherParticipantInitial(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.charAt(0).toUpperCase(); return otherP.charAt(0).toUpperCase(); },
-      getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(' ')[0]; return `${otherP.substring(0,6)}...${otherP.substring(otherP.length-4)}`; },
+      getOtherParticipantDisplayAddress(conv) { if (!conv || !this.isUserAuthenticated) return '?'; const otherP = conv.participants.find(p => p !== this.currentUserIdentifier); if (!otherP) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const otherPProfile = userProfiles[otherP]; if (otherPProfile && otherPProfile.name) return otherPProfile.name.split(" ")[0]; return `${otherP.substring(0,6)}...${otherP.substring(otherP.length-4)}`; },
       formatTimestamp(isoString, short = false) { if (!isoString) return ''; const date = new Date(isoString); const now = new Date(); const diffSeconds = Math.round((now - date) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (short) { if (diffMinutes < 1) return 'now'; if (diffMinutes < 60) return `${diffMinutes}m`; if (diffHours < 24) return `${diffHours}h`; if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'short' }).substring(0,3); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } else { if (diffMinutes < 2) return 'Just now'; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } },
       handlePlantImageUpload(event) { const file = event.target.files[0]; if (file) { this.plantImageFile = file; this.plantImageMimeType = file.type; this.plantImageUrl = URL.createObjectURL(file); this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; } },
       convertFileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => { resolve(reader.result.split(',')[1]); }; reader.onerror = error => reject(error); }); },
       async analyzePlant() { if (!this.plantImageFile) { this.analysisErrorText = "Please upload an image first."; return; } if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script."; return; } this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; try { const base64Image = await this.convertFileToBase64(this.plantImageFile); const apiKey = this.geminiApiKey; const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; const prompt = `Analyze this image of a plant. Identify the plant if possible, then detect any visible diseases. Based on your findings, provide the following information, each on a new line, formatted exactly as: Plant: [Plant Name or 'Unknown'] Disease: [Disease Name or 'Healthy' or 'Not Apparent' or 'Unknown'] Treatment: [Recommended treatment and/or types of pesticides. If healthy, state 'No treatment needed'. If disease is not apparent or unknown, state 'Cannot recommend treatment without clear disease identification.']. Be concise and focus on actionable recommendations. If the image is not clear or not a plant, state that.`; const payload = { contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: this.plantImageMimeType, data: base64Image } } ] }], generationConfig: { "temperature": 0.4, "topK": 32, "topP": 1, "maxOutputTokens": 2048, }, safetySettings: [ { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" } ] }; const response = await axios.post(url, payload); if (response.data && response.data.candidates && response.data.candidates.length > 0 && response.data.candidates[0].content && response.data.candidates[0].content.parts && response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) { this.analysisResultText = response.data.candidates[0].content.parts[0].text; this.parseGeminiResponse(this.analysisResultText); } else if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) { this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`; this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' }; } else { console.error("Unexpected response structure from Gemini API:", response.data); throw new Error("Invalid or empty response structure from Gemini API."); } } catch (error) { console.error("Error analyzing plant image with Gemini:", error); if (error.response) { this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`; if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) { this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project."; } else if (error.response.status === 429) { this.analysisErrorText += " You might have exceeded your API quota."; } } else if (error.request) { this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection."; } else { this.analysisErrorText = "An unexpected error occurred: " + error.message; } this.parsedAnalysis = { plantName: '-', diseaseName: '-', treatmentRecommended: '-' }; } finally { this.analysisInProgress = false; } },
       parseGeminiResponse(text) { const result = { plantName: 'Unknown', diseaseName: 'Not Apparent', treatmentRecommended: 'Could not determine specific treatment.' }; if (!text) { this.parsedAnalysis = result; return; } const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0); let currentPlant = null; let currentDisease = null; let currentTreatment = []; lines.forEach(line => { const lowerLine = line.toLowerCase(); if (lowerLine.startsWith('plant:')) { currentPlant = line.substring('plant:'.length).trim(); } else if (lowerLine.startsWith('disease:')) { currentDisease = line.substring('disease:'.length).trim(); } else if (lowerLine.startsWith('treatment:')) { currentTreatment.push(line.substring('treatment:'.length).trim()); } else if (currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentDisease && !currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentPlant && !currentDisease && !currentTreatment.length > 0) { if (lowerLine.includes("healthy") || lowerLine.includes("not apparent") || lowerLine.includes("unknown disease")) { currentDisease = line; } } }); if (currentPlant) result.plantName = currentPlant; if (currentDisease) result.diseaseName = currentDisease; if (currentTreatment.length > 0) result.treatmentRecommended = currentTreatment.join('\n'); if (result.plantName === 'Unknown' && result.diseaseName === 'Not Apparent' && result.treatmentRecommended === 'Could not determine specific treatment.') { const plantMatch = text.match(/Plant:\s*(.*)/i); const diseaseMatch = text.match(/Disease:\s*(.*)/i); const treatmentMatch = text.match(/Treatment:\s*(.*?)(?:\n|$)/is); if (plantMatch && plantMatch[1]) result.plantName = plantMatch[1].trim(); if (diseaseMatch && diseaseMatch[1]) result.diseaseName = diseaseMatch[1].trim(); if (treatmentMatch && treatmentMatch[1]) result.treatmentRecommended = treatmentMatch[1].trim(); } this.parsedAnalysis = result; },
-      initializeChatbot() { if (this.chatMessages.length === 0) { this.chatMessages.push({ id: Date.now(), sender: 'bot', text: "Hello! I'm AgriBot. How can I help you with your farming questions today?" }); } },
+      initializeChatbot() { if (this.chatMessages.length === 0 || this.chatMessages.every(msg => !msg.text)) { // Check if history is empty or only contains empty messages
+          // Add system prompt message (optional, but good for context)
+          // this.chatMessages.push({ id: Date.now() + '_sys', sender: 'system', text: "Initializing AgriBot..."}); // Don't display system message
+          // Add initial bot greeting
+          this.chatMessages.push({ id: Date.now(), sender: 'bot', text: "Hello! I'm AgriBot. How can I help you with your farming questions today?", userId: this.currentUserIdentifier });
+          this.saveDataToLocalStorage(); // Save initial chat state
+         }
+       },
       async sendChatMessage() {
           if (!this.chatInput.trim() || this.isGroqLoading) return;
-          const userInput = this.chatInput.trim(); this.chatMessages.push({ id: Date.now(), sender: 'user', text: userInput }); this.chatInput = ''; this.isGroqLoading = true;
-          const messagesForApi = [{ role: 'system', content: this.groqSystemPrompt }]; const recentHistory = this.chatMessages.slice(-7).map(msg => ({ role: msg.sender === 'user' ? 'user' : 'assistant', content: msg.text })); messagesForApi.push(...recentHistory);
+          const userInput = this.chatInput.trim();
+          // Add user message with user ID
+          this.chatMessages.push({ id: Date.now(), sender: 'user', text: userInput, userId: this.currentUserIdentifier });
+          this.chatInput = '';
+          this.isGroqLoading = true;
+  
+          // Prepare messages for the API, including system prompt and recent history (filtered by user)
+          const messagesForApi = [{ role: 'system', content: this.groqSystemPrompt }];
+          const userChatHistory = this.chatMessages.filter(msg => msg.userId === this.currentUserIdentifier); // Filter to current user's chat
+          const recentHistory = userChatHistory.slice(-10).map(msg => ({ // Take last 10 messages including the current user input
+               role: msg.sender === 'user' ? 'user' : 'assistant',
+               content: msg.text
+          }));
+          messagesForApi.push(...recentHistory);
+  
+  
           try {
               const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', { messages: messagesForApi, model: 'llama3-8b-8192', temperature: 0.7, max_tokens: 1024, }, { headers: { 'Authorization': `Bearer ${this.groqApiKey}`, 'Content-Type': 'application/json' } });
-              if (response.data.choices && response.data.choices.length > 0) { const botResponse = response.data.choices[0].message.content; this.chatMessages.push({ id: Date.now(), sender: 'bot', text: botResponse }); } else { this.chatMessages.push({ id: Date.now(), sender: 'bot', text: "Sorry, I couldn't get a response. Please try again." }); }
-          } catch (error) { console.error("Error calling Groq API:", error); let errorMsg = "Sorry, I encountered an error."; if (error.response) { errorMsg += ` (Status: ${error.response.status})`; if (error.response.data && error.response.data.error && error.response.data.error.message) { errorMsg += `: ${error.response.data.error.message}`; } } this.chatMessages.push({ id: Date.now(), sender: 'bot', text: errorMsg });
+              if (response.data.choices && response.data.choices.length > 0) { const botResponse = response.data.choices[0].message.content; this.chatMessages.push({ id: Date.now(), sender: 'bot', text: botResponse, userId: this.currentUserIdentifier }); // Add bot response with user ID
+              } else { this.chatMessages.push({ id: Date.now(), sender: 'bot', text: "Sorry, I couldn't get a response. Please try again.", userId: this.currentUserIdentifier }); // Add error message with user ID
+              }
+          } catch (error) { console.error("Error calling Groq API:", error); let errorMsg = "Sorry, I encountered an error."; if (error.response) { errorMsg += ` (Status: ${error.response.status})`; if (error.response.data && error.response.data.error && error.response.data.error.message) { errorMsg += `: ${error.response.data.error.message}`; } } this.chatMessages.push({ id: Date.now(), sender: 'bot', text: errorMsg, userId: this.currentUserIdentifier }); // Add error message with user ID
           } finally { this.isGroqLoading = false; this.saveDataToLocalStorage(); }
       },
       scrollToChatBottom() { const container = this.$refs.chatbotMessagesContainer; if (container) { this.$nextTick(() => { container.scrollTop = container.scrollHeight; }); } },
-      renderMarkdown(text) { if (window.marked && typeof window.marked.parse === 'function') { return window.marked.parse(text || ''); } return (text || '').replace(/\n/g, '<br>'); }
+      renderMarkdown(text) { if (window.marked && typeof window.marked.parse === 'function') {
+          try { return marked.parse(text || ''); } catch (e) { console.error("Markdown parsing error:", e); return (text || '').replace(/\n/g, '<br>'); }
+          } return (text || '').replace(/\n/g, '<br>'); }
     },
     mounted() {
       console.log("PestiVid (Orange ID) App Mounted.");
       if (!this.initializeOrangeIdSDK()) { console.warn("Orange ID SDK failed to initialize. Orange ID login will not be available."); }
       if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE' || !this.pinataJwt || this.pinataJwt.length < 50) { console.warn("CONFIG WARNING: Pinata JWT not set or is placeholder. Video uploads WILL FAIL until a valid JWT is provided."); }
-      if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder or invalid. Plant recommendation WILL FAIL."); } 
+      if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder or invalid. Plant recommendation WILL FAIL."); }
       else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for Generative Language API."); }
       if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY_REPLACE_ME" || this.groqApiKey.length < 30) { console.error("CONFIG ERROR: Groq API Key is missing or invalid. AgriBot WILL FAIL."); }
       if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
-      this.loadDataFromLocalStorage();
-      if (this.checkOrangeIdCallback()) { return; }
-      // No Solana auto-reconnect logic needed
-      if (this.isUserAuthenticated) {
-        this.filterDataForCurrentUser();
-        this.renderOrangeIdSignOutButton('orange-id-signout-button-container');
+  
+      // Check for Orange ID callback parameters BEFORE loading/filtering data
+      // If a callback is detected, let the callback processor handle the rest after auth
+      if (this.checkOrangeIdCallback()) {
+          console.log("Orange ID callback detected. Processing authentication.");
+          // The renderOrangeIdCallbackProcessor will call handleAuthenticationSuccess upon completion
+          return;
       }
-      setInterval(() => { if(this.isUserAuthenticated && this.role==='investor') this.updateInvestmentProgress(); }, 30000);
+  
+      // If not an Orange ID callback, proceed with normal app initialization
+      this.loadDataFromLocalStorage();
+  
+      // If the user is already authenticated (e.g., from a previous session,
+      // loaded via loadDataFromLocalStorage), render the sign-out button.
+      if (this.isUserAuthenticated) {
+        this.renderOrangeIdSignOutButton('orange-id-signout-button-container');
+        // The loadDataFromLocalStorage already called filterDataForCurrentUser
+        // and potentially loadOrSetupPestiVidProfile if a profile was found.
+        // If a profile was *not* found, loadOrSetupPestiVidProfile would have set current='roleSelection'.
+        // If a profile *was* found, loadOrSetupPestiVidProfile would have called getStarted,
+        // which in turn sets the current page based on the user's role.
+      } else {
+          // If no user is authenticated and we aren't already on landing or login choice, go to landing.
+          if (this.current !== 'landing' && this.current !== 'loginChoice') {
+               this.current = 'landing';
+          }
+      }
+  
+      // Start interval for investment progress updates only if authenticated as investor
+      if (this.isUserAuthenticated && this.role === 'investor') {
+          setInterval(() => { this.updateInvestmentProgress(); }, 30000); // Update every 30 seconds
+      }
+  
+      // Initialize chatbot if the user is authenticated as a farmer and is on the chatbot page
+      // This check is also in the watch handler for 'current'
+      // if (this.isUserAuthenticated && this.role === 'farmer' && this.current === 'farmerChatbot') {
+      //     this.initializeChatbot();
+      // }
     }
   });
-  window.vueApp = app;
+  window.vueApp = app; // Make app instance globally available if needed
+  
 </script>
+
 </body>
-</html>
+</html> 
