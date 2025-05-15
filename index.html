@@ -944,7 +944,7 @@
       loadOrSetupPestiVidProfile() {
           const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
           const pestividProfile = userProfiles[this.currentUserIdentifier];
-          let proceedToGetStarted = false; // Flag to decide if we should call getStarted
+          let proceedToGetStarted = false;
 
           if (pestividProfile && pestividProfile.role) {
               this.role = pestividProfile.role;
@@ -952,16 +952,21 @@
               this.userEmail = pestividProfile.email;
               this.userPhone = pestividProfile.phone || '';
               this.memberSince = pestividProfile.memberSince || new Date().toLocaleDateString();
-              proceedToGetStarted = true; // Existing user, has a role, should proceed
+              proceedToGetStarted = true;
           } else {
               // New user or user without a role in PestiVid profile
-              this.userNameOnboarding = (this.orangeIdUser && this.orangeIdUser.name) ? this.orangeIdUser.name : '';
-              this.userEmailOnboarding = (this.orangeIdUser && this.orangeIdUser.email) ? this.orangeIdUser.email : '';
-              this.userPhoneOnboarding = '';
-              this.selectedRoleOnboarding = '';
-              this.current = 'roleSelection'; // Send to onboarding
+              // Pre-fill from Orange ID if available, otherwise try from potentially partial PestiVid profile, then blank
+              this.userNameOnboarding = (this.orangeIdUser && this.orangeIdUser.name) ? this.orangeIdUser.name :
+                                        (pestividProfile && pestividProfile.name) ? pestividProfile.name : '';
+              this.userEmailOnboarding = (this.orangeIdUser && this.orangeIdUser.email) ? this.orangeIdUser.email :
+                                        (pestividProfile && pestividProfile.email) ? pestividProfile.email : '';
+              this.userPhoneOnboarding = (pestividProfile && pestividProfile.phone) ? pestividProfile.phone : ''; // Phone is optional, prefill if available
+
+              this.selectedRoleOnboarding = ''; // Always force role selection if not present or re-confirming
+              this.current = 'roleSelection'; // Send to onboarding/details fill page
+              
               if (this.isUserAuthenticated) {
-                  this.addNotification(`Welcome! Please complete your PestiVid profile.`, 'info');
+                  this.addNotification( (pestividProfile ? "Please complete or confirm " : "Welcome! Please complete ") + "your PestiVid profile.", 'info');
               }
               // proceedToGetStarted remains false, user will go through completeOnboarding
           }
@@ -970,17 +975,11 @@
           this.showMobileMenu = false;
 
           if (proceedToGetStarted) {
-              // If we determined this user has a profile and role, route them
-              // This also handles the case where this.current might have been 'roleSelection'
-              // but we found a profile. We should not stay on 'roleSelection'.
               this.getStarted();
           } else if (this.current !== 'roleSelection' && this.isUserAuthenticated && !this.role) {
-              // This is a fallback: authenticated but no role and not already on roleSelection
-              // Should be covered by the `else` block above, but for safety.
+              // Fallback: authenticated but no role and not already on roleSelection
               this.current = 'roleSelection';
           }
-          // If this.current is 'roleSelection' (from the `else` block for new users),
-          // then getStarted() will be called by completeOnboarding() later.
       },
       completeOnboarding() { if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Please fill in Full Name, PestiVid Email, and select a Role."); return; } if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Please enter a valid PestiVid email address."); return; } this.role = this.selectedRoleOnboarding; this.userName = this.userNameOnboarding.trim(); this.userEmail = this.userEmailOnboarding.trim(); this.userPhone = this.userPhoneOnboarding.trim() || ''; this.memberSince = new Date().toLocaleDateString(); const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; userProfiles[this.currentUserIdentifier] = { role: this.role, name: this.userName, email: this.userEmail, phone: this.userPhone, memberSince: this.memberSince, authMethod: 'orangeId', orangeAuthEmail: this.orangeIdUser ? this.orangeIdUser.email : null, orangeEthAddress: this.orangeIdUser ? this.orangeIdUser.ethAddress : null, }; localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); this.filterDataForCurrentUser(); this.getStarted(); this.addNotification(`Profile for ${this.userName} setup! Welcome!`, 'success'); },
       async logoutUser(notify = true) {
