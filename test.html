@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PestiVid - Agricultural Blockchain Platform (Web3 Demo) - Project Report</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif; /* Reverted to Times for AttendEase title page section */
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #000000;
+            background-color: #f9fafb;
+        }
+        .container {
+            width: 80%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius: 0.5rem;
+        }
+
+        /* AttendEase Title Page Styles */
+        .title-page {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            border-bottom: 2px solid #eee; /* AttendEase style */
+        }
+        .title-page img.logo { /* Specific class for Amrita logo */
+            max-width: 250px;
+            margin-bottom: 15px;
+        }
+        .title-page h1.institution-main-title { /* Specific class for main institution title */
+            font-size: 1.8em; /* Adjusted for typical document title */
+            color: #000000;
+            font-weight: bold; /* Made bold as in image */
+            margin-bottom: 5px;
+            font-family: 'Times New Roman', Times, serif; /* Ensure Times */
+        }
+        .title-page .institution-sub {
+            font-size: 1.1em;
+            color: #000000;
+            margin-bottom: 30px; /* Increased spacing */
+            font-family: 'Times New Roman', Times, serif; /* Ensure Times */
+        }
+         .title-page .motto {
+            font-size: 1.5em; /* Made larger */
+            font-style: normal; /* Original was italic, but image is normal bold-ish */
+            font-weight: bold;
+            color: #000000; /* Black as per request */
+            margin: 20px 0;
+            font-family: 'Times New Roman', Times, serif; /* Ensure Times for Sanskrit */
+        }
+        .title-page h2.department-title { /* Specific class */
+            font-size: 1.3em; /* Adjusted */
+            color: #000000;
+            margin-top: 40px; /* More space before dept */
+            margin-bottom: 5px;
+            font-weight: normal; /* As per image */
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .title-page h3.course-title { /* Specific class */
+            font-size: 1.2em; /* Adjusted */
+            color: #000000;
+            margin-bottom: 30px; /* More space after course */
+            font-weight: bold; /* As per image */
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .team-members { /* Style for AttendEase team members */
+            margin-top: 30px;
+            text-align: left;
+            max-width: 500px; /* Adjusted for content */
+            margin-left: auto;
+            margin-right: auto;
+            padding: 15px;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .team-members h4.team-title { /* Specific class */
+            font-size: 1.2em;
+            color: #000000;
+            margin-bottom: 15px;
+            font-weight: bold; /* As per image */
+            text-align: center; /* Centered title */
+        }
+        .team-members ul {
+            list-style: none;
+            padding: 0;
+        }
+        .team-members li {
+            margin-bottom: 10px; /* Increased spacing */
+            font-size: 1em;
+            color: #000000;
+            overflow: hidden; /* To contain floats */
+        }
+        .team-members .member-name {
+            float: left;
+        }
+        .team-members .member-id {
+            float: right;
+            color: #000000;
+            font-family: 'Times New Roman', Times, serif; /* Ensure Times */
+        }
+
+
+        /* General Content Styles (font changed to Inter for PestiVid content) */
+        main, .toc, .references {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            /* Styles for non-title-page headings will be black already due to body color */
+            font-weight: 600;
+        }
+        main h2 { /* Chapter Titles for PestiVid content */
+            border-bottom: 2px solid #10b981;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.75rem;
+            color: #000000;
+        }
+        main h3 { /* Section Titles for PestiVid content */
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: #000000;
+        }
+        main h4 { /* Sub-section Titles for PestiVid content */
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.25rem;
+            color: #000000;
+        }
+        p {
+            margin-bottom: 1em;
+            text-align: justify;
+            color: #000000;
+        }
+        ul, ol {
+            margin-bottom: 1em;
+            padding-left: 40px;
+        }
+        main li { /* Specific to main content lists */
+            margin-bottom: 0.5em;
+            color: #000000;
+        }
+        a {
+            color: #000000;
+            text-decoration: underline;
+        }
+        a:hover {
+            color: #000000;
+            text-decoration: underline;
+        }
+        img.diagram {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border: 1px solid #d1d5db;
+            padding: 5px;
+            border-radius: 0.375rem;
+            background-color: #f9fafb;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin-bottom: 8px;
+            color: #000000;
+            overflow: hidden; /* To contain floats for page numbers */
+        }
+        .toc li a {
+            text-decoration: none;
+            color: #000000;
+        }
+        .toc li a:hover {
+            color: #000000; /* Or a highlight color if preferred */
+        }
+        .toc li .page-num {
+            float: right;
+            margin-left: 10px;
+        }
+        .toc li ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .references ol li {
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .code-link {
+            display: block;
+            text-align: center;
+            margin: 20px 0;
+            padding: 12px;
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+        }
+        .note, .warning {
+            border-left-width: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0.25rem;
+            color: #000000;
+        }
+        .note {
+            background-color: #eff6ff;
+            border-left-color: #3b82f6;
+        }
+        .warning {
+            background-color: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+        .warning strong {
+            color: #000000;
+            font-weight: bold;
+        }
+        .pestivid-icon { /* This class is no longer used for checkmarks, but kept in case it's used elsewhere */
+             color: #10b981; 
+             margin-right: 5px;
+        }
+
+    </style>
+    <!-- Font Awesome is still linked in case other icons are used, but not for objectives -->
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- AttendEase Title Page Structure -->
+        <div class="title-page">
+            <h1 class="institution-main-title">AMRITA VISHWA VIDYAPEETHAM</h1>
+
+            <h2 class="department-title">Department of Computer Science Engineering - AIE</h2>
+            <h3 class="course-title">22AIE311 – Software Engineering</h3><br<br><br><br><br><br><br>  <h1 class="institution-main-title">PestiVid - Agricultural Blockchain Platform</h1><br><br><br><br><br><br><br><br><br><br>
+
+            <div class="team-members">
+                <h4 class="team-title">Team Members:</h4>
+                 <ul>
+                    <li><span class="member-name">SindukuriTeja</span><span class="member-id">AM.EN.U4AIE22049</span></li>
+                   
+                </ul>
+            </div>
+        </div>
+        <!-- End of AttendEase Title Page Structure -->
+
+        <nav class="toc" id="table-of-contents">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#abstract">Abstract</a> <span class="page-num">2</span></li>
+                <li><a href="#chapter1">Chapter 1: Introduction & Communication</a> <span class="page-num">3</span>
+                    <ul>
+                        <li><a href="#section1-1">1.1 Client Definition (User Roles)</a> <span class="page-num">3</span></li>
+                        <li><a href="#section1-2">1.2 Project Meetings & Agile Approach (Simulated)</a> <span class="page-num">3</span></li>
+                        <li><a href="#section1-3">1.3 Problem Statement</a> <span class="page-num">4</span></li>
+                        <li><a href="#section1-4">1.4 Background & Motivation</a> <span class="page-num">5</span></li>
+                        <li><a href="#section1-5">1.5 Project Objectives</a> <span class="page-num">5</span></li>
+                    </ul>
+                </li>
+                <li><a href="#chapter2">Chapter 2: Planning</a> <span class="page-num">6</span>
+                    <ul>
+                        <li><a href="#section2-1">2.1 Project Timeline (Conceptual)</a> <span class="page-num">6</span></li>
+                        <li><a href="#section2-2">2.2 Phases and Modules</a> <span class="page-num">7</span></li>
+                        <!-- For 2.3 Weekly Plans, as per original it had an error, so no page number is given -->
+                        <li><a href="#section2-3">2.3 Weekly Plans (Conceptual)</a> <span class="page-num">[N/A]</span></li>
+                    </ul>
+                </li>
+                <li><a href="#chapter3">Chapter 3: Modeling and Design Phase</a> <span class="page-num">8</span>
+                    <ul>
+                        <li><a href="#section3-1">3.1 Use Case Diagram</a> <span class="page-num">8</span></li>
+                        <li><a href="#section3-2">3.2 Activity Diagram (Example Flow)</a> <span class="page-num">10</span></li>
+                        <li><a href="#section3-3">3.3 Data Flow Diagram (DFD)</a> <span class="page-num">12</span></li>
+                    </ul>
+                </li>
+                <li><a href="#chapter4">Chapter 4: Implementation & Coding</a> <span class="page-num">13</span></li>
+                <li><a href="#chapter5">Chapter 5: Testing Strategy</a> <span class="page-num">14</span>
+                    <ul>
+                        <li><a href="#section5-1">5.1 Importance of Testing in Web3 dApps</a> <span class="page-num">15</span></li>
+                        <li><a href="#section5-2">5.2 Testing Report for PestiVid (Conceptual)</a> <span class="page-num">16</span></li>
+                    </ul>
+                </li>
+                <li><a href="#chapter6">Chapter 6: Conclusion</a> <span class="page-num">17</span>
+                    <ul>
+                        <li><a href="#section6-1">6.1 Summary</a> <span class="page-num">18</span></li>
+                        <li><a href="#section6-2">6.2 Project Achievements for PestiVid</a> <span class="page-num">19</span></li>
+                        <li><a href="#section6-3">6.3 Future Enhancements for PestiVid</a> <span class="page-num">20</span></li>
+                        <li><a href="#section6-4">6.4 Final Thoughts & Learnings</a> <span class="page-num">21</span></li>
+                    </ul>
+                </li>
+                <li><a href="#references">References & Technologies Used</a> <span class="page-num">22</span></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="abstract">
+                <h2>Abstract</h2>
+                <p>PestiVid is an innovative Web3 demonstration platform designed to bring transparency and trust to the agricultural supply chain. It leverages blockchain-simulated transactions, decentralized video storage (IPFS), and AI-powered support tools to create a secure and efficient ecosystem for farmers, buyers, and investors. Farmers can record video evidence of their crops and farming practices, storing this data immutably. Buyers gain access to verified information, enabling confident purchasing decisions. Investors can discover and fund agricultural projects with enhanced visibility into operations and potential returns. The platform integrates user authentication via Orange ID and Solana wallets, secure messaging, real-time notifications, and AI-driven features like plant disease recommendation (using Google Gemini) and an agricultural chatbot (AgriBot, powered by Groq). PestiVid aims to address common challenges in agriculture such as information asymmetry, lack of traceability, and difficult market access, ultimately fostering a more equitable and sustainable agricultural marketplace.</section>
+
+            <section id="chapter1">
+                <h2>Chapter 1: Introduction & Communication</h2>
+                <section id="section1-1">
+                    <h3>1.1 Client Definition (User Roles)</h3>
+                    <p>PestiVid serves three primary user roles, each with distinct needs and interactions within the platform:</p>
+                    <h4>1. Farmers:</h4>
+                    <ul>
+                        <li><strong>Description:</strong> Agricultural producers seeking to showcase their products, practices, and gain fair market access or funding.</li>
+                        <li><strong>Needs:</strong>
+                            <ul>
+                                <li>A simple way to record and upload video evidence of crops and practices (PestiVid & AgriStream).</li>
+                                <li>A platform to list their produce for sale directly to buyers (Sell).</li>
+                                <li>Opportunities to request and receive funding for their projects (Get Funding).</li>
+                                <li>Access to tools for farm management support, like plant disease identification (PlantRecommend) and expert advice (AgriBot).</li>
+                                <li>Secure communication with buyers and investors.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4>2. Buyers:</h4>
+                    <ul>
+                        <li><strong>Description:</strong> Individuals or businesses looking to purchase agricultural products with greater transparency and assurance of quality/origin.</li>
+                        <li><strong>Needs:</strong>
+                            <ul>
+                                <li>Access to a marketplace with video-verified listings (AgriSell).</li>
+                                <li>Detailed information about crop origin, farming practices, and pesticide use.</li>
+                                <li>Confidence in the authenticity and traceability of purchased goods.</li>
+                                <li>Direct communication with farmers.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4>3. Investors:</h4>
+                    <ul>
+                        <li><strong>Description:</strong> Individuals or entities interested in funding agricultural projects with transparent tracking and potential returns.</li>
+                        <li><strong>Needs:</strong>
+                            <ul>
+                                <li>A platform to discover and evaluate agricultural projects seeking investment (Projects).</li>
+                                <li>Video evidence and detailed information about funded projects.</li>
+                                <li>Transparent tracking of investment progress and (simulated) returns (Portfolio).</li>
+                                <li>Secure communication with farmers.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <section id="section1-2">
+                    <h3>1.2 Project Meetings & Agile Approach (Simulated)</h3>
+                    <p>The development of PestiVid followed an agile-inspired methodology, with iterative development cycles and regular (simulated) progress reviews with faculty advisors or self-review milestones. Key discussion points and decisions would have included:</p>
+                    <h4>Initial Conceptualization Meeting (e.g., Week 1)</h4>
+                    <ul>
+                        <li><strong>Agenda:</strong> Brainstorming core problem, defining project scope, initial feature ideation.</li>
+                        <li><strong>Key Points:</strong>
+                            <ul>
+                                <li>Identified the need for transparency in agriculture as the core problem.</li>
+                                <li>Decided on video verification as a key differentiator.</li>
+                                <li>Outlined three main user roles: Farmer, Buyer, Investor.</li>
+                                <li>Considered blockchain for traceability (initially simulated).</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>Technology Stack & Architecture Meeting (e.g., Week 2)</h4>
+                    <ul>
+                        <li><strong>Agenda:</strong> Selecting appropriate technologies, outlining basic architecture.</li>
+                        <li><strong>Key Points:</strong>
+                            <ul>
+                                <li>Chose Vue.js for the frontend due to its reactivity and component-based structure.</li>
+                                <li>Selected Tailwind CSS for rapid UI development.</li>
+                                <li>Planned for IPFS (via Pinata) for decentralized video storage.</li>
+                                <li>Decided on Orange ID and Solana Wallet for flexible Web3 authentication.</li>
+                                <li>Discussed future integration of AI tools (Gemini for image analysis, Groq for chatbot).</li>
+                                <li>Agreed on local storage for data persistence in the demo version.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>Sprint Planning Meetings (e.g., Weekly/Bi-Weekly)</h4>
+                    <ul>
+                        <li><strong>Agenda:</strong> Reviewing previous sprint, planning tasks for the next sprint, identifying blockers.</li>
+                        <li><strong>Key Points (Example - Mid-project):</strong>
+                            <ul>
+                                <li>Prioritized implementation of the Farmer's video upload and AgriStream features.</li>
+                                <li>Planned development of the Marketplace (AgriSell) for Buyers.
+                                <li>Assigned tasks for user profile management and inter-user messaging.
+                                <li>Discussed integration challenges for external APIs (Pinata, Gemini, Groq).</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <section id="section1-3">
+                    <h3>1.3 Problem Statement</h3>
+                    <p>The traditional agricultural supply chain often suffers from a lack of transparency, making it difficult for buyers to verify claims about product origin, quality, and farming practices. This information asymmetry can lead to reduced trust and unfair pricing for farmers who employ sustainable or premium methods. Investors also face challenges in identifying and tracking legitimate agricultural projects, increasing their risk.</p>
+                    <p>Furthermore, farmers, especially smallholders, may lack easy access to direct markets, efficient funding mechanisms, and timely, expert agricultural advice. Existing platforms might not fully leverage modern technologies like decentralized storage and AI to address these issues comprehensively.</p>
+                    <p>PestiVid aims to solve these problems by creating a Web3-enabled platform that:
+                    <ul>
+                        <li>Enhances transparency through video-verified proof of crop and practices.</li>
+                        <li>Builds trust between farmers, buyers, and investors using (simulated) blockchain principles and decentralized data.</li>
+                        <li>Provides farmers with direct market access and alternative funding avenues.</li>
+                        <li>Empowers farmers with AI-driven support tools for better decision-making.</li>
+                    </ul>
+                    </p>
+                </section>
+
+                <section id="section1-4">
+                    <h3>1.4 Background & Motivation</h3>
+                    <p>The global agricultural sector is undergoing significant transformation, driven by increasing consumer demand for food safety, traceability, and sustainability. There's a growing interest in understanding where food comes from and how it's produced. Simultaneously, technologies like blockchain and IPFS offer new paradigms for creating secure, transparent, and decentralized systems. Web3 principles encourage user ownership and control over data and interactions.</p>
+                    <p>The motivation behind PestiVid stems from the desire to harness these technological advancements to empower participants in the agricultural ecosystem. By providing tools for verifiable proof, direct communication, and transparent transactions, PestiVid seeks to create a fairer and more efficient marketplace. The integration of AI tools further aims to provide valuable, accessible support to farmers, enhancing their productivity and sustainability.</p>
+                </section>
+
+                <section id="section1-5">
+                    <h3>1.5 Project Objectives</h3>
+                    The primary objectives of the PestiVid project are to:
+                    <ul>
+                        <li>Develop a secure and user-friendly platform for farmers to record, upload (to IPFS), and manage video evidence of their agricultural activities.</li>
+                        <li>Implement a marketplace (AgriSell) where farmers can list their video-verified crops for sale, and buyers can browse and purchase with confidence.</li>
+                        <li>Create a module for farmers to request funding for their projects, supported by video evidence, and for investors to discover and fund these opportunities.</li>
+                        <li>Integrate dual authentication methods (Orange ID and Solana Wallet) for flexible user access.</li>
+                        <li>Enable secure peer-to-peer messaging between platform users.</li>
+                        <li>Implement AI-powered features:
+                            <ul>
+                                <li>Plant disease detection and treatment recommendation using image analysis (Google Gemini).</li>
+                                <li>An agricultural assistant chatbot (AgriBot) for farming advice (Groq).</li>
+                            </ul>
+                        </li>
+                        <li>Simulate blockchain interactions for key transactions (listings, purchases, investments) to demonstrate Web3 concepts.</li>
+                        <li>Provide a clear user interface with role-specific dashboards and real-time (simulated) notifications.</li>
+                        <li>Ensure data persistence for the demo using browser local storage.</li>
+                    </ul>
+                </section>
+            </section>
+
+            <section id="chapter2">
+                <h2>Chapter 2: Planning</h2>
+                <section id="section2-1">
+                    <h3>2.1 Project Timeline (Conceptual)</h3>
+                    <p>A conceptual timeline for a project like PestiVid might be structured as follows:</p>
+                    <p><strong>Phase 1: Foundation & User Management (e.g., 2-3 Weeks)</strong></p>
+                    <ul>
+                        <li>Week 1-2: Project setup, detailed requirements gathering, UI/UX wireframing, technology stack finalization. Initial setup of Vue.js project.</li>
+                        <li>Week 2-3: Implementation of Orange ID and Solana Wallet authentication. User profile creation and role selection (Farmer, Buyer, Investor). Basic navigation structure.</li>
+                    </ul>
+                    <p><strong>Phase 2: Core Farmer Features (e.g., 3-4 Weeks)</strong></p>
+                    <ul>
+                        <li>Week 4-5: PestiVid module: Video recording (browser MediaRecorder), local storage of video.</li>
+                        <li>Week 5-6: IPFS integration (Pinata) for video upload. AgriStream module for viewing uploaded videos.</li>
+                        <li>Week 6-7: Farmer Sell module: Creating listings linked to IPFS videos. Farmer Funding module: Creating funding requests.</li>
+                    </ul>
+                    <p><strong>Phase 3: Core Buyer & Investor Features (e.g., 2-3 Weeks)</strong></p>
+                    <ul>
+                        <li>Week 8-9: Buyer AgriSell module: Browsing and filtering marketplace listings. Simulated purchase flow.</li>
+                        <li>Week 9-10: Investor Projects module: Browsing funding requests. Simulated investment flow. Investor Portfolio view.</li>
+                    </ul>
+                    <p><strong>Phase 4: AI & Support Features (e.g., 3-4 Weeks)</strong></p>
+                    <ul>
+                        <li>Week 11-12: Plant Recommendation module: Image upload, integration with Google Gemini API for analysis.</li>
+                        <li>Week 12-13: AgriBot module: Chat interface, integration with Groq API for Q&A.</li>
+                        <li>Week 13-14: Secure messaging system between users. Notification system implementation.</li>
+                    </ul>
+                     <p><strong>Phase 5: Testing, Refinement & Documentation (e.g., 2 Weeks)</strong></p>
+                    <ul>
+                        <li>Week 15: Comprehensive testing (Unit, Integration, Usability). Bug fixing and UI/UX refinements.</li>
+                        <li>Week 16: Finalizing project documentation and preparing for demonstration.</li>
+                    </ul>
+                </section>
+
+                <section id="section2-2">
+                    <h3>2.2 Phases and Modules</h3>
+                    <h4>Phase 1: User Management & Platform Foundation</h4>
+                    <p><strong>Tasks:</strong></p>
+                    <ul>
+                        <li>Implement user registration/login with Orange ID and Solana Wallet.</li>
+                        <li>Develop user profile management with role selection (Farmer, Buyer, Investor).</li>
+                        <li>Establish basic application structure, navigation, and UI theme using Vue.js and Tailwind CSS.</li>
+                        <li>Setup local storage for data persistence (demo purposes).</li>
+                    </ul>
+                    <p><strong>Key Modules:</strong> Login Page, Role Selection, User Profile Page, Main Navigation.</p>
+
+                    <h4>Phase 2: Core PestiVid Features (Farmer, Buyer, Investor)</h4>
+                    <p><strong>Tasks:</strong></p>
+                    <ul>
+                        <li><strong>Farmer:</strong>
+                            <ul>
+                                <li>PestiVid: Implement in-browser video recording and local capture.</li>
+                                <li>IPFS Upload: Integrate Pinata API for secure decentralized video storage, including metadata (crop details, SHA256 hash).</li>
+                                <li>AgriStream: Display farmer's uploaded videos with details.</li>
+                                <li>Sell: Allow farmers to create crop listings linked to their PestiVid videos, set price ranges.</li>
+                                <li>Get Funding: Enable farmers to create funding requests for projects, linking video evidence.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Buyer:</strong>
+                            <ul>
+                                <li>AgriSell: Develop marketplace to browse, filter, and view video-verified listings. Implement simulated purchase flow.</li>
+                            </ul>
+                        </li>
+                         <li><strong>Investor:</strong>
+                            <ul>
+                                <li>Projects: Allow investors to browse and filter funding requests.</li>
+                                <li>Portfolio: Implement simulated investment flow and display investor's portfolio with progress.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p><strong>Key Modules:</strong> FarmerPestiVid, FarmerAgriStream, FarmerSell, FarmerFunding, BuyerAgriSell, InvestorProjects, InvestorPortfolio.</p>
+                    
+                    <h4>Phase 3: AI-Powered Support & Communication Tools</h4>
+                     <p><strong>Tasks:</strong></p>
+                    <ul>
+                        <li>Plant Recommendation: Integrate Google Gemini API for plant image analysis (disease detection, treatment suggestion).</li>
+                        <li>AgriBot: Implement a chatbot interface and integrate Groq API for agricultural Q&A.</li>
+                        <li>Messaging: Develop a secure peer-to-peer messaging system for users.</li>
+                        <li>Notifications: Implement a real-time (simulated) notification system for key platform events.</li>
+                    </ul>
+                    <p><strong>Key Modules:</strong> PlantRecommendation, FarmerChatbot, Messaging System, Notification Service.</p>
+                </section>
+                 <section id="section2-3">
+                    <h3>2.3 Weekly Plans (Conceptual)</h3>
+                    <p>Weekly plans would detail specific tasks derived from the phases and modules, assigning them to development sprints. For example:</p>
+                    <ul>
+                        <li><strong>Week 1:</strong> Setup project environment, Vue.js boilerplate, initial component for Orange ID login.</li>
+                        <li><strong>Week 2:</strong> Complete Orange ID integration, implement Solana wallet connection, basic user profile structure.</li>
+                        <li><strong>Week 5:</strong> Develop video recording UI (PestiVid), implement Pinata API wrapper for IPFS upload.</li>
+                        <li><strong>Week 11:</strong> Design PlantRecommend UI, integrate Gemini API for image submission and result display.</li>
+                        <li>And so on, breaking down each module into manageable weekly or bi-weekly tasks.</li>
+                    </ul>
+                    <p class="note">This section would typically be much more detailed in an actual project plan, often using tools like JIRA, Trello, or Gantt charts.</p>
+                </section>
+            </section>
+
+            <section id="chapter3">
+                <h2>Chapter 3: Modeling and Design Phase</h2>
+                <section id="section3-1">
+                    <h3>3.1 Use Case Diagram</h3>
+                    <p><strong>Actors:</strong></p>
+                    <ul>
+                        <li>Farmer</li>
+                        <li>Buyer</li>
+                        <li>Investor</li>
+                        <li>System (PestiVid Platform, IPFS, AI APIs)</li>
+                    </ul>
+                    <p><strong>Key Use Cases:</strong></p>
+                    <ul>
+                        <li>Authenticate User (Orange ID/Solana)</li>
+                        <li>Manage User Profile & Role</li>
+                        <li>Record Crop Video (PestiVid)</li>
+                        <li>Upload Video to IPFS</li>
+                        <li>View AgriStream (Farmer's Videos)</li>
+                        <li>Create Crop Listing (Farmer)</li>
+                        <li>Browse Marketplace Listings (Buyer)</li>
+                        <li>Initiate Crop Purchase (Buyer)</li>
+                        <li>Create Funding Request (Farmer)</li>
+                        <li>Browse Funding Projects (Investor)</li>
+                        <li>Invest in Project (Investor)</li>
+                        <li>View Investment Portfolio (Investor)</li>
+                        <li>Get Plant Recommendation (Farmer)</li>
+                        <li>Chat with AgriBot (Farmer)</li>
+                        <li>Send/Receive Messages</li>
+                        <li>Receive Notifications</li>
+                    </ul>
+                    <div class="note">
+                        <strong>Note:</strong> A Use Case Diagram image representing the actors and their interactions with the PestiVid system's main functionalities should be placed here.
+                        <img src="Case Diagram.jpg" alt="PestiVid Use Case Diagram" class="diagram">
+                    </div>
+                </section>
+
+                <section id="section3-2">
+                    <h3>3.2 Activity Diagram (Example Flow: Farmer Records & Lists Crop)</h3>
+                    <p>This activity diagram would illustrate the steps a farmer takes from recording a video to listing their crop on the marketplace.</p>
+                    <ol>
+                        <li>Farmer navigates to "PestiVid" section.</li>
+                        <li>Farmer inputs crop details (type, location, pesticide, etc.).</li>
+                        <li>Farmer initiates video recording.</li>
+                        <li>System accesses camera.</li>
+                        <li>Farmer records video.</li>
+                        <li>Farmer stops recording.</li>
+                        <li>Video is previewed and (locally) saved.</li>
+                        <li>Farmer initiates upload to IPFS.</li>
+                        <li>System uploads video and metadata (including SHA256 hash) to IPFS via Pinata.</li>
+                        <li>IPFS returns CID.</li>
+                        <li>Video (with CID & hash) is added to Farmer's AgriStream.</li>
+                        <li>Farmer navigates to "Sell" section.</li>
+                        <li>Farmer selects the uploaded video (by CID) for listing.</li>
+                        <li>Farmer inputs pricing details (min/max price).</li>
+                        <li>Farmer submits listing.</li>
+                        <li>System creates listing, (simulates) blockchain transaction, and makes it visible on AgriSell.</li>
+                        <li>(Optional) System notifies potential buyers.</li>
+                    </ol>
+                    <div class="note">
+                        <strong>Note:</strong> An Activity Diagram image for a key PestiVid process, like the one described above, should be placed here.
+                        <img src="Activity Diagram.jpg" alt="PestiVid Activity Diagram" class="diagram">
+                    </div>
+                </section>
+
+                <section id="section3-3">
+                    <h3>3.3 Data Flow Diagram (DFD)</h3>
+                    <h4>Level 0: PestiVid System Overview</h4>
+                    <p>Shows PestiVid as a central process interacting with external entities and major data stores.</p>
+                    <ul>
+                        <li><strong>External Entities:</strong> Farmer, Buyer, Investor, Orange ID Service, Solana Wallet, IPFS (Pinata), Google Gemini API, Groq API.</li>
+                        <li><strong>Processes:</strong> PestiVid Platform.</li>
+                        <li><strong>Data Stores (Conceptual for Demo):</strong> User Profiles, Video Metadata, Listings, Funding Requests, Investments, Messages, (Simulated) Blockchain Ledger.</li>
+                        <li><strong>Data Flows:</strong> User credentials, video files, IPFS CIDs, listing data, investment data, AI query/response, messages.</li>
+                    </ul>
+                     <div class="note">
+                        <strong>Note:</strong> A DFD Level 0 image should be placed here.
+                        <img src="dfd0.jpg" alt="PestiVid DFD Level 0" class="diagram">
+                    </div>
+
+                    <h4>Level 1: Example DFD for "Marketplace Interaction"</h4>
+                    <p>Details the processes and data flows involved when a buyer interacts with the marketplace and makes a purchase.</p>
+                    <ul>
+                        <li><strong>Processes:</strong> Browse Listings, Filter Listings, View Listing Details (incl. Video), Initiate Purchase, (Simulate) Payment, Update Listing Status, Notify Seller.</li>
+                        <li><strong>Data Stores:</strong> Listings, User Profiles, (Simulated) Blockchain Ledger, Video Metadata (via IPFS CIDs).</li>
+                        <li><strong>Data Flows:</strong> Search criteria, listing results, video stream request (via CID), purchase offer, payment confirmation (simulated), purchase record.</li>
+                    </ul>
+                    <div class="note">
+                        <strong>Note:</strong> A DFD Level 1 image for a key PestiVid module like "Marketplace Interaction" should be placed here.
+                        <img src="dfd1.jpg" alt="PestiVid DFD Level 1 - Marketplace" class="diagram">
+                    </div>
+                </section>
+            </section>
+
+            <section id="chapter4">
+                <h2>Chapter 4: Implementation & Coding</h2>
+                <p>PestiVid is developed as a single-page web application using Vue.js (version 2.6.14) for the frontend. Styling is primarily handled by Tailwind CSS (version 2.2.19) for rapid and responsive UI development, with Font Awesome (version 6.5.2) for icons.</p>
+                <p>Key technologies and libraries integrated include:</p>
+                <ul>
+                    <li><strong>Authentication:</strong>
+                        <ul>
+                            <li>Orange ID: Leveraged via the Bedrock Passport SDK for social logins and email-based authentication.</li>
+                            <li>Solana Wallet: Direct integration with browser-based Solana wallets (e.g., Phantom) using `@solana/web3.js` for Web3 native login.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Decentralized Storage:</strong>
+                        <ul>
+                            <li>IPFS: Videos are uploaded to the InterPlanetary File System via the Pinata pinning service. Axios is used for HTTP requests to the Pinata API. The SHA256 hash of the video file is calculated client-side before upload for integrity verification.</li>
+                        </ul>
+                    </li>
+                     <li><strong>Blockchain Interaction (Simulated):</strong>
+                        <ul>
+                            <li>While full blockchain deployment is outside the demo scope, key transactions (listing creation, purchases, investments) are simulated to mimic on-chain events, generating mock transaction hashes.</li>
+                        </ul>
+                    </li>
+                    <li><strong>AI Integrations:</strong>
+                        <ul>
+                            <li>Google Gemini API: Used for the Plant Recommendation feature. Plant images uploaded by users are sent to the Gemini model for analysis (plant identification, disease detection, treatment suggestions).</li>
+                            <li>Groq API: Powers the AgriBot chatbot, providing farmers with AI-driven agricultural advice using a Llama3-based model.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Data Persistence (Demo):</strong>
+                        <ul>
+                            <li>Browser Local Storage: Used to store application data (user profiles, video metadata, listings, funding requests, messages, etc.) for persistence across sessions in this demo version.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Other Libraries:</strong> `marked.js` for rendering Markdown in the AgriBot chat.</li>
+                </ul>
+                <div class="code-link">
+                    The complete source code for the PestiVid demo application is available at: <br>
+                    <a href="https://github.com/sindukuriTeja/congenial-waddle" target="_blank">PestiVid GitHub </a>
+                </div>
+            </section>
+
+            <section id="chapter5">
+                <h2>Chapter 5: Testing Strategy</h2>
+                <section id="section5-1">
+                    <h3>5.1 Importance of Testing in Web3 dApps</h3>
+                    <p>Testing is paramount in all software development, but it takes on heightened importance in Web3 decentralized applications (dApps) and platforms interacting with blockchain and AI services. For PestiVid, thorough testing ensures:</p>
+                    <ul>
+                        <li><strong>Security:</strong> Validating authentication flows (Orange ID, Solana), ensuring role-based access control, and protecting user data are critical. For services interacting with real assets (even if simulated here), security against unauthorized actions is vital.</li>
+                        <li><strong>Reliability:</strong> Ensuring consistent video uploads to IPFS, correct metadata association, reliable API interactions with Gemini and Groq, and robust (simulated) transaction processing.</li>
+                        <li><strong>Data Integrity:</strong> Verifying that video file hashes match, and that data displayed to users (listings, investment progress) is accurate and reflects the underlying (simulated) state.</li>
+                        <li><strong>User Experience (UX):</strong> Given the complexity of Web3 interactions and multiple user roles, ensuring an intuitive and smooth UX across all features (video recording, marketplace, funding, AI tools) is crucial for adoption.</li>
+                        <li><strong>Smart Contract Logic (Future):</strong> Although PestiVid uses simulated blockchain, if it were to move to real smart contracts, testing their logic would be extremely critical due to the immutability of deployed contracts.</li>
+                    </ul>
+                </section>
+
+                <section id="section5-2">
+                    <h3>5.2 Testing Report for PestiVid (Conceptual)</h3>
+                    <p>A comprehensive testing strategy for PestiVid would include the following types of tests:</p>
+                    <h4>1. Unit Testing</h4>
+                    <ul>
+                        <li><strong>Objective:</strong> Test individual Vue components, utility functions, and API service wrappers in isolation.</li>
+                        <li><strong>Examples:</strong>
+                            <ul>
+                                <li>Verify the `calculateFileHash` function produces correct SHA256 hashes.</li>
+                                <li>Test input validation in forms (e.g., price ranges, funding amounts).</li>
+                                <li>Mock API calls to Pinata, Gemini, Groq to test response handling in service methods.</li>
+                                <li>Test Vue component rendering based on different props and data states.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4>2. Integration Testing</h4>
+                    <ul>
+                        <li><strong>Objective:</strong> Test interactions between different modules and services.</li>
+                        <li><strong>Examples:</strong>
+                            <ul>
+                                <li>User authentication flow: Orange ID/Solana login leading to correct role-based dashboard access.</li>
+                                <li>PestiVid to AgriSell flow: Farmer uploads video, video appears in AgriStream, farmer successfully lists it, and it appears in AgriSell for buyers.</li>
+                                <li>Gemini API integration: Farmer uploads plant image, request is sent to Gemini, response is parsed and displayed correctly.</li>
+                                <li>Groq API integration: User sends message to AgriBot, request to Groq, response displayed in chat.</li>
+                                <li>Simulated purchase flow: Buyer initiates purchase, (simulated) payment, listing removal, and notifications.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                     <h4>3. End-to-End (E2E) Testing</h4>
+                    <ul>
+                        <li><strong>Objective:</strong> Test complete user flows from the user's perspective, simulating real interactions.</li>
+                        <li><strong>Examples:</strong>
+                            <ul>
+                                <li>A farmer registers, records a video, uploads it, lists it for sale, and another user (buyer) logs in, finds the listing, and (simulates) a purchase.</li>
+                                <li>An investor logs in, browses funding projects, invests in one, and sees their portfolio updated.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4>4. Usability Testing</h4>
+                    <ul>
+                        <li><strong>Objective:</strong> Evaluate the ease of use and intuitiveness of the platform for each user role.</li>
+                        <li><strong>Methods:</strong> Observing users (or peers) performing common tasks, collecting feedback on UI clarity, navigation, and overall experience.</li>
+                    </ul>
+                    <h4>5. Security Testing (Conceptual for Demo)</h4>
+                    <ul>
+                        <li><strong>Objective:</strong> Identify potential vulnerabilities.</li>
+                        <li><strong>Areas of Focus:</strong>
+                            <ul>
+                                <li>Authentication & Authorization: Ensure only authenticated users with correct roles can access specific features/data.</li>
+                                <li>Input Validation: Check for potential issues if malicious input is provided (though client-side only in this demo).</li>
+                                <li>API Key Exposure: (As noted, a critical issue in the current codebase if it were production).</li>
+                            </ul>
+                        </li>
+                    </ul>
+                     <h4>6. API Interaction Testing</h4>
+                    <ul>
+                        <li><strong>Objective:</strong> Verify correct request formation and response handling for all external APIs (Pinata, Gemini, Groq).</li>
+                        <li><strong>Methods:</strong> Mocking API responses for various scenarios (success, error, rate limiting) to ensure the application handles them gracefully.</li>
+                    </ul>
+                </section>
+            </section>
+
+            <section id="chapter6">
+                <h2>Chapter 6: Conclusion</h2>
+                <section id="section6-1">
+                    <h3>6.1 Summary</h3>
+                    <p>PestiVid, as a Web3 demonstration platform, successfully showcases the potential of integrating blockchain principles (simulated), decentralized storage (IPFS), and artificial intelligence to enhance transparency, trust, and efficiency in the agricultural sector. The project provides distinct functionalities for Farmers, Buyers, and Investors, centered around video-verified evidence of farming practices. Key features include robust user authentication (Orange ID & Solana), video recording and IPFS upload, a marketplace for crop sales, a platform for agricultural project funding, AI-driven plant diagnosis, and an AI chatbot for farming assistance.</p>
+                    <p>Through its various modules, PestiVid demonstrates a user-centric approach, addressing specific pain points for each user role. The use of Vue.js and Tailwind CSS allowed for rapid development of a responsive and interactive user interface. The integration of external APIs like Pinata, Google Gemini, and Groq highlights the power of composability in modern web development to deliver sophisticated features.</p>
+                </section>
+
+                <section id="section6-2">
+                    <h3>6.2 Project Achievements for PestiVid</h3>
+                    <ol>
+                        <li><strong>Multi-Role Platform:</strong> Successfully implemented distinct workflows and interfaces for Farmers, Buyers, and Investors.</li>
+                        <li><strong>Dual Authentication System:</strong> Integrated both Orange ID (social/email) and Solana wallet-based authentication, offering flexibility.</li>
+                        <li><strong>Video Verification & IPFS Storage:</strong> Enabled farmers to record videos and upload them to IPFS via Pinata, with client-side SHA256 hash calculation for (conceptual) integrity.</li>
+                        <li><strong>Functional Marketplace (Simulated):</strong> Created AgriSell where farmers can list produce and buyers can (simulate) purchases.</li>
+                        <li><strong>Investment Module (Simulated):</strong> Developed a system for farmers to request funding and investors to fund projects, with portfolio tracking.</li>
+                        <li><strong>AI-Powered Plant Recommendation:</strong> Integrated Google Gemini API for plant image analysis, providing disease detection and treatment suggestions.</li>
+                        <li><strong>AI Farming Assistant (AgriBot):</strong> Integrated Groq API to power a chatbot offering agricultural advice.</li>
+                        <li><strong>User Communication:</strong> Implemented a peer-to-peer messaging system and (simulated) real-time notifications.</li>
+                        <li><strong>Responsive UI:</strong> Developed a user-friendly interface using Vue.js and Tailwind CSS.</li>
+                        <li><strong>Web3 Concepts Demonstration:</strong> Effectively simulated blockchain transactions and showcased the utility of decentralized storage for a practical use case.</li>
+                    </ol>
+                </section>
+
+                <section id="section6-3">
+                    <h3>6.3 Future Enhancements for PestiVid</h3>
+                    <ol>
+                        <li><strong>Real Blockchain Integration:</strong> Transition from simulated transactions to actual smart contracts on a blockchain (e.g., Solana, Polygon, or an L2 solution) for listings, purchases, and investment management.</li>
+                        <li><strong>Tokenization:</strong> Introduce a utility token for platform governance, staking, or premium features. Potentially tokenize agricultural assets or investment shares.</li>
+                        <li><strong>Enhanced AI Capabilities:</strong>
+                            <ul>
+                                <li>More sophisticated plant analysis (e.g., nutrient deficiency, pest identification).</li>
+                                <li>Personalized advice from AgriBot based on farmer's specific location, crops, and history.</li>
+                                <li>AI-driven market price predictions or demand forecasting.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Supply Chain Tracking:</strong> Extend blockchain use to track produce from farm to consumer for full traceability.</li>
+                        <li><strong>Mobile Application:</strong> Develop native mobile apps for easier field use, especially for video recording and AI tool access.</li>
+                        <li><strong>Community Features:</strong> Forums, farmer groups, expert Q&A sessions to foster a collaborative ecosystem.</li>
+                        <li><strong>Data Analytics Dashboard:</strong> Provide farmers and investors with more detailed analytics on their activities, market trends, and project performance.</li>
+                        <li><strong>Third-Party Integrations:</strong> Connect with weather APIs, soil sensor data, or existing farm management software.</li>
+                        <li><strong>Robust Security Audit:</strong> If moving to real assets, a comprehensive security audit of smart contracts and platform infrastructure would be essential.</li>
+                        <li><strong>Scalable Backend:</strong> Move data persistence from local storage to a scalable database solution if user base grows. Secure API key management via a dedicated backend.</li>
+                    </ol>
+                </section>
+
+                <section id="section6-4">
+                    <h3>6.4 Final Thoughts & Learnings</h3>
+                    <p>The PestiVid project served as an excellent exploration into building a multifaceted Web3-inspired application. It highlighted the complexities of integrating various cutting-edge technologies—decentralized identity (Orange ID), wallet-based authentication (Solana), decentralized storage (IPFS), and multiple AI APIs (Gemini, Groq)—into a cohesive user experience.</p>
+                    <p>Key learnings include the importance of a modular design to manage complexity, the challenges of client-side API key management (and the critical need for backend solutions in production), and the significant potential of AI to provide value-added services in domain-specific applications like agriculture. The simulation of blockchain transactions provided valuable insight into the conceptual design required for real-world dApp development.</p>
+                    <p>PestiVid demonstrates a strong proof-of-concept for how technology can be leveraged to build more transparent, trustworthy, and efficient agricultural systems, benefiting all stakeholders in the value chain.</p>
+                </section>
+            </section>
+
+            <section id="references" class="references">
+                <h2>References & Technologies Used</h2>
+                <ol>
+                    <li>Vue.js (v2.6.14). (n.d.). Progressive JavaScript Framework. Retrieved from <a href="https://v2.vuejs.org/" target="_blank">https://v2.vuejs.org/</a></li>
+                    <li>Tailwind CSS (v2.2.19). (n.d.). A utility-first CSS framework. Retrieved from <a href="https://v2.tailwindcss.com/" target="_blank">https://v2.tailwindcss.com/</a></li>
+                    <li>Font Awesome (v6.5.2). (n.d.). Icon library and toolkit. Retrieved from <a href="https://fontawesome.com/" target="_blank">https://fontawesome.com/</a></li>
+                    <li>Orange ID (Bedrock Passport). (n.d.). Decentralized Identity Solution. Retrieved from <a href="https://orangeid.xyz/" target="_blank">https://orangeid.xyz/</a> & Bedrock documentation.</li>
+                    <li>Solana Web3.js (@solana/web3.js v1.73.0). (n.d.). Solana JavaScript API. Retrieved from <a href="https://solana-labs.github.io/solana-web3.js/" target="_blank">https://solana-labs.github.io/solana-web3.js/</a></li>
+                    <li>IPFS (InterPlanetary File System). (n.d.). A peer-to-peer hypermedia protocol. Retrieved from <a href="https://ipfs.tech/" target="_blank">https://ipfs.tech/</a></li>
+                    <li>Pinata. (n.d.). IPFS Pinning Service. Retrieved from <a href="https://www.pinata.cloud/" target="_blank">https://www.pinata.cloud/</a></li>
+                    <li>Google Gemini API. (n.d.). Multimodal AI models by Google. Retrieved from <a href="https://ai.google.dev/docs/gemini_api_overview" target="_blank">https://ai.google.dev/docs/gemini_api_overview</a></li>
+                    <li>K. Bakthavatchalam et al., “IoT framework for measurement and precision agriculture: predicting the crop using machine
+                      learning algorithms,” Technologies, vol. 10, no. 1, Jan. 2022, doi: 10.3390/technologies10010013.</li>
+                    <li>G. S. Manoj, G. S. Prajwal, U. R. Ashoka, P. Krishna, and P. Anitha, “Prediction and analysis of crop yield using machine
+                      learning techniques,” International Journal of Engineering Research and Technology (Ijert), vol. 8, no. 15, pp. 19–23, 2020.</li>
+                    <li>S. Ramya, A. M. Swetha, and M. Doraipandian, “IoT framework for smart irrigation using machine learning technique,” Journal
+                      of Computer Science, vol. 16, no. 3, pp. 355–363, Mar. 2020, doi: 10.3844/jcssp.2020.355.363.</li>
+                    <li>A. H. Blasi, M. A. Abbadi, and R. Al-Huweimel, “Machine learning approach for an automatic irrigation system in Southern
+                      Jordan Valley,” Engineering, Technology and Applied Science Research, vol. 11, no. 1, pp. 6609–6613, Feb. 2021, doi:
+                      10.48084/etasr.3944.</li>
+                </ol>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

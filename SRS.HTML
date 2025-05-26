@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Requirements Specification for PestiVid</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: black;
+            background-color: white;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: black;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 2rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 2rem;
+        }
+        h3 {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        h4 {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        p {
+            margin-bottom: 0.75rem;
+            text-align: justify;
+        }
+        ul, ol {
+            margin-bottom: 1rem;
+            margin-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.25rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .cover-page {
+            text-align: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .cover-page h1 {
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+        }
+        .cover-page h2 {
+            font-size: 2rem;
+            margin-bottom: 3rem;
+        }
+        .page-break {
+            margin-top: 4rem;
+            margin-bottom: 4rem;
+            border-top: none;
+            page-break-before: avoid;
+        }
+        .toc-item {
+            display: flex;
+            margin-bottom: 0.25rem;
+        }
+        .toc-dots {
+            flex-grow: 1;
+            border-bottom: 1px dotted black;
+            margin: 0 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .center-text {
+            text-align: center;
+        }
+        .section-header {
+            font-weight: bold;
+            margin-top: 1.5rem;
+        }
+        .indent {
+            margin-left: 2rem;
+        }
+        code {
+            background-color: #f0f0f0;
+            padding: 0.2rem;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <h1>Software Requirements Specification</h1>
+        <h2>for</h2>
+        <h1>PestiVid - Agricultural Blockchain Platform</h1>
+        <p class="mt-10">Version 1.0 approved</p>
+        <p class="mt-16">Prepared by</p>
+        <p class="mt-6">sindukuri Teja</p>
+        <p>AM.EN.U4AIE22049</p>
+        <p> Amrita Vishwa Vidyapeetham</p>
+        <p> MAY 20, 2025</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Table of Contents -->
+    <h1>Table of Contents</h1>
+    <!-- TOC items remain as they are structural -->
+    <div class="toc-item"><span>1. Introduction</span><span class="toc-dots"></span><span>3</span></div>
+    <div class="toc-item indent"><span>1.1 Purpose</span><span class="toc-dots"></span><span>3</span></div>
+    <div class="toc-item indent"><span>1.2 Document Conventions</span><span class="toc-dots"></span><span>3</span></div>
+    <div class="toc-item indent"><span>1.3 Intended Audience and Reading Suggestions</span><span class="toc-dots"></span><span>3</span></div>
+    <div class="toc-item indent"><span>1.4 Project Scope</span><span class="toc-dots"></span><span>4</span></div>
+    <div class="toc-item indent"><span>1.5 References</span><span class="toc-dots"></span><span>4</span></div>
+    <div class="toc-item"><span>2. Overall Description</span><span class="toc-dots"></span><span>5</span></div>
+    <div class="toc-item indent"><span>2.1 Product Perspective</span><span class="toc-dots"></span><span>5</span></div>
+    <div class="toc-item indent"><span>2.2 Product Features</span><span class="toc-dots"></span><span>6</span></div>
+    <div class="toc-item indent"><span>2.3 User Classes and Characteristics</span><span class="toc-dots"></span><span>6</span></div>
+    <div class="toc-item indent"><span>2.4 Operating Environment</span><span class="toc-dots"></span><span>7</span></div>
+    <div class="toc-item indent"><span>2.5 Design and Implementation Constraints</span><span class="toc-dots"></span><span>7</span></div>
+    <div class="toc-item indent"><span>2.6 User Documentation</span><span class="toc-dots"></span><span>8</span></div>
+    <div class="toc-item indent"><span>2.7 Assumptions and Dependencies</span><span class="toc-dots"></span><span>8</span></div>
+    <div class="toc-item"><span>3. System Features</span><span class="toc-dots"></span><span>9</span></div>
+    <div class="toc-item indent"><span>3.1 User Authentication and Role Management</span><span class="toc-dots"></span><span>9</span></div>
+    <div class="toc-item indent"><span>3.2 Farmer: Video Recording & IPFS Upload</span><span class="toc-dots"></span><span>9</span></div>
+    <div class="toc-item indent"><span>3.3 Farmer: AgriStream Video Management</span><span class="toc-dots"></span><span>9</span></div>
+    <div class="toc-item indent"><span>3.4 Farmer: Marketplace Listing</span><span class="toc-dots"></span><span>10</span></div>
+    <div class="toc-item indent"><span>3.5 Farmer: Project Funding Request</span><span class="toc-dots"></span><span>10</span></div>
+    <div class="toc-item indent"><span>3.6 Farmer: AI Plant Disease Recommendation</span><span class="toc-dots"></span><span>10</span></div>
+    <div class="toc-item indent"><span>3.7 Farmer: AI Farming Assistant (AgriBot)</span><span class="toc-dots"></span><span>10</span></div>
+    <div class="toc-item indent"><span>3.8 Buyer: Marketplace Browsing and Purchase</span><span class="toc-dots"></span><span>11</span></div>
+    <div class="toc-item indent"><span>3.9 Investor: Project Discovery and Investment</span><span class="toc-dots"></span><span>11</span></div>
+    <div class="toc-item indent"><span>3.10 Investor: Portfolio Management</span><span class="toc-dots"></span><span>11</span></div>
+    <div class="toc-item indent"><span>3.11 Cross-Role: Secure Messaging</span><span class="toc-dots"></span><span>11</span></div>
+    <div class="toc-item indent"><span>3.12 Cross-Role: User Profiles & Activity</span><span class="toc-dots"></span><span>12</span></div>
+    <div class="toc-item indent"><span>3.13 Cross-Role: Notifications</span><span class="toc-dots"></span><span>12</span></div>
+    <div class="toc-item"><span>4. External Interface Requirements</span><span class="toc-dots"></span><span>12</span></div>
+    <div class="toc-item indent"><span>4.1 User Interfaces</span><span class="toc-dots"></span><span>12</span></div>
+    <div class="toc-item indent"><span>4.2 Hardware Interfaces</span><span class="toc-dots"></span><span>13</span></div>
+    <div class="toc-item indent"><span>4.3 Software Interfaces</span><span class="toc-dots"></span><span>13</span></div>
+    <div class="toc-item indent"><span>4.4 Communications Interfaces</span><span class="toc-dots"></span><span>13</span></div>
+    <div class="toc-item"><span>5. Other Nonfunctional Requirements</span><span class="toc-dots"></span><span>14</span></div>
+    <div class="toc-item indent"><span>5.1 Performance Requirements</span><span class="toc-dots"></span><span>14</span></div>
+    <div class="toc-item indent"><span>5.2 Safety Requirements</span><span class="toc-dots"></span><span>14</span></div>
+    <div class="toc-item indent"><span>5.3 Security Requirements</span><span class="toc-dots"></span><span>13</span></div>
+    <div class="toc-item indent"><span>5.4 Software Quality Attributes</span><span class="toc-dots"></span><span>15</span></div>
+    <div class="toc-item"><span>6. Other Requirements</span><span class="toc-dots"></span><span>16</span></div>
+    <div class="toc-item"><span>Appendix A: Glossary</span><span class="toc-dots"></span><span>16</span></div>
+    <div class="toc-item"><span>Appendix B: Analysis Models</span><span class="toc-dots"></span><span>17</span></div>
+    <div class="toc-item"><span>Appendix C: Issues List</span><span class="toc-dots"></span><span>17</span></div>
+
+    <div class="page-break"></div>
+
+    <!-- Revision History -->
+    <h2>Revision History</h2>
+    <table>
+        <thead>
+            <tr><th>Name</th><th>Date</th><th>Reason For Changes</th><th>Version</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>sindukuri Teja</td><td>20 MAY 2025</td><td>Initial Draft</td><td>1.0</td></tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- 1. Introduction -->
+    <h1>1. Introduction</h1>
+
+    <h2>1.1 Purpose</h2>
+    <p>
+        PestiVid is a Web3 demo platform for agricultural transparency and traceability. Farmers record/store crop practice videos on IPFS (via Pinata), linked to a simulated Solana blockchain. Buyers browse video-verified produce for simulated purchases; investors fund projects with transparent (simulated) returns. It showcases Web3's potential to enhance trust, efficiency, and direct engagement in agriculture.
+    </p>
+
+    <h2>1.2 Document Conventions</h2>
+    <p>Conventions used:</p>
+    <ul>
+        <li><strong>Prioritization:</strong> High, Medium, Low.</li>
+        <li><strong>Emphasis:</strong> Bold, italics, code formatting for key points/terms.</li>
+        <li><strong>Structure:</strong> Clear, hierarchical headings and numbering.</li>
+        <li><strong>Presentation:</strong> Uniform font/typeface.</li>
+    </ul>
+
+    <h2>1.3 Intended Audience and Reading Suggestions</h2>
+    <p>Audiences and suggested focus:</p>
+    <ol>
+        <li><strong>Developers:</strong> Sections 3, 4, 5.</li>
+        <li><strong>Project Managers:</strong> Sections 1, 2, Appendix C.</li>
+        <li><strong>Testers:</strong> Sections 3, 5, Appendix B.</li>
+        <li><strong>Users/Stakeholders:</strong> Sections 1.4, 2.2.</li>
+        <li><strong>Documentation Writers:</strong> Entire document.</li>
+    </ol>
+
+    <h2>1.4 Project Scope</h2>
+    <p>PestiVid demo's scope:</p>
+    <ul>
+        <li><strong>Authentication:</strong> Simulated multi-factor login (Orange ID, Solana wallet).</li>
+        <li><strong>Role-Based Access:</strong> Distinct interfaces for Farmers, Buyers, Investors.</li>
+        <li><strong>Video Evidence:</strong> Farmer video recording, metadata, IPFS upload (Pinata) with SHA256 hash.</li>
+        <li><strong>Marketplace (AgriSell):</strong> Farmers list produce with video; Buyers browse/simulate purchases.</li>
+        <li><strong>Funding Platform:</strong> Farmers request project funding; Investors browse/simulate investments.</li>
+        <li><strong>AI Integration:</strong> Plant disease recommendation (Gemini API); AgriBot chatbot (Groq API).</li>
+        <li><strong>Simulated Blockchain:</strong> Demonstrates transaction recording (Solana simulated).</li>
+        <li><strong>Communication:</strong> Secure messaging, notifications.</li>
+        <li><strong>Demo Data Persistence:</strong> Browser <code>localStorage</code> simulates backend.</li>
+    </ul>
+    <p>Aims to show enhanced traceability, direct market access, and transparent investment in a simulated Web3 agricultural ecosystem.</p><br>
+    <br>
+    <br>
+    <br>
+    <h2>1.5 References</h2>
+    <ul>
+        <li>
+            <ol>Vue.js 2, Tailwind CSS</ol>
+            <ol>Orange ID (Bedrock Passport)</ol>
+            <ol>Solana Web3.js (@solana/web3.js)</ol>
+            <ol>Pinata API</ol>
+            <ol>Google Gemini,Groq API</ol>
+            <ol>localStorage</ol>
+            <ol>WebRTC</ol>
+            <ol>SubtleCrypto API</ol>
+        </li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- 2. Overall Description -->
+    <h1>2. Overall Description</h1>
+
+    <h2>2.1 Product Perspective</h2>
+    <p>
+        PestiVid is a self-contained demo showcasing Web3 in agriculture. It's a proof-of-concept for transparency, traceability, and direct engagement, not a replacement for existing systems. Its modular features could be adapted for larger platforms.
+    </p>
+    <p>It addresses trust/efficiency needs in agricultural transactions, demonstrating how video evidence, decentralized storage, and simulated blockchain mitigate information asymmetry and verification/investment barriers.</p>
+    <p>A real-world version might interface with actual blockchains, identity solutions, payment gateways, data oracles, and supply chain systems.</p>
+
+    <h3>System Overview Diagram</h3>
+    <div class="center-text">
+        <img src="System Overview Diagram.png" alt="System Overview Diagram for PestiVid" style="max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 1rem; margin-bottom: 1rem;">
+        <p><em>Figure 1: PestiVid System Overview</em></p>
+    </div>
+
+    <h2>2.2 Product Features</h2>
+    <p>Key PestiVid demo features:</p>
+    <ol>
+        <li><strong>User Auth & Role Management:</strong> Secure login (Orange ID, Solana), role selection, profile management.</li>
+        <li><strong>Farmer Video & IPFS Upload:</strong> Record videos, add metadata, upload to IPFS (Pinata) with SHA256.</li>
+        <li><strong>Farmer AgriStream:</strong> Gallery of uploaded videos; initiate listings/funding.</li>
+        <li><strong>AgriSell Marketplace:</strong> Farmers list produce with video; Buyers browse, simulate purchases.</li>
+        <li><strong>Farmer Funding Platform:</strong> Farmers create funding requests with video.</li>
+        <li><strong>Investor Project Discovery & Investment:</strong> Investors browse requests, view videos, simulate investments.</li>
+        <li><strong>Investor Portfolio:</strong> Track (simulated) investments, progress, history.</li>
+        <li><strong>AI Plant Disease Recommendation:</strong> Farmers upload images for Gemini API analysis.</li>
+        <li><strong>AI Farming Assistant (AgriBot):</strong> Groq API-powered chatbot for farming advice.</li>
+        <li><strong>Secure Messaging:</strong> 1-to-1 text communication.</li>
+        <li><strong>User Profiles & Activity:</strong> View profiles and role-specific activity.</li>
+        <li><strong>Notifications:</strong> Toast notifications for platform events.</li>
+    </ol>
+
+    <h2>2.3 User Classes and Characteristics</h2>
+    <ol>
+        <li>
+            <strong>Farmers:</strong> Agricultural producers; seek to showcase practices, reach buyers/investors, access modern tools. Need intuitive video/listing/funding tools, useful AI.
+        </li>
+        <li>
+            <strong>Buyers:</strong> Individuals/businesses seeking produce; value transparency, verification, direct sourcing. Need easy browsing, clear info with video, simple (simulated) purchase.
+        </li>
+        <li>
+            <strong>Investors:</strong> Individuals/entities investing in projects; seek transparency, verifiable details, ROI info. Need detailed listings with video, clear terms, (simulated) tracking.
+        </li>
+    </ol>
+    <p>All three user classes are primary. No "less important" classes for this demo.</p>
+
+    <h2>2.4 Operating Environment</h2>
+    <ul>
+        <li>Web app for modern browsers (desktop/mobile). Standard hardware.</li>
+        <li>Stable internet for API/media uploads.</li>
+        <li><code>localStorage</code> for demo data persistence.</li>
+        <li>Solana browser wallet (e.g., Phantom) for Solana interaction.</li>
+        <li>Camera access for video recording.</li>
+    </ul>
+
+    <h2>2.5 Design and Implementation Constraints</h2>
+    <ol>
+        <li><strong>Tech Stack:</strong> Vue.js 2, Tailwind CSS. Integrates: Orange ID, Solana Web3.js, Pinata, Gemini, Groq APIs (Axios).</li>
+        <li><strong>Demo Persistence:</strong> Data in browser <code>localStorage</code> (not scalable).</li>
+        <li><strong>Simulated Blockchain:</strong> Solana interactions simulated; no real crypto.</li>
+        <li><strong>API Key Management: CRITICAL:</strong> Client-side keys for demo. Production <strong>MUST</strong> use backend key management.</li>
+        <li><strong>IPFS Public Nature:</strong> Data public by CID.</li>
+        <li><strong>SPA:</strong> Client-side routing.</li>
+        <li><strong>Browser Compatibility:</strong> Tested on modern Chrome.</li>
+        <li><strong>Demo Security:</strong> Not secure for real data/transactions due to client-side nature.</li>
+    </ol>
+
+    <h2>2.6 User Documentation</h2>
+    <p>Demo documentation: Intuitive UI, clear labels, in-line tooltips. This SRS is technical documentation. No separate user manuals.</p>
+
+    <h2>2.7 Assumptions and Dependencies</h2>
+    <ol>
+        <li><strong>API Stability:</strong> Continued operation of Orange ID, Pinata, Gemini, Groq.</li>
+        <li><strong>API Quotas/Billing:</strong> Usage within free tiers or dev handles billing. <strong>Valid API keys needed.</strong></li>
+        <li><strong>Internet:</strong> Users need stable connection.</li>
+        <li><strong>Modern Browser:</strong> JS enabled, <code>localStorage</code> access.</li>
+        <li><strong>Solana Wallet:</strong> For Solana login features.</li>
+        <li><strong>Camera Permissions:</strong> For video recording.</li>
+        <li><strong><code>localStorage</code> Integrity:</strong> Assumed not disabled/cleared for data persistence.</li>
+        <li><strong>Correct API Keys:</strong> Developer uses valid keys.</li>
+    </ol>
+
+    <div class="page-break"></div>
+
+    <!-- 3. System Features -->
+    <h1>3. System Features</h1>
+
+    <h2>3.1 User Authentication and Role Management</h2>
+    <p><strong>Desc:</strong> User auth (Orange ID, Solana Wallet), role management (Farmer, Buyer, Investor), PestiVid profile. <strong>Priority:</strong> High.</p>
+    <p><strong>Stimulus/Response:</strong></p>
+    <ul>
+        <li><strong>Orange ID Login:</strong> User initiates. Redirect to Orange ID. On success, back to PestiVid. Capture details. New users: Solana & role prompt.</li>
+        <li><strong>Solana Wallet Connect:</strong> User clicks. Wallet prompts. On approval, capture public key. New users: role prompt.</li>
+        <li><strong>New User Onboarding:</strong> Post-auth, new user sees form. Selects role, enters PestiVid name/email. Profile to localStorage. To role dashboard.</li>
+        <li><strong>Logout:</strong> User initiates. Session cleared. Orange ID logout if applicable. To landing.</li>
+    </ul>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.1.1: Support Orange ID auth.</li>
+        <li>REQ-3.1.2: Support Solana wallet connection.</li>
+        <li>REQ-3.1.3: New PestiVid users provide name, email, select role post-auth.</li>
+        <li>REQ-3.1.4: User roles/profile to localStorage (keyed by ID).</li>
+        <li>REQ-3.1.5: Role-based navigation/feature access.</li>
+        <li>REQ-3.1.6: Allow logout, clear session, trigger Orange ID logout.</li>
+    </ul>
+
+    <h2>3.2 Farmer: Video Recording & IPFS Upload (PestiVid Module)</h2>
+    <p><strong>Desc:</strong> Farmers record crop/practice videos, add metadata, upload to IPFS (Pinata) with SHA256. <strong>Priority:</strong> High.</p>
+    <p><strong>Stimulus/Response:</strong></p>
+    <ul>
+        <li>Farmer to "PestiVid," fills details, clicks "Start Recording." -> Camera access. Live feed. Record.</li>
+        <li>Farmer clicks "Stop Recording." -> Recording stops. Local preview.</li>
+        <li>Farmer clicks "Upload to IPFS." -> SHA256 hash. Video to Pinata. IPFS CID returned. Data to localStorage.</li>
+    </ul>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.2.1: Allow video recording (WebRTC).</li>
+        <li>REQ-3.2.2: Input video metadata (crop, location, pesticide, company, purpose).</li>
+        <li>REQ-3.2.3: Calculate SHA256 of video pre-upload.</li>
+        <li>REQ-3.2.4: Upload video/metadata (inc. hash) to IPFS (Pinata API).</li>
+        <li>REQ-3.2.5: Store IPFS CID & metadata (inc. hash) in farmer's localStorage.</li>
+        <li>REQ-3.2.6: Feedback on upload status.</li>
+    </ul>
+
+    <h2>3.3 Farmer: AgriStream Video Management</h2>
+    <p><strong>Desc:</strong> Farmer gallery for IPFS videos; manage associations with listings/funding. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong> Farmer to "AgriStream." -> Display farmer's videos from localStorage with details/options.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.3.1: Display authenticated farmer's videos from localStorage.</li>
+        <li>REQ-3.3.2: Display video metadata (crop, CID, hash).</li>
+        <li>REQ-3.3.3: Initiate listing/funding from AgriStream video.</li>
+        <li>REQ-3.3.4: Indicate if video used in listing/funding.</li>
+    </ul>
+
+    <h2>3.4 Farmer: Marketplace Listing (AgriSell Module)</h2>
+    <p><strong>Desc:</strong> Farmers list produce on AgriSell using PestiVid video. <strong>Priority:</strong> High.</p>
+    <p><strong>Stimulus/Response:</strong> Farmer to "Sell," selects video, sets price (SOL), clicks "Create Listing." -> New listing (simulated), to localStorage. Confirmation.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.4.1: Select unlisted PestiVid video for listing.</li>
+        <li>REQ-3.4.2: Set min/max selling price (SOL simulated).</li>
+        <li>REQ-3.4.3: Store listing details (CID, hash, prices, farmer ID) in localStorage.</li>
+        <li>REQ-3.4.4: View active listings.</li>
+        <li>REQ-3.4.5: (Simulate) buyer notification on opt-in.</li>
+    </ul>
+
+    <h2>3.5 Farmer: Project Funding Request</h2>
+    <p><strong>Desc:</strong> Farmers request project funding with PestiVid video. <strong>Priority:</strong> High.</p>
+    <p><strong>Stimulus/Response:</strong> Farmer to "Get Funding," fills details, selects video, clicks "Create Request." -> New request, to localStorage. Confirmation.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.5.1: Input detailed funding request info.</li>
+        <li>REQ-3.5.2: Select PestiVid video as evidence.</li>
+        <li>REQ-3.5.3: Store request details (CID, hash, project info) in localStorage.</li>
+        <li>REQ-3.5.4: View active requests & (simulated) progress.</li>
+    </ul>
+
+    <h2>3.6 Farmer: AI-Powered Plant Disease Recommendation (PlantRecommend)</h2>
+    <p><strong>Desc:</strong> Upload plant image for AI analysis (Gemini API) for disease ID/treatment. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong> Farmer to "PlantRecommend," uploads image, clicks "Analyze." -> Image to Gemini API. Response (plant, disease, treatment) displayed.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.6.1: Upload image (JPG, PNG).</li>
+        <li>REQ-3.6.2: Send image to Gemini API.</li>
+        <li>REQ-3.6.3: Parse/display API response (plant, disease, treatment).</li>
+        <li>REQ-3.6.4: Feedback during analysis; API errors.</li>
+    </ul>
+
+    <h2>3.7 Farmer: AI Farming Assistant (AgriBot)</h2>
+    <p><strong>Desc:</strong> AI chatbot (AgriBot, Groq API) for farming advice. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong> Farmer to "AgriBot," types question. -> Query to Groq API. Response displayed.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.7.1: Chat interface for AgriBot.</li>
+        <li>REQ-3.7.2: Display messages chronologically.</li>
+        <li>REQ-3.7.3: Send queries to Groq API.</li>
+        <li>REQ-3.7.4: Display Groq API response.</li>
+        <li>REQ-3.7.5: Persist chat history in localStorage (session/user).</li>
+        <li>REQ-3.7.6: Render responses with basic Markdown.</li>
+    </ul>
+
+    <h2>3.8 Buyer: Marketplace Browsing and Purchase (AgriSell Module)</h2>
+    <p><strong>Desc:</strong> Buyers browse AgriSell, view video, make simulated purchases. <strong>Priority:</strong> High.</p>
+    <p><strong>Stimulus/Response:</strong></p>
+    <ul>
+        <li>Buyer to "AgriSell." -> Display listings from localStorage, with filtering.</li>
+        <li>Buyer selects listing. -> Display details, video, (simulated) farmer profile.</li>
+        <li>Buyer initiates purchase, offers price (SOL), confirms. -> (Simulate) transaction, update status, record purchase, notify farmer.</li>
+    </ul>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.8.1: Browse active listings (localStorage).</li>
+        <li>REQ-3.8.2: Filter listings (crop, location, company).</li>
+        <li>REQ-3.8.3: View listing details, video, (simulated) farmer info.</li>
+        <li>REQ-3.8.4: Make (simulated) purchase offer.</li>
+        <li>REQ-3.8.5: Record (simulated) purchase in localStorage; mark listing.</li>
+        <li>REQ-3.8.6: (Simulate) farmer notification on purchase.</li>
+    </ul>
+
+    <h2>3.9 Investor: Project Discovery and Investment</h2>
+    <p><strong>Desc:</strong> Investors browse funding requests, view video, make simulated investments. <strong>Priority:</strong> High.</p>
+    <p><strong>Stimulus/Response:</strong></p>
+    <ul>
+        <li>Investor to "Projects." -> Display requests from localStorage, with filtering.</li>
+        <li>Investor selects project. -> Display details, video, (simulated) farmer profile, terms.</li>
+        <li>Investor invests (SOL), confirms. -> (Simulate) transaction, update funding, record investment, notify farmer.</li>
+    </ul>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.9.1: Browse active requests (localStorage).</li>
+        <li>REQ-3.9.2: Filter projects (crop, method, ROI, amount).</li>
+        <li>REQ-3.9.3: View project details, video, (simulated) farmer info, terms.</li>
+        <li>REQ-3.9.4: Make (simulated) investment.</li>
+        <li>REQ-3.9.5: Record (simulated) investment in localStorage; update project.</li>
+        <li>REQ-3.9.6: (Simulate) farmer notification on investment.</li>
+    </ul>
+
+    <h2>3.10 Investor: Portfolio Management</h2>
+    <p><strong>Desc:</strong> Investor overview of (simulated) investments, progress, history. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong> Investor to "Portfolio." -> Display summary, investment list, (simulated) transaction history.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.10.1: Display portfolio summary (simulated total invested, projects, ROI).</li>
+        <li>REQ-3.10.2: List investments (title, farmer, amount, (simulated) progress, status).</li>
+        <li>REQ-3.10.3: Display (simulated) transaction history.</li>
+        <li>REQ-3.10.4: Update project progress periodically (simulated).</li>
+    </ul>
+
+    <h2>3.11 Cross-Role: Secure Messaging</h2>
+    <p><strong>Desc:</strong> Authenticated users in direct, 1-to-1 text messaging. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong> User A messages User B. -> New conversation. A sends. B receives notification, views, replies.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.11.1: Private 1-to-1 text conversations.</li>
+        <li>REQ-3.11.2: Display active conversations, sorted by recent.</li>
+        <li>REQ-3.11.3: Messages chronological in conversation.</li>
+        <li>REQ-3.11.4: Indicate unread messages.</li>
+        <li>REQ-3.11.5: Persist messages/conversations in localStorage.</li>
+    </ul>
+
+    <h2>3.12 Cross-Role: User Profiles & Activity Tracking</h2>
+    <p><strong>Desc:</strong> View own PestiVid profile, role-specific activity; basic (simulated) profiles of others. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong></p>
+    <ul>
+        <li>User to "User Profile." -> Display PestiVid info, role-specific activity summaries.</li>
+        <li>User views other's profile. -> Modal with basic (simulated) info.</li>
+    </ul>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.12.1: View own PestiVid profile (name, email, role, ID, member since).</li>
+        <li>REQ-3.12.2: Profile page shows relevant activity summaries.</li>
+        <li>REQ-3.12.3: View simplified, simulated profiles of others.</li>
+    </ul>
+
+    <h2>3.13 Cross-Role: Notifications</h2>
+    <p><strong>Desc:</strong> Real-time (toast) notifications for platform events. <strong>Priority:</strong> Medium.</p>
+    <p><strong>Stimulus/Response:</strong> Significant event. -> If relevant, toast notification on user screen.</p>
+    <p><strong>Functional Req:</strong></p>
+    <ul>
+        <li>REQ-3.13.1: Non-intrusive toast notifications.</li>
+        <li>REQ-3.13.2: Categorized notifications (success, info, error).</li>
+        <li>REQ-3.13.3: Dismissible or auto-dismiss.</li>
+        <li>REQ-3.13.4: Support (simulated) targeted/global notifications.</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- 4. External Interface Requirements -->
+    <h1>4. External Interface Requirements</h1>
+
+    <h2>4.1 User Interfaces</h2>
+    <p>Responsive web GUI (Vue.js, Tailwind CSS). Views: Landing, Login/Onboarding, Farmer/Buyer/Investor Dashboards, Profile, Messaging. Adheres to web design principles; modals for focused tasks; mobile-friendly menu.</p>
+
+    <h2>4.2 Hardware Interfaces</h2>
+    <p>User devices (desktops, laptops, tablets, smartphones) with modern browsers. Camera for video. Standard inputs.</p>
+
+    <h2>4.3 Software Interfaces</h2>
+    <p>Modern browsers. OS (Win, macOS, Linux, Android, iOS). APIs: Orange ID (Bedrock SDK), Solana Wallets (<code>window.solana</code>), Pinata (HTTP POST), Google Gemini (HTTP POST), Groq (HTTP POST). Browser localStorage.</p>
+
+    <h2>4.4 Communications Interfaces</h2>
+    <p>HTTP/HTTPS for web traffic/APIs. IPFS Gateway (HTTPS) for video retrieval.</p>
+
+    <div class="page-break"></div>
+
+    <!-- 5. Other Nonfunctional Requirements -->
+    <h1>5. Other Nonfunctional Requirements</h1>
+
+    <h2>5.1 Performance Requirements</h2>
+    <p>Page load: 3-5s. Video upload: user/API dependent; feedback needed. API responses: Gemini 10-20s, Groq 2-5s. UI responsiveness: <200ms. localStorage: efficient.</p>
+
+    <h2>5.2 Safety Requirements</h2>
+    <p>Demo: no real financial/sensitive data beyond basic profile. SHA256 for (simulated) video integrity. Gemini API safety settings. AI advice informational.</p>
+
+    <h2>5.3 Security Requirements</h2>
+    <p>Auth: Orange ID, Solana wallet security. API Keys: Client-side (DEMO ONLY), production needs backend. IPFS: Public by CID. localStorage: Not app-encrypted. HTTPS for production. XSS: Vue.js protection; care with <code>v-html</code>.</p>
+
+    <h2>5.4 Software Quality Attributes</h2>
+    <ul>
+        <li><strong>Usability:</strong> Intuitive, clear feedback, mobile responsive.</li>
+        <li><strong>Reliability (Demo):</strong> Consistent, graceful error handling, localStorage persistence.</li>
+        <li><strong>Maintainability (Demo):</strong> Structured Vue code, some comments.</li>
+        <li><strong>Portability:</strong> Web app.</li>
+        <li><strong>Testability (Demo):</strong> Manual.</li>
+        <li><strong>Modularity (Conceptual):</strong> Distinct features.</li>
+      </ul>
+      
+    <div class="page-break"></div>
+
+    <!-- 6. Other Requirements -->
+    <h1>6. Other Requirements</h1>
+    <p>API Key Config: User/dev MUST use valid Pinata, Gemini, Groq keys. Demo Data: Loads initial data to localStorage if empty. Browser Permissions: User grants camera access, etc.</p>
+
+    <!-- Appendix A: Glossary -->
+    <h1>Appendix A: Glossary</h1>
+
+<p><strong>PestiVid:</strong> A prototype agricultural platform using blockchain and AI to verify crop quality through video submissions.</p>
+<p><strong>Web3:</strong> The decentralized web powered by blockchain, enabling dApps (decentralized applications) with user-owned data.</p>
+<p><strong>IPFS:</strong> InterPlanetary File System — a peer-to-peer hypermedia protocol designed to make the web faster, safer, and more open.</p>
+<p><strong>Pinata:</strong> A service that allows you to manage and pin files to IPFS to ensure persistent availability across the network.</p>
+<p><strong>CID:</strong> Content Identifier — a unique hash used in IPFS to locate and verify the integrity of a file.</p>
+<p><strong>SHA256:</strong> A cryptographic hash function used to generate secure and unique data fingerprints.</p>
+<p><strong>Solana:</strong> A high-performance blockchain supporting fast and low-cost decentralized apps (simulated in this project).</p>
+<p><strong>Orange ID:</strong> An authentication service for managing user identities securely within the PestiVid ecosystem.</p>
+<p><strong>Gemini API:</strong> A Google AI model integrated for identifying plant diseases and recommending pesticide solutions.</p>
+<p><strong>Groq API:</strong> An ultra-fast LLM API used to power the AgriBot chatbot for farmer interaction and support.</p>
+<p><strong>AgriSell:</strong> A module where farmers can list and sell their verified crops in a transparent marketplace.</p>
+<p><strong>AgriStream:</strong> A feature that hosts verified farmer-submitted crop videos, ensuring visual transparency.</p>
+<p><strong>PlantRecommend:</strong> An AI-powered module that analyzes plant health and offers recovery suggestions based on visual inputs.</p>
+<p><strong>AgriBot:</strong> An intelligent chatbot that provides real-time assistance to farmers using LLMs and domain-specific training.</p>
+<p><strong>localStorage:</strong> A web browser feature used as a temporary demo database to store user information on the client side.</p>
+<p><strong>SRS:</strong> Software Requirements Specification — this document outlines the goals, functions, and structure of the PestiVid system.</p>
+<p><strong>GUI:</strong> Graphical User Interface — the visual component of the system users interact with to access platform features.</p>
+<p><strong>API:</strong> Application Programming Interface — a set of defined rules that enable different software modules to communicate.</p>
+<p><strong>JWT:</strong> JSON Web Token — a compact and self-contained method for securely transmitting authentication data between parties.</p>
+<p><strong>ROI:</strong> Return on Investment — a performance measure used to evaluate the efficiency or profitability of an investment.</p>
+<p><strong>SOL:</strong> The native cryptocurrency of the Solana blockchain used in the simulated transaction flows.</p>
+<p><strong>WebRTC:</strong> A web technology enabling real-time communication of audio, video, and data directly between browsers.</p>
+
+
+    <!-- Appendix B: Analysis Models -->
+    <h1>Appendix B: Analysis Models</h1>
+    <p>This section would typically include diagrams like Use Case Diagrams, Activity Diagrams, Class Diagrams, Sequence Diagrams, etc. For
+        this demo, these are not explicitly provided but could be derived from the feature descriptions and code</p>
+    <p><strong>Example:</strong> A simple Use Case Diagram could show actors (Farmer, Buyer, Investor) and their interactions with key system features (Record
+        Video, List Produce, Browse Marketplace, Invest in Project, etc.)</p>
+
+    <!-- Appendix C: Issues List -->
+    <h1>Appendix C: Issues List</h1>
+    <p><strong>Open Issues:</strong> None tracked post-demo completion.</p>
+    <p><strong>Resolved (Conceptual):</strong> IPFS playback (public gateway). localStorage structure.</p>
+    <p><strong>Future Enhancements:</strong> Real smart contracts, backend, advanced search, reputation, oracles, AI tuning, escrow, community.</p>
+
+</body>
+</html>
