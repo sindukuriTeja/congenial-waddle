@@ -982,7 +982,7 @@ const app = new Vue({
       allListings: [], buyerFilters: {crop:'', location:'', pesticideCompany: ''}, showBuyModal: false, selectedListing: null, purchaseAmount: null, purchaseStatus: '', purchaseError: '',
       investorInvestments: [], investorTransactions: [], investorFilters: {crop: '', method: '', minRoi: null, maxAmount: null}, allFundingRequests: [], investmentAmounts: {}, investmentErrors: {}, showInvestmentDetailsModal: false, selectedInvestment: null, selectedInvestmentProject: null,
       showFarmerProfileModal: false, selectedFarmerProfile: null,
-      
+
       // Pinata Configuration (Still present for potential IPFS fallback or if mixed content is needed)
       // For new uploads, this demo will now primarily use Storj if configured.
       pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiY2Q2N2EzMC1lYmVmLTRiMWYtYjZmMi02OTI1ZGM2OWUzZDUiLCJlbWFpbCI6InRlamFzaW5kdWt1cmk1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI4OTY1ODM2MDlhMzE4YjY1N2QzMSIsInNjb3BlZEtleVNlY3JldCI6ImFkNWQ2OTc5NDkwNmFjODAzOGYxOGExNmYwMmIwOTc2NjlhNjQwNDY3MDExODdiZWRmOTdjMmZiMTA2NzdiNmYiLCJleHAiOjE3NzYwOTU3OTF9.dbyd6dnaASvYze1j5zVmPkoiDuQhA3PBczy0LxsRO-U', // Keep this structure, but actual JWT needed if using Pinata
@@ -990,10 +990,10 @@ const app = new Vue({
 
       // Storj S3 Configuration - UPDATED WITH YOUR CREDENTIALS
       storjConfig: {
-        accessKeyId: 'juqnefz7qw2daooplo6ixzwocdsq',
-        secretAccessKey: 'jztu4esblunw3itukpn5oc3yygayaeew6md6vv4szwj5awqz6bxni',
+        accessKeyId: 'juqnefz7qw2daooplo6ixzwocdsq', // REPLACE with your actual Storj Access Key ID
+        secretAccessKey: 'jztu4esblunw3itukpn5oc3yygayaeew6md6vv4szwj5awqz6bxni', // REPLACE with your actual Storj Secret Access Key
         endpoint: 'https://gateway.storjshare.io',
-        bucketName: 'pestivid',
+        bucketName: 'pestivid', // YOUR BUCKET NAME IS CORRECTLY SET HERE
         region: 'us-east-1', // Default region for S3 SDK, Storj may ignore this
       },
 
@@ -1015,24 +1015,24 @@ const app = new Vue({
       avatar: {
           visible: true,
           expanded: false,
-          state: 'idle', 
-          character: 'farmer', 
-          position: 'bottom-right', 
-          chatMessages: [], 
-          userInput: '', 
+          state: 'idle',
+          character: 'farmer',
+          position: 'bottom-right',
+          chatMessages: [],
+          userInput: '',
           quickActions: [],
-          currentContextText: '', 
-          images: { 
+          currentContextText: '',
+          images: {
               farmer: {
                   idle: 'https://img.icons8.com/plasticine/100/farmer-male.png',
-                  talking: 'https://img.icons8.com/plasticine/100/farmer-male.png', 
-                  thinking: 'https://img.icons8.com/plasticine/100/farmer-male.png', 
-                  listening: 'https://img.icons8.com/plasticine/100/farmer-male.png' 
+                  talking: 'https://img.icons8.com/plasticine/100/farmer-male.png',
+                  thinking: 'https://img.icons8.com/plasticine/100/farmer-male.png',
+                  listening: 'https://img.icons8.com/plasticine/100/farmer-male.png'
               },
           },
           systemPrompt: "You are PestiVid Helper, a friendly and knowledgeable AI assistant for the PestiVid platform. You are represented by a visual avatar. Your goal is to help users navigate the platform, understand its features (like PestiVid video uploads, AgriStream, Marketplace, Funding, PlantRecommend, Messaging, Investment Opportunities, Investor Portfolio, Orange ID & Solana Login), and answer their questions. Be encouraging and clear. If asked about a specific page, try to provide relevant tips. When the user opens your chat, if you have context, offer a relevant quick action or greeting. Keep responses concise for a chat interface. If you provide lists, use markdown for bullet points.",
-          isProcessing: false, 
-          isListening: false,  
+          isProcessing: false,
+          isListening: false,
       },
       speechRecognition: null,
     },
@@ -1055,7 +1055,7 @@ const app = new Vue({
       activeConversationPartnerDisplayAddress() { const partnerId = this.activeConversationPartnerIdentifier; if (!partnerId) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const partnerProfile = userProfiles[partnerId]; if(partnerProfile && partnerProfile.name) return partnerProfile.name.split(" ")[0]; return `${partnerId.substring(0,6)}...${partnerId.substring(partnerId.length-4)}`; },
       activeConversationPartnerInitial() { const partnerDisplay = this.activeConversationPartnerDisplayAddress; if (!partnerDisplay || partnerDisplay === '?') return '?'; return partnerDisplay.charAt(0).toUpperCase(); },
       unreadMessageCount() { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.receiver === this.currentUserIdentifier && !msg.read).length; },
-      unreadAvatarMessagesCount() { 
+      unreadAvatarMessagesCount() {
           if (!this.avatar.expanded && this.avatar.chatMessages) {
               return this.avatar.chatMessages.filter(msg => msg.sender === 'bot' && !msg.readByUser).length;
           }
@@ -1072,7 +1072,7 @@ const app = new Vue({
           if (newPage === 'loginChoice' && !this.isOrangeIdCallback && !this.isUserAuthenticated) { this.$nextTick(() => this.renderOrangeIdLoginWidget()); }
           else if (oldPage === 'loginChoice' && newPage !== 'loginChoice') { this.$nextTick(() => this.unmountOrangeIdLoginWidget()); }
           if (oldPage === 'plantRecommendation' && newPage !== 'plantRecommendation') { this.plantImageFile = null; this.plantImageUrl = null; this.plantImageMimeType = null; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; }
-          if (newPage === 'farmerChatbot') { this.initializeChatbot(); this.$nextTick(() => this.scrollToChatBottom()); } 
+          if (newPage === 'farmerChatbot') { this.initializeChatbot(); this.$nextTick(() => this.scrollToChatBottom()); }
 
           if (this.avatar.visible && this.avatar.expanded) {
             this.updateAvatarContextAndQuickActions();
@@ -1081,8 +1081,8 @@ const app = new Vue({
       isUserAuthenticated(isAuthenticated) { this.$nextTick(() => { if (isAuthenticated && this.loginMethod === 'orangeId') { this.renderOrangeIdSignOutButton('orange-id-signout-button-container'); if (this.showMobileMenu) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); } } else if (!isAuthenticated) { this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } }); },
       showMobileMenu(isShown) { if (isShown && this.isUserAuthenticated && this.loginMethod === 'orangeId') { this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); }); } else if (!isShown && this.loginMethod === 'orangeId') { this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } },
       farmerVideos: { handler(newVideos) { if (this.current === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { if (newVideos.some(v => v.cid === this.targetAgriStreamVideoCid)) { this.scrollToAndHighlightAgriStreamVideo(); } } }, deep: true },
-      chatMessages: { handler() { if(this.current === 'farmerChatbot') this.$nextTick(() => this.scrollToChatBottom()); }, deep: true }, 
-      'avatar.chatMessages': { 
+      chatMessages: { handler() { if(this.current === 'farmerChatbot') this.$nextTick(() => this.scrollToChatBottom()); }, deep: true },
+      'avatar.chatMessages': {
           handler(newMessages, oldMessages) {
               if (newMessages.length > (oldMessages ? oldMessages.length : 0) ) {
                   const lastMsg = newMessages[newMessages.length - 1];
@@ -1097,7 +1097,7 @@ const app = new Vue({
           },
           deep: true
       },
-      'avatar.isListening'(isListening) { 
+      'avatar.isListening'(isListening) {
         if (isListening && 'speechSynthesis' in window && speechSynthesis.speaking) {
             speechSynthesis.cancel();
             this.avatar.state = 'listening';
@@ -1115,7 +1115,7 @@ const app = new Vue({
               this.isOrangeIdCallback = false;
               this.isAuthProcessing = false;
               this.showLoadingModal = false;
-              this.current = 'loginChoice'; 
+              this.current = 'loginChoice';
               return;
           }
           this.isOrangeIdCallback = false; this.isAuthProcessing = false; this.showLoadingModal = false;
@@ -1239,15 +1239,15 @@ const app = new Vue({
           if (!this.recordBlob) { alert("No video recorded or video is empty. Please record again."); return; }
           if (this.recordBlob.size === 0) { alert("Recorded video is empty. Please try recording again."); return;}
           if (!this.recordForm.crop || !this.recordForm.pesticide || !this.recordForm.location || !this.recordForm.pesticideCompany || !this.recordForm.purpose) { alert("Fill all video details & select purpose."); return; }
-  
-          if (!this.storjConfig.accessKeyId || !this.storjConfig.secretAccessKey || this.storjConfig.accessKeyId === 'YOUR_STORJ_ACCESS_KEY_ID' || this.storjConfig.secretAccessKey === 'YOUR_STORJ_SECRET_ACCESS_KEY') {
+
+          if (!this.storjConfig.accessKeyId || !this.storjConfig.secretAccessKey || this.storjConfig.accessKeyId.includes('YOUR_STORJ_ACCESS_KEY_ID') || this.storjConfig.secretAccessKey.includes('YOUR_STORJ_SECRET_ACCESS_KEY')) {
               const errorMsg = "CRITICAL ERROR: Storj S3 credentials are not configured correctly. Video uploads WILL FAIL. Please update 'storjConfig' in the script with your actual Storj credentials.";
               this.uploadError = errorMsg;
               alert(errorMsg);
               console.error(errorMsg);
               return;
           }
-  
+
           this.uploading = true; this.uploadCid = ''; this.uploadError = ''; this.lastUploadedVideoPurpose = ''; this.lastUploadedVideoFileHash = '';
           let videoFileHash = null;
           try {
@@ -1257,7 +1257,7 @@ const app = new Vue({
               if (!videoFileHash) { this.uploadError = "Failed to calculate video file hash. Upload aborted."; this.uploading = false; alert(this.uploadError); return; }
               this.lastUploadedVideoFileHash = videoFileHash;
           } catch (e) { this.showLoadingModal = false; this.uploadError = "Error during video hash calculation: " + e.message; this.uploading = false; alert(this.uploadError); return; }
-  
+
           this.loadingMessage = "Uploading to Storj..."; this.showLoadingModal = true;
           AWS.config.update({ accessKeyId: this.storjConfig.accessKeyId, secretAccessKey: this.storjConfig.secretAccessKey, region: this.storjConfig.region, endpoint: new AWS.Endpoint(this.storjConfig.endpoint), s3ForcePathStyle: true, });
           const s3 = new AWS.S3();
@@ -1265,13 +1265,26 @@ const app = new Vue({
           const farmerIdPart = (this.currentUserIdentifier || 'unknown_user').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 10);
           const cropPart = (this.recordForm.crop || 'unknown_crop').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 15);
           const objectKey = `videos/${farmerIdPart}/${Date.now()}_${cropPart}.${fileExtension}`;
+
           const params = {
-              Bucket: this.storjConfig.bucketName, Key: objectKey, Body: this.recordBlob, ContentType: this.recordBlob.type,
-              // ACL: 'public-read', // Uncomment if you need objects to be public by default for easy demo playback.
-              // Ensure your bucket policy also allows public GetObject if you use this.
-              // For production: Use presigned URLs or a CDN with token auth for secure access.
-              Metadata: { 'uploaderid': this.currentUserIdentifier, 'role': this.role, 'crop': this.recordForm.crop.trim(), 'pesticide': this.recordForm.pesticide.trim(), 'location': this.recordForm.location.trim(), 'pesticidecompany': this.recordForm.pesticideCompany.trim(), 'purpose': this.recordForm.purpose, 'uploadtimestamp': new Date().toISOString(), 'videofilesha256': videoFileHash }
+              Bucket: this.storjConfig.bucketName, // This uses your 'pestivid' bucket name
+              Key: objectKey,
+              Body: this.recordBlob,
+              ContentType: this.recordBlob.type,
+              ACL: 'public-read', // <<< THIS LINE MAKES THE OBJECT PUBLICLY READABLE
+              Metadata: {
+                  'uploaderid': this.currentUserIdentifier,
+                  'role': this.role,
+                  'crop': this.recordForm.crop.trim(),
+                  'pesticide': this.recordForm.pesticide.trim(),
+                  'location': this.recordForm.location.trim(),
+                  'pesticidecompany': this.recordForm.pesticideCompany.trim(),
+                  'purpose': this.recordForm.purpose,
+                  'uploadtimestamp': new Date().toISOString(),
+                  'videofilesha256': videoFileHash
+              }
           };
+
           try {
               const data = await s3.putObject(params).promise();
               this.uploadCid = objectKey; this.lastUploadedVideoPurpose = this.recordForm.purpose;
@@ -1301,14 +1314,14 @@ const app = new Vue({
       },
       getVideoUrl(objectKeyOrCid, storageType = null) {
           let type = storageType;
-          if (!type && objectKeyOrCid) { 
+          if (!type && objectKeyOrCid) {
               if (typeof objectKeyOrCid === 'string' && (objectKeyOrCid.startsWith('bafy') || objectKeyOrCid.startsWith('Qm'))) type = 'ipfs';
               else if (typeof objectKeyOrCid === 'string' && objectKeyOrCid.includes('/')) type = 'storj';
-              else type = 'ipfs'; 
+              else type = 'ipfs';
           }
           if (type === 'storj' && objectKeyOrCid) return `${this.storjConfig.endpoint}/${this.storjConfig.bucketName}/${objectKeyOrCid}`;
           else if (type === 'ipfs' && objectKeyOrCid) return `https://${this.pinataGateway}/ipfs/${objectKeyOrCid}`;
-          return ""; 
+          return "";
       },
       isListed(cid) { return this.farmerListings.some(l => l.cid === cid && l.farmerWallet === this.currentUserIdentifier); },
       isUsedInFunding(cid) { return this.farmerFundingRequests.some(req => req.cid === cid && req.farmerWallet === this.currentUserIdentifier); },
@@ -1421,7 +1434,7 @@ const app = new Vue({
           if (globalBroadcast && this.isUserAuthenticated) {
               const newNotification = { id: 'notif_global_' + Date.now(), message: message, type: type, timestamp: Date.now(), show: false };
               this.notifications.push(newNotification);
-              if (this.recentNotifications.length === 0 || !this.recentNotifications.some(n => n.message === message && Date.now() - n.timestamp < 10000)) { 
+              if (this.recentNotifications.length === 0 || !this.recentNotifications.some(n => n.message === message && Date.now() - n.timestamp < 10000)) {
                   this.showNextToastNotification();
               }
               console.log(`GLOBAL BROADCAST (Demo): ${message}`);
@@ -1439,7 +1452,7 @@ const app = new Vue({
       dismissNotification(id) { const index = this.recentNotifications.findIndex(n => n.id === id); if (index > -1) { if (this.recentNotifications[index].timeoutId) clearTimeout(this.recentNotifications[index].timeoutId); this.$set(this.recentNotifications[index], 'show', false); setTimeout(() => { const removeIndex = this.recentNotifications.findIndex(n => n.id === id); if (removeIndex > -1) this.recentNotifications.splice(removeIndex, 1); this.$nextTick(() => this.showNextToastNotification()); }, 400); } },
       notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${this.getFarmerDisplayIdentifier(listing.farmerWallet)}... available!`, 'info'); if (this.role === 'buyer' && this.currentUserIdentifier !== listing.farmerWallet) this.addNotification(`Check new listing for "${listing.crop}"!`, 'info'); console.log(`SIM: Notifying buyers about listing ${listing.id}`); },
       notifyInvestorsAboutFunding(request, markAsSent = false) { if (markAsSent) {/* mark notificationSent */} this.addNotification(`New funding: "${request.title}" by ${this.getFarmerDisplayIdentifier(request.farmerWallet)}... seeking investors!`, 'info'); if (this.role === 'investor' && this.currentUserIdentifier !== request.farmerWallet) this.addNotification(`New project "${request.title}" needs funding!`, 'info'); console.log(`SIM: Notifying investors about funding ${request.id}`); },
-      saveDataToLocalStorage() { localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: this.getAllFarmerVideos(), buyerPurchases: this.getAllBuyerPurchases(), investorInvestments: this.getAllInvestorInvestments(), investorTransactions: this.getAllInvestorTransactions(), messages: this.messages, conversations: this.conversations, chatMessages: this.chatMessages, avatarChatMessages: this.avatar.chatMessages, })); }, 
+      saveDataToLocalStorage() { localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: this.getAllFarmerVideos(), buyerPurchases: this.getAllBuyerPurchases(), investorInvestments: this.getAllInvestorInvestments(), investorTransactions: this.getAllInvestorTransactions(), messages: this.messages, conversations: this.conversations, chatMessages: this.chatMessages, avatarChatMessages: this.avatar.chatMessages, })); },
       getAllFarmerVideos() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.farmerVideos || []; if (this.isUserAuthenticated && this.farmerVideos.length > 0) { const userCIDs = new Set(this.farmerVideos.map(v => v.cid)); all = all.filter(v => !userCIDs.has(v.cid) || v.farmerWallet !== this.currentUserIdentifier); all.push(...this.farmerVideos); } return [...new Map(all.map(item => [item.cid + item.farmerWallet, item])).values()]; },
       getAllBuyerPurchases() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.buyerPurchases || []; if (this.isUserAuthenticated && this.buyerPurchases.length > 0) { const userIDs = new Set(this.buyerPurchases.map(p => p.id)); all = all.filter(p => !userIDs.has(p.id) || p.buyerWallet !== this.currentUserIdentifier); all.push(...this.buyerPurchases); } return [...new Map(all.map(item => [item.id, item])).values()]; },
       getAllInvestorInvestments() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorInvestments || []; if (this.isUserAuthenticated && this.investorInvestments.length > 0) { const userIDs = new Set(this.investorInvestments.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorWallet !== this.currentUserIdentifier); all.push(...this.investorInvestments); } return [...new Map(all.map(item => [item.id, item])).values()]; },
@@ -1453,8 +1466,8 @@ const app = new Vue({
                 this.allFundingRequests = appData.allFundingRequests || [];
                 this.messages = appData.messages || [];
                 this.conversations = appData.conversations || [];
-                this.chatMessages = appData.chatMessages || []; 
-                this.avatar.chatMessages = appData.avatarChatMessages || []; 
+                this.chatMessages = appData.chatMessages || [];
+                this.avatar.chatMessages = appData.avatarChatMessages || [];
 
                 if (this.current === 'farmerChatbot') this.initializeChatbot();
                 if (!this.currentUserIdentifier) {
@@ -1487,15 +1500,15 @@ const app = new Vue({
           try {
             const existingData = JSON.parse(appDataString);
             const hasStorageTypeStructure = (arr) => arr && arr.length > 0 && arr.every(item => typeof item.storageType === 'string' || typeof item.videoStorageType === 'string' || item.storageType === undefined || item.videoStorageType === undefined); // Allow undefined for older data
-  
+
             if ( hasStorageTypeStructure(existingData.allListings) && hasStorageTypeStructure(existingData.allFundingRequests) && hasStorageTypeStructure(existingData.farmerVideos) &&
                  hasStorageTypeStructure(existingData.buyerPurchases) && hasStorageTypeStructure(existingData.investorInvestments) && (existingData.allFundingRequests?.length > 0 || existingData.allListings?.length > 0 || existingData.farmerVideos?.length > 0) ) {
               this.allListings = (existingData.allListings || []).map(l => ({...l, storageType: l.storageType || 'ipfs'})); // Default to ipfs if missing
               this.allFundingRequests = (existingData.allFundingRequests || []).map(r => ({...r, videoStorageType: r.videoStorageType || 'ipfs'}));
               this.messages = existingData.messages || [];
               this.conversations = existingData.conversations || [];
-              this.chatMessages = existingData.chatMessages || []; 
-              this.avatar.chatMessages = existingData.avatarChatMessages || []; 
+              this.chatMessages = existingData.chatMessages || [];
+              this.avatar.chatMessages = existingData.avatarChatMessages || [];
               const allFarmerVideosFromStorage = (existingData.farmerVideos || []).map(v => ({...v, storageType: v.storageType || 'ipfs'}));
               this.farmerVideos = allFarmerVideosFromStorage.filter(v => this.isUserAuthenticated && v.farmerWallet === this.currentUserIdentifier);
               this.filterDataForCurrentUser(); // This will also update buyerPurchases, investorInvestments etc based on filtered allListings/allFundingRequests
@@ -1508,7 +1521,7 @@ const app = new Vue({
             console.error("Error parsing existing demo data, loading fresh demo.", e);
           }
         }
-  
+
         if (loadFreshDemo) {
           console.log("Loading/Reloading PestiVid Demo Data with Storj and IPFS examples.");
           const storjVideoKey1 = 'videos/oid_farm_1/demokey_storj_tomatoes.webm';
@@ -1516,10 +1529,10 @@ const app = new Vue({
           const ipfsVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u'; // Keep an IPFS example
           const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString();
           const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
-  
+
           const demoFarmer1 = 'oid_farmer_1_sub'; const demoFarmer2 = 'sol_farmer_2_addr';
           const demoInvestor1 = 'oid_investor_1_sub'; const demoBuyer1 = 'sol_buyer_1_addr';
-  
+
           const demoFarmerVideos = [
               { farmerWallet: demoFarmer1, cid: storjVideoKey1, storageType: 'storj', videoFileHash: 'demo_sha256_hash_tomatoes_storj', crop: 'Tomatoes (Storj)', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell', uploadTimestamp: oneDayAgo},
               { farmerWallet: demoFarmer1, cid: storjVideoKey2, storageType: 'storj', videoFileHash: 'demo_sha256_hash_strawberries_storj', crop: 'Strawberries (Storj)', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding', uploadTimestamp: oneDayAgo},
@@ -1544,7 +1557,7 @@ const app = new Vue({
               { id: 'msg_demo1c', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'We are projecting an 18% ROI over 6 months, with a 20% profit share for investors.', timestamp: new Date(nowTime - minToMs(6)).toISOString(), read: true },
               { id: 'msg_demo1d', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Sounds good, will review the project terms tonight.', timestamp: new Date(nowTime - minToMs(5)).toISOString(), read: false }
           ];
-          const demoAvatarChatMessages = [ 
+          const demoAvatarChatMessages = [
             { id: 'avatar_demo_greet_1', sender: 'bot', text: "Hi! I'm PestiVid Helper. How can I assist you today on our platform?", timestamp: new Date(nowTime - minToMs(1)).toISOString(), readByUser: true }
           ];
 
@@ -1553,8 +1566,8 @@ const app = new Vue({
               farmerVideos: demoFarmerVideos, buyerPurchases: demoBuyerPurchases,
               investorInvestments: demoInvestorInvestments, investorTransactions: demoInvestorTransactions,
               messages: demoMessages, conversations: demoConversations,
-              chatMessages: [], 
-              avatarChatMessages: demoAvatarChatMessages 
+              chatMessages: [],
+              avatarChatMessages: demoAvatarChatMessages
           }));
           const demoProfiles = {};
           demoProfiles[demoFarmer1] = { role: 'farmer', name: 'Alice Farmer (OID)', email: 'alice.oid@pestivid.sim', phone: '555-0101', memberSince: this.simulateMemberSince(demoFarmer1), authMethod: 'orangeId'};
@@ -1583,7 +1596,10 @@ const app = new Vue({
       },
       async analyzePlant() {
           if (!this.plantImageFile) { alert("Please upload a plant image first."); return; }
-          if (!this.geminiApiKey || this.geminiApiKey === 'YOUR_GEMINI_API_KEY_PLACEHOLDER') { this.analysisErrorText = "Gemini API Key not configured. Analysis cannot proceed."; alert(this.analysisErrorText); return; }
+          if (!this.geminiApiKey || this.geminiApiKey === 'YOUR_GEMINI_API_KEY_PLACEHOLDER' || this.geminiApiKey.includes('AIzaSyDK')) { // Added more specific check for placeholder
+              this.analysisErrorText = "Gemini API Key not configured or is a placeholder. Analysis cannot proceed.";
+              alert(this.analysisErrorText); return;
+          }
           this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; this.showLoadingModal = true; this.loadingMessage = "Analyzing plant image with AI...";
           const reader = new FileReader();
           reader.readAsDataURL(this.plantImageFile);
@@ -1641,11 +1657,37 @@ const app = new Vue({
       },
       async sendChatMessage() {
           if (!this.chatInput.trim() || this.isGroqLoading) return;
-          if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY") { this.addNotification("AgriBot API Key not configured.", "error"); this.isGroqLoading = false; return; }
+          if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY" || this.groqApiKey.includes("gsk_")) { // Added more specific check for placeholder
+             // this.addNotification("AgriBot API Key not configured or is a placeholder.", "error");
+             // this.isGroqLoading = false; return;
+             // SIMULATED RESPONSE FOR DEMO WITHOUT REAL KEY
+             const userMessageText = this.chatInput.trim();
+             const userMessage = { id: Date.now() + '_user', sender: 'user', text: userMessageText };
+             this.chatMessages.push(userMessage);
+             this.chatInput = '';
+             this.isGroqLoading = true;
+             this.$nextTick(() => this.scrollToChatBottom());
+             setTimeout(() => {
+                let botResponseText = "I'm in demo mode. If you asked about '" + userMessageText.substring(0,20) + "...', I'd normally give a detailed answer here!";
+                if (userMessageText.toLowerCase().includes("hello") || userMessageText.toLowerCase().includes("hi")) {
+                    botResponseText = "Hello there! How can I assist you with your farming needs today?";
+                } else if (userMessageText.toLowerCase().includes("tomato blight")) {
+                    botResponseText = "For tomato blight, consider using copper-based fungicides or bio-fungicides. Ensure good air circulation and remove affected leaves promptly. For more details, consult local agricultural guidelines.";
+                } else if (userMessageText.toLowerCase().includes("pestivid features")) {
+                    botResponseText = "PestiVid allows farmers to upload videos of their crops for transparency, sell produce on the marketplace, and seek funding. Buyers can view these videos before purchasing, and investors can fund projects.";
+                }
+                const botMessage = { id: Date.now() + '_bot_sim', sender: 'bot', text: botResponseText };
+                this.chatMessages.push(botMessage);
+                this.isGroqLoading = false;
+                this.$nextTick(() => this.scrollToChatBottom());
+                this.saveDataToLocalStorage();
+             }, 1500);
+             return; // End of simulated response
+          }
           const userMessage = { id: Date.now() + '_user', sender: 'user', text: this.chatInput.trim() };
           this.chatMessages.push(userMessage);
           const currentInput = this.chatInput; this.chatInput = ''; this.isGroqLoading = true; this.$nextTick(() => this.scrollToChatBottom());
-          
+
           const messagesPayload = this.chatMessages.map(msg => ({ role: msg.sender === 'user' ? 'user' : 'assistant', content: msg.text }));
           messagesPayload.unshift({ role: 'system', content: this.groqSystemPrompt });
 
@@ -1675,7 +1717,7 @@ const app = new Vue({
       toggleAvatarExpansion(forceState = null) {
           this.avatar.expanded = forceState !== null ? forceState : !this.avatar.expanded;
           if (this.avatar.expanded) {
-              this.avatar.state = 'listening'; 
+              this.avatar.state = 'listening';
               this.markAvatarMessagesAsRead();
               this.$nextTick(() => this.scrollToAvatarMessagesBottom());
               this.updateAvatarContextAndQuickActions();
@@ -1701,14 +1743,47 @@ const app = new Vue({
       },
       async sendAvatarMessage() {
           if (!this.avatar.userInput.trim() || this.avatar.isProcessing) return;
-          if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY") { this.addNotification("Avatar Helper API Key not configured.", "error"); this.avatar.isProcessing = false; return; }
+          if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY" || !this.groqApiKey.includes("gsk_")) {
+             // this.addNotification("Avatar Helper API Key not configured or is placeholder.", "error");
+             // this.avatar.isProcessing = false;
+             // SIMULATED RESPONSE FOR AVATAR DEMO WITHOUT REAL KEY
+             const userText = this.avatar.userInput.trim();
+             this.addAvatarMessage(userText, 'user');
+             this.avatar.userInput = '';
+             this.avatar.isProcessing = true;
+             this.avatar.state = 'thinking';
+             this.avatar.quickActions = [];
+             setTimeout(() => {
+                let botResponseText = `Thanks for asking about "${userText.substring(0,20)}...". As a demo avatar, I'm giving a general reply. On the ${this.current} page, you can... [example action].`;
+                 if (userText.toLowerCase().includes("navigate to") || userText.toLowerCase().includes("go to")) {
+                    let targetPage = null;
+                    if (userText.toLowerCase().includes("upload")) targetPage = 'farmerPestiVid';
+                    else if (userText.toLowerCase().includes("marketplace")) targetPage = 'buyerAgriSell';
+                    else if (userText.toLowerCase().includes("profile")) targetPage = 'userProfile';
+                    if (targetPage) {
+                        botResponseText = `Okay, I can take you to the ${targetPage.replace('farmer', '').replace('buyer', '').replace('user', '')} page.`;
+                        this.handleAvatarQuickAction({ label: `Go to ${targetPage}`, targetPage: targetPage });
+                    } else {
+                         botResponseText = "I can help you navigate. Which page would you like to go to? (e.g., Upload, Marketplace, Profile)";
+                    }
+                 } else if (userText.toLowerCase().includes("hello") || userText.toLowerCase().includes("hi")) {
+                    botResponseText = "Hello! I'm PestiVid Helper. How can I assist you with the platform features today?";
+                 }
+                this.addAvatarMessage(botResponseText, 'bot');
+                this.speakAvatarResponse(botResponseText);
+                this.avatar.isProcessing = false;
+                if (!this.avatar.isListening) this.avatar.state = 'listening';
+                this.saveDataToLocalStorage();
+             }, 1800);
+             return; // End of simulated response
+          }
 
           const userText = this.avatar.userInput.trim();
           this.addAvatarMessage(userText, 'user');
           this.avatar.userInput = '';
           this.avatar.isProcessing = true;
           this.avatar.state = 'thinking';
-          this.avatar.quickActions = []; 
+          this.avatar.quickActions = [];
 
           const messagesPayload = this.avatar.chatMessages.map(msg => ({ role: msg.sender === 'user' ? 'user' : 'assistant', content: msg.text }));
           let systemPromptContent = this.avatar.systemPrompt;
@@ -1716,7 +1791,7 @@ const app = new Vue({
               systemPromptContent += `\n\nCURRENT PAGE CONTEXT: The user is currently on the '${this.current}' page of PestiVid. ${this.avatar.currentContextText}`;
           }
           messagesPayload.unshift({ role: 'system', content: systemPromptContent });
-          
+
           try {
               const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
                   messages: messagesPayload, model: "llama3-8b-8192", temperature: 0.6, max_tokens: 250, top_p: 1, stream: false,
@@ -1753,7 +1828,7 @@ const app = new Vue({
             else if (actionLabel.toLowerCase().includes('funding') && this.role === 'farmer') actionTarget = 'farmerFunding';
             else if (actionLabel.toLowerCase().includes('projects') && this.role === 'investor') actionTarget = 'investorProjects';
             else if (actionLabel.toLowerCase().includes('profile')) actionTarget = 'userProfile';
-            
+
             if(actionTarget) {
                 newQuickActions.push({ id: 'qa_' + Date.now() + '_' + newQuickActions.length, label: actionLabel, targetPage: actionTarget });
             }
@@ -1765,7 +1840,7 @@ const app = new Vue({
               this.addAvatarMessage(`Okay, taking you to ${action.label}...`, 'bot');
               this.speakAvatarResponse(`Okay, taking you to ${action.label}.`);
               this.switchPage(action.targetPage);
-              this.toggleAvatarExpansion(false); 
+              this.toggleAvatarExpansion(false);
           }
           this.avatar.quickActions = [];
       },
@@ -1828,8 +1903,8 @@ const app = new Vue({
           utterance.lang = 'en-US';
           utterance.pitch = 1.1;
           utterance.rate = 1;
-          
-          this.avatar.state = 'talking'; 
+
+          this.avatar.state = 'talking';
 
           utterance.onend = () => {
               this.$nextTick(() => {
@@ -1921,7 +1996,7 @@ const app = new Vue({
             this.$nextTick(() => this.renderOrangeIdLoginWidget());
         }
       }
-      if ('speechSynthesis' in window && 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      if ('speechSynthesis' in window && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
         this.initializeSpeechRecognition();
       } else {
         console.warn("Avatar voice features (TTS/STT) not fully supported by this browser.");
