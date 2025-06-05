@@ -44,8 +44,6 @@
     .project-updates-list { max-height: 150px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.75rem; background-color: #f9fafb; }
     .project-update-item { padding-bottom: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6; }
     .project-update-item:last-child { border-bottom: none; margin-bottom: 0; }
-    .weather-card { background-color: #fff; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
-    .forecast-day { text-align: center; padding: 0.75rem; background-color: #f9fafb; border-radius: 0.375rem; border: 1px solid #e5e7eb; }
     .message-view-container { scroll-behavior: smooth; }
     .notification-badge { position: absolute; top: -5px; right: -8px; min-width: 18px; height: 18px; background-color: #ef4444; border-radius: 9px; color: white; font-size: 10px; font-weight: 600; line-height: 18px; text-align: center; padding: 0 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     .mobile-notification-badge { display: inline-block; background-color: #ef4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; line-height: 16px; text-align: center; vertical-align: top; margin-left: 4px; }
@@ -106,6 +104,22 @@
     .message-bubble pre { background-color: #f3f4f6; padding: 0.5rem; border-radius: 0.25rem; overflow-x: auto; font-family: monospace; font-size: 0.875em; margin: 0.5rem 0; }
     .message-bubble code { background-color: #f3f4f6; padding: 0.1em 0.3em; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; }
     .message-bubble pre code { padding: 0; background-color: transparent; }
+
+    /* Avatar Assistant Styles */
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 2s infinite ease-in-out;
+    }
+    .avatar-input-mic-btn.listening i {
+        animation: pulse-red 1.5s infinite;
+    }
+    @keyframes pulse-red {
+      0%, 100% { color: #ef4444; transform: scale(1); }
+      50% { color: #f87171; transform: scale(1.1); }
+    }
   </style>
 </head>
 <body class="text-gray-900">
@@ -362,10 +376,6 @@
             <option value="investor">Investor</option>
           </select>
         </div>
-         <div class="mb-4" v-if="selectedRoleOnboarding === 'farmer'">
-            <label class="block text-gray-600 mb-1">Farm/City Name (for Weather)</label>
-            <input v-model="farmerLocationCityOnboarding" type="text" class="w-full px-3 py-2 border rounded" placeholder="e.g., Davis, California">
-         </div>
         <button @click="completeOnboarding" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" :disabled="!selectedRoleOnboarding || !userNameOnboarding || !userEmailOnboarding">Confirm Profile & Role</button>
     </section>
 
@@ -660,16 +670,13 @@
               </div>
             </div>
           </div>
+          
           <div v-if="role === 'farmer'" class="mb-8">
-            <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-cloud-sun-rain mr-2"></i>Farm Weather Station </h3>
-            <div class="weather-card">
-                <div class="flex flex-col sm:flex-row gap-4 mb-6 items-end"> <div class="flex-grow"> <label for="farmerCity" class="block text-sm font-medium text-gray-700 mb-1">Farm City/Location:</label> <input type="text" id="farmerCity" v-model.trim="farmerLocationCity" @keyup.enter="fetchWeather" @change="saveFarmerCity" placeholder="e.g., Davis, California" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"> </div> <button @click="fetchWeather" :disabled="weatherLoading || !farmerLocationCity" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center" :class="{'opacity-50 cursor-not-allowed': weatherLoading || !farmerLocationCity}"> <i :class="weatherLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search-location'" class="mr-2"></i> {{ weatherLoading ? 'Fetching...' : 'Get Weather' }} </button> </div>
-                <div v-if="weatherError" class="mb-4 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded text-sm"> <i class="fas fa-exclamation-triangle mr-2"></i>{{ weatherError }} </div>
-                <div v-if="!weatherLoading && !weatherError && !currentWeather && !forecastWeather" class="text-center text-gray-500 py-4"> Enter your farm's city to see local weather conditions and forecast. </div>
-                <div v-if="currentWeather && !weatherLoading" class="mb-8"> <h4 class="text-lg font-semibold text-gray-800 mb-3">Current Conditions in {{ currentWeather.name }}</h4> <div class="flex flex-col sm:flex-row items-center gap-4 bg-blue-50 p-4 rounded-lg border border-blue-200"> <img :src="getWeatherIconUrl(currentWeather.weather[0].icon)" :alt="currentWeather.weather[0].description" class="w-20 h-20"> <div class="flex-grow text-center sm:text-left"> <p class="text-3xl font-bold">{{ Math.round(currentWeather.main.temp) }}°C</p> <p class="text-gray-700 capitalize">{{ currentWeather.weather[0].description }}</p> </div> <div class="text-sm text-gray-600 space-y-1 text-center sm:text-left"> <p><i class="fas fa-tint mr-1 text-blue-500"></i>Humidity: {{ currentWeather.main.humidity }}%</p> <p><i class="fas fa-wind mr-1 text-gray-500"></i>Wind: {{ currentWeather.wind.speed }} m/s</p> <p><i class="fas fa-tachometer-alt mr-1 text-gray-500"></i>Pressure: {{ currentWeather.main.pressure }} hPa</p> </div> </div> </div>
-                <div v-if="forecastWeather.length > 0 && !weatherLoading"> <h4 class="text-lg font-semibold text-gray-800 mb-4">5-Day Forecast</h4> <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"> <div v-for="day in forecastWeather" :key="day.date" class="forecast-day"> <p class="font-semibold text-sm">{{ day.dateString }}</p> <img :src="getWeatherIconUrl(day.icon)" :alt="day.description" class="w-12 h-12 mx-auto my-1"> <p class="text-lg font-bold">{{ Math.round(day.maxTemp) }}° <span class="text-gray-500">/ {{ Math.round(day.minTemp) }}°</span></p> <p class="text-xs text-gray-600 capitalize">{{ day.description }}</p> </div> </div> </div>
-            </div>
+            <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-map-marker-alt mr-2"></i>Farm Information </h3>
+             <p class="text-sm text-gray-600">General farm information can be displayed here (e.g., location, size, certifications if any). This section is a placeholder.</p>
+             <!-- Example: <p><strong>Farm Location:</strong> {{ farmerLocationCity || 'Not Specified' }}</p> -->
           </div>
+
            <div v-if="role === 'farmer'">
                 <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-video mr-2"></i>Your Uploaded Videos ({{ farmerVideos.length }}) </h3> <div v-if="farmerVideos.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-film text-gray-400 text-2xl mb-2"></i> <p>You haven't uploaded any videos yet.</p> <button @click="switchPage('farmerPestiVid')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Upload your first video</button> </div> <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> <div v-for="vid in farmerVideos" :key="vid.cid" class="bg-gray-50 rounded-lg p-4 shadow-sm"> <video :src="ipfsUrl(vid.cid)" controls playsinline webkit-playsinline class="w-full h-40 object-cover bg-black rounded mb-3"></video> <h4 class="font-bold">{{ vid.crop }}</h4> <div class="text-xs mb-1" :class="{ 'text-blue-700': vid.purpose === 'sell', 'text-purple-700': vid.purpose === 'funding', 'text-gray-600': vid.purpose === 'agristream' || !vid.purpose }"> Purpose: <span class="font-semibold"> {{ vid.purpose === 'sell' ? 'Sale' : (vid.purpose === 'funding' ? 'Funding' : (vid.purpose === 'agristream' ? 'General' : 'N/A')) }} </span> </div> <div class="text-sm mb-1">Location: {{ vid.location }}</div> <div class="text-sm mb-1">Pesticide: {{ vid.pesticide }}</div> <div class="text-sm mb-2">Pesticide Co.: {{ vid.pesticideCompany || 'N/A' }}</div> <div class="flex justify-between items-center mt-2 text-xs text-gray-500"> <span class="font-mono truncate" :title="vid.cid">CID: {{ vid.cid.substring(0, 10) }}...</span> <a :href="ipfsUrl(vid.cid)" target="_blank" class="text-blue-600 hover:underline">View</a> </div> <div class="text-xs text-gray-400 mt-1">File Hash: <span class="font-mono break-all" :title="vid.videoFileHash || 'N/A'">{{ vid.videoFileHash ? vid.videoFileHash.substring(0,10) + '...' : 'N/A' }}</span></div> </div> </div> </div>
                 <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-tags mr-2"></i>Your Active Listings ({{ farmerListings.length }}) </h3> <div v-if="farmerListings.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-store text-gray-400 text-2xl mb-2"></i> <p>You don't have any active listings.</p> <button @click="switchPage('farmerSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Create your first listing</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="listing in farmerListings" :key="listing.id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ listing.crop }}</div> <div class="text-xs text-gray-500" :title="listing.cid">CID: {{ listing.cid.substring(0, 8) }}...</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ listing.location }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ listing.pesticideCompany || 'N/A' }} </td> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ listing.minPrice }} - {{ listing.maxPrice }}</div> </td> <td class="px-6 py-4 whitespace-nowrap"> <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"> Active </span> </td> </tr> </tbody> </table> </div> </div> </div>
@@ -730,7 +737,7 @@
         </div>
         <button @click="analyzePlant" :disabled="!plantImageFile || analysisInProgress" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm flex items-center justify-center" :class="{'opacity-50 cursor-not-allowed': !plantImageFile || analysisInProgress}">
           <i :class="analysisInProgress ? 'fas fa-spinner fa-spin' : 'fas fa-search-plus'" class="mr-2"></i>
-          {{ analysisInProgress ? 'Analyzing...' : 'Analyze Plant with Gemini AI' }}
+          {{ analysisInProgress ? 'Analyzing...' : 'Analyze Plant with trained model' }}
         </button>
         <div v-if="analysisErrorText" class="mt-4 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded text-sm">
           <p class="font-bold">Analysis Error:</p>
@@ -867,9 +874,86 @@
   <footer class="bg-white border-t py-6 mt-auto text-center text-sm text-gray-500">
     <span>© {{ new Date().getFullYear() }} PestiVid • Blockchain Agricultural Platform (Web3 Demo)</span>
   </footer>
+
+  <!-- Interactive Avatar Assistant -->
+  <div v-if="avatar.visible"
+        :class="['fixed z-[9998] p-2 flex flex-col items-end', avatar.position === 'bottom-right' ? 'bottom-4 right-4' : 'bottom-4 left-4']"
+        style="transition: all 0.3s ease;">
+
+      <div v-show="avatar.expanded"
+          class="bg-white w-80 md:w-96 h-96 max-h-[70vh] mb-2 rounded-xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
+          <header class="bg-green-600 text-white p-3 flex items-center justify-between">
+              <div class="flex items-center">
+                  <img :src="avatar.images[avatar.character]?.[avatar.state] || avatar.images.farmer.idle" alt="Avatar" class="w-8 h-8 rounded-full mr-2 border-2 border-white">
+                  <h3 class="font-semibold">PestiVid Helper</h3>
+              </div>
+              <button @click="toggleAvatarExpansion(false)" class="text-green-100 hover:text-white">
+                  <i class="fas fa-times"></i>
+              </button>
+          </header>
+
+          <div class="flex-grow p-3 space-y-3 overflow-y-auto" ref="avatarMessagesContainer" style="scroll-behavior: smooth;">
+              <div v-for="msg in avatar.chatMessages" :key="msg.id + '-avatar'"
+                  :class="['flex', msg.sender === 'user' ? 'justify-end' : 'justify-start']">
+                  <div :class="['max-w-[80%] p-2.5 rounded-lg shadow-sm text-sm', msg.sender === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none']"
+                      v-html="renderMarkdown(msg.text)">
+                  </div>
+              </div>
+              <div v-if="avatar.isProcessing && avatar.state === 'thinking'" class="flex justify-start">
+                    <div class="bg-gray-100 text-gray-800 p-2.5 rounded-lg shadow-sm text-sm rounded-bl-none typing-indicator">
+                      <span></span><span></span><span></span>
+                    </div>
+              </div>
+          </div>
+
+          <div v-if="avatar.quickActions.length > 0 && !avatar.isProcessing && !avatar.isListening" class="p-2 border-t border-gray-200 flex flex-wrap gap-2 justify-center">
+              <button v-for="action in avatar.quickActions" :key="action.id"
+                      @click="handleAvatarQuickAction(action)"
+                      class="bg-green-100 text-green-700 px-3 py-1.5 text-xs rounded-full hover:bg-green-200 transition-colors">
+                  {{ action.label }}
+              </button>
+          </div>
+
+          <div class="p-3 border-t border-gray-200 bg-gray-50">
+              <div class="flex items-center gap-2">
+                   <button @click="toggleAvatarListening"
+                          :disabled="avatar.isProcessing"
+                          title="Toggle Voice Input"
+                          class="avatar-input-mic-btn text-gray-500 hover:text-green-600 p-2 rounded-full focus:outline-none"
+                          :class="{'text-red-500 listening': avatar.isListening}">
+                      <i class="fas fa-microphone text-lg"></i>
+                  </button>
+                  <input type="text" v-model="avatar.userInput"
+                        @keyup.enter="sendAvatarMessage"
+                        :placeholder="avatar.isListening ? 'Listening...' : (avatar.isProcessing ? 'Helper is thinking...' : 'Ask PestiVid Helper...')"
+                        :disabled="avatar.isProcessing"
+                        class="flex-grow px-3 py-2 border border-gray-300 rounded-full text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <button @click="sendAvatarMessage" :disabled="avatar.isProcessing || !avatar.userInput.trim()"
+                          class="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition-opacity"
+                          :class="{'opacity-50 cursor-not-allowed': avatar.isProcessing || !avatar.userInput.trim()}">
+                      <i class="fas fa-paper-plane"></i>
+                  </button>
+              </div>
+          </div>
+      </div>
+
+      <button @click="toggleAvatarExpansion()"
+              class="w-16 h-16 rounded-full shadow-xl overflow-hidden focus:outline-none ring-4 ring-green-500/30 hover:ring-green-500/50 transition-all duration-300 relative"
+              :class="[avatar.expanded ? 'transform scale-90 opacity-70' : 'transform scale-100 opacity-100', 'border-4 border-white']"
+              :style="{ borderColor: avatar.expanded ? '#10B981' : 'white' }">
+          <img :src="avatar.images[avatar.character]?.[avatar.state] || avatar.images.farmer.idle"
+                alt="PestiVid Helper Avatar"
+                class="w-full h-full object-cover transition-transform duration-500"
+                :class="{'animate-pulse-slow': avatar.state === 'thinking'}">
+          <div v-if="!avatar.expanded && unreadAvatarMessagesCount > 0" class="absolute top-[-4px] right-[-4px] bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ring-2 ring-white">
+              {{ unreadAvatarMessagesCount }}
+          </div>
+      </button>
+  </div>
+
 </div>
 <script>
-  const app = new Vue({
+const app = new Vue({
     el: "#app",
     data: {
       current: 'landing',
@@ -878,8 +962,8 @@
       orangeIdUser: null, orangeIdBedrockSDK: null, orangeIdReactRootLogin: null, orangeIdReactRootCallback: null, orangeIdReactRootSignOut: null, orangeIdReactRootSignOutMobile: null, orangeIdWidgetMounted: false, orangeIdBedrockSDKError: false, isOrangeIdCallback: false,
       bedrockConfig: { baseUrl: 'https://api.bedrockpassport.com', authCallbackUrl: window.location.href.split('?')[0].split('#')[0], tenantId: 'orange-h0zmx5nf44', },
       walletAddress: null,
-      role: '', userName: '', userEmail: '', userPhone: '', memberSince: '', farmerLocationCity: '',
-      selectedRoleOnboarding: '', userNameOnboarding: '', userEmailOnboarding: '', userPhoneOnboarding: '', farmerLocationCityOnboarding: '',
+      role: '', userName: '', userEmail: '', userPhone: '', memberSince: '',
+      selectedRoleOnboarding: '', userNameOnboarding: '', userEmailOnboarding: '', userPhoneOnboarding: '',
       recordForm: {crop:'', pesticide:'', location:'', pesticideCompany: '', purpose: 'agristream'}, recordStream: null, recordMediaRecorder: null, recording: false, recordBlob: null, recordBlobUrl: '', showLive: false,
       uploadCid: '', uploading: false, uploadError: '', lastUploadedVideoPurpose: '',
       lastUploadedVideoFileHash: '',
@@ -897,21 +981,44 @@
       // ========================================================================
       pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiY2Q2N2EzMC1lYmVmLTRiMWYtYjZmMi02OTI1ZGM2OWUzZDUiLCJlbWFpbCI6InRlamFzaW5kdWt1cmk1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI4OTY1ODM2MDlhMzE4YjY1N2QzMSIsInNjb3BlZEtleVNlY3JldCI6ImFkNWQ2OTc5NDkwNmFjODAzOGYxOGExNmYwMmIwOTc2NjlhNjQwNDY3MDExODdiZWRmOTdjMmZiMTA2NzdiNmYiLCJleHAiOjE3NzYwOTU3OTF9.dbyd6dnaASvYze1j5zVmPkoiDuQhA3PBczy0LxsRO-U', // Example: 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE'
       pinataGateway: 'gateway.pinata.cloud',
-      weatherApiKey: 'YOUR_OPENWEATHERMAP_API_KEY', // <-- REPLACE THIS WITH YOUR ACTUAL OpenWeatherMap API KEY
-      currentWeather: null, forecastWeather: [], weatherLoading: false, weatherError: '',
       conversations: [], messages: [], activeConversationId: null, messageInputText: '',
       notifications: [], recentNotifications: [],
       showLoadingModal: false, loadingMessage: '',
       targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
-      geminiApiKey: 'YOUR_GEMINI_API_KEY_HERE', // <-- REPLACE THIS WITH YOUR ACTUAL Google Gemini API KEY
+      geminiApiKey: 'AIzaSyDK-CIafImL53t0GjL6zGWP10lA0yYcaSs', // <-- REPLACE THIS WITH YOUR ACTUAL Google Gemini API KEY
       plantImageFile: null, plantImageUrl: null, plantImageMimeType: null, analysisInProgress: false, analysisResultText: '', parsedAnalysis: { plantName: null, diseaseName: null, treatmentRecommended: null }, analysisErrorText: '',
-  
-      // Groq Chatbot State
-      groqApiKey: "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", // Your Groq API Key (as provided)
-      chatMessages: [],
-      chatInput: '',
-      isGroqLoading: false,
-      groqSystemPrompt: "You are AgriBot, a knowledgeable and friendly AI assistant for farmers. Your expertise includes crop management (like tomatoes, strawberries, lettuce, peppers), pest and disease control (organic and conventional methods), soil health, irrigation, farm-to-market advice, and general agricultural best practices. You can also help explain features of the PestiVid platform. Provide clear, concise, and actionable advice. If a question is outside your agricultural expertise, politely state that. Always remind the user that your advice is for informational purposes and they should consult with local agricultural experts or conduct their own research before making critical farming decisions."
+
+      // Groq Chatbot State (for page-based AgriBot)
+      groqApiKey: "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", // Your Groq API Key
+      chatMessages: [], // For page-based AgriBot
+      chatInput: '', // For page-based AgriBot
+      isGroqLoading: false, // For page-based AgriBot
+      groqSystemPrompt: "You are AgriBot, a knowledgeable and friendly AI assistant for farmers. Your expertise includes crop management (like tomatoes, strawberries, lettuce, peppers), pest and disease control (organic and conventional methods), soil health, irrigation, farm-to-market advice, and general agricultural best practices. You can also help explain features of the PestiVid platform. Provide clear, concise, and actionable advice. If a question is outside your agricultural expertise, politely state that. Always remind the user that your advice is for informational purposes and they should consult with local agricultural experts or conduct their own research before making critical farming decisions.",
+
+      // Avatar Assistant State (NEW)
+      avatar: {
+          visible: true,
+          expanded: false,
+          state: 'idle', // idle, talking, thinking, listening
+          character: 'farmer', // Can be changed later to 'investor', 'buyer' etc.
+          position: 'bottom-right', // 'bottom-left'
+          chatMessages: [], // For Avatar Assistant
+          userInput: '', // For Avatar Assistant
+          quickActions: [],
+          currentContextText: '', // For providing context to LLM
+          images: { // Placeholder image URLs
+              farmer: {
+                  idle: 'https://img.icons8.com/plasticine/100/farmer-male.png',
+                  talking: 'https://img.icons8.com/plasticine/100/farmer-male.png', // Placeholder, ideally different
+                  thinking: 'https://img.icons8.com/plasticine/100/farmer-male.png', // Placeholder
+                  listening: 'https://img.icons8.com/plasticine/100/farmer-male.png' // Placeholder
+              },
+          },
+          systemPrompt: "You are PestiVid Helper, a friendly and knowledgeable AI assistant for the PestiVid platform. You are represented by a visual avatar. Your goal is to help users navigate the platform, understand its features (like PestiVid video uploads, AgriStream, Marketplace, Funding, PlantRecommend, Messaging, Investment Opportunities, Investor Portfolio, Orange ID & Solana Login), and answer their questions. Be encouraging and clear. If asked about a specific page, try to provide relevant tips. When the user opens your chat, if you have context, offer a relevant quick action or greeting. Keep responses concise for a chat interface. If you provide lists, use markdown for bullet points.",
+          isProcessing: false, // True when waiting for LLM response for Avatar
+          isListening: false,  // True when SpeechRecognition is active for Avatar
+      },
+      speechRecognition: null,
     },
     computed: {
       isUserAuthenticated() { return !!this.currentUserIdentifier && !this.isAuthProcessing && !this.isOrangeIdCallback; },
@@ -932,6 +1039,12 @@
       activeConversationPartnerDisplayAddress() { const partnerId = this.activeConversationPartnerIdentifier; if (!partnerId) return '?'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const partnerProfile = userProfiles[partnerId]; if(partnerProfile && partnerProfile.name) return partnerProfile.name.split(" ")[0]; return `${partnerId.substring(0,6)}...${partnerId.substring(partnerId.length-4)}`; },
       activeConversationPartnerInitial() { const partnerDisplay = this.activeConversationPartnerDisplayAddress; if (!partnerDisplay || partnerDisplay === '?') return '?'; return partnerDisplay.charAt(0).toUpperCase(); },
       unreadMessageCount() { if (!this.isUserAuthenticated) return 0; return this.messages.filter(msg => msg.receiver === this.currentUserIdentifier && !msg.read).length; },
+      unreadAvatarMessagesCount() { // NEW for Avatar
+          if (!this.avatar.expanded && this.avatar.chatMessages) {
+              return this.avatar.chatMessages.filter(msg => msg.sender === 'bot' && !msg.readByUser).length;
+          }
+          return 0;
+      },
     },
     watch: {
       current(newPage, oldPage) {
@@ -939,17 +1052,43 @@
           if (newPage === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { this.scrollToAndHighlightAgriStreamVideo(); }
           else if (newPage !== 'farmerAgriStream') { this.highlightedAgriStreamVideoCid = null; }
           if (newPage === 'investorPortfolio' && this.isUserAuthenticated && this.role === 'investor') { this.updateInvestmentProgress(); }
-          if (newPage === 'userProfile' && this.isUserAuthenticated && this.role === 'farmer' && this.farmerLocationCity && !this.currentWeather) { this.fetchWeather(); }
           if (newPage === 'messaging' && this.activeConversationId) { this.scrollToMessageBottom(); this.markConversationAsRead(this.activeConversationId); }
           if (newPage === 'loginChoice' && !this.isOrangeIdCallback && !this.isUserAuthenticated) { this.$nextTick(() => this.renderOrangeIdLoginWidget()); }
           else if (oldPage === 'loginChoice' && newPage !== 'loginChoice') { this.$nextTick(() => this.unmountOrangeIdLoginWidget()); }
           if (oldPage === 'plantRecommendation' && newPage !== 'plantRecommendation') { this.plantImageFile = null; this.plantImageUrl = null; this.plantImageMimeType = null; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; }
-          if (newPage === 'farmerChatbot') { this.initializeChatbot(); this.$nextTick(() => this.scrollToChatBottom()); }
+          if (newPage === 'farmerChatbot') { this.initializeChatbot(); this.$nextTick(() => this.scrollToChatBottom()); } // For page-based AgriBot
+
+          // NEW for Avatar
+          if (this.avatar.visible && this.avatar.expanded) {
+            this.updateAvatarContextAndQuickActions();
+          }
       },
       isUserAuthenticated(isAuthenticated) { this.$nextTick(() => { if (isAuthenticated && this.loginMethod === 'orangeId') { this.renderOrangeIdSignOutButton('orange-id-signout-button-container'); if (this.showMobileMenu) { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); } } else if (!isAuthenticated) { this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } }); },
       showMobileMenu(isShown) { if (isShown && this.isUserAuthenticated && this.loginMethod === 'orangeId') { this.$nextTick(() => { this.renderOrangeIdSignOutButton('orange-id-signout-button-container-mobile', true); }); } else if (!isShown && this.loginMethod === 'orangeId') { this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); } },
       farmerVideos: { handler(newVideos) { if (this.current === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { if (newVideos.some(v => v.cid === this.targetAgriStreamVideoCid)) { this.scrollToAndHighlightAgriStreamVideo(); } } }, deep: true },
-      chatMessages: { handler() { this.$nextTick(() => this.scrollToChatBottom()); }, deep: true }
+      chatMessages: { handler() { if(this.current === 'farmerChatbot') this.$nextTick(() => this.scrollToChatBottom()); }, deep: true }, // For page-based AgriBot
+      'avatar.chatMessages': { // NEW for Avatar
+          handler(newMessages, oldMessages) {
+              if (newMessages.length > (oldMessages ? oldMessages.length : 0) ) {
+                  const lastMsg = newMessages[newMessages.length - 1];
+                  if (lastMsg.sender === 'bot' && this.avatar.expanded && this.avatar.state !== 'talking') {
+                      this.avatar.state = 'listening';
+                  }
+                  this.$nextTick(() => this.scrollToAvatarMessagesBottom());
+                  if(lastMsg.sender === 'bot' && !this.avatar.expanded && this.avatar.state !== 'talking') {
+                      this.avatar.state = 'idle';
+                  }
+              }
+              // Save avatar chat to pestiVidAppData - handled in sendAvatarMessage and loadData
+          },
+          deep: true
+      },
+      'avatar.isListening'(isListening) { // NEW for Avatar
+        if (isListening && 'speechSynthesis' in window && speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+            this.avatar.state = 'listening';
+        }
+      }
     },
     methods: {
       switchPage(page) { this.current = page; this.showMobileMenu = false; },
@@ -984,10 +1123,10 @@
       checkOrangeIdCallback() { const params = new URLSearchParams(window.location.search); const token = params.get('token'); const refreshToken = params.get('refreshToken'); if (token && refreshToken) { this.isOrangeIdCallback = true; this.isAuthProcessing = true; this.$nextTick(() => this.renderOrangeIdCallbackProcessor()); return true; } this.isOrangeIdCallback = false; return false; },
       async connectWallet() { if (typeof window.solana === 'undefined' || typeof window.solana.connect === 'undefined') { alert("Solana wallet (e.g., Phantom) not found. Please install Phantom and try again."); window.open('https://phantom.app/', '_blank'); return; } if (this.isUserAuthenticated) { if (this.loginMethod === 'solana') { this.addNotification("Solana Wallet already connected.", "info"); return; } if(!confirm(`You are logged in with ${this.loginMethod}. Switch to Solana Wallet? This will log you out of Orange ID.`)) return; await this.logoutUser(false); } this.isAuthProcessing = true; try { const resp = await window.solana.connect(); this.handleAuthenticationSuccess(resp.publicKey.toString(), 'solana'); } catch (err) { console.error("Solana Wallet connection error:", err); this.addNotification("Could not connect to Solana wallet. " + (err.message || ''), "error"); this.loginMethod = null; this.isAuthProcessing = false; } },
       async disconnectWallet() { if (window.solana && window.solana.isConnected) { try { await window.solana.disconnect(); } catch (err) { console.error("Error disconnecting Solana wallet:", err); } } this.walletAddress = null; },
-      loadOrSetupPestiVidProfile() { const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const pestividProfile = userProfiles[this.currentUserIdentifier]; if (pestividProfile && pestividProfile.role) { this.role = pestividProfile.role; this.userName = pestividProfile.name; this.userEmail = pestividProfile.email; this.userPhone = pestividProfile.phone || ''; this.memberSince = pestividProfile.memberSince || new Date().toLocaleDateString(); if (this.role === 'farmer') { this.farmerLocationCity = pestividProfile.farmerLocationCity || ''; } else { this.farmerLocationCity = ''; } } else { this.userNameOnboarding = this.loginMethod === 'orangeId' && this.orangeIdUser ? (this.orangeIdUser.name || '') : ''; this.userEmailOnboarding = this.loginMethod === 'orangeId' && this.orangeIdUser ? (this.orangeIdUser.email || '') : ''; this.userPhoneOnboarding = ''; this.farmerLocationCityOnboarding = ''; this.selectedRoleOnboarding = ''; this.current = 'roleSelection'; if (this.isUserAuthenticated) { this.addNotification(`Welcome! Please complete your PestiVid profile.`, 'info'); } } this.filterDataForCurrentUser(); this.showMobileMenu = false; if (this.current !== 'roleSelection') { if (this.isUserAuthenticated && this.role) { this.getStarted(); } else if (this.isUserAuthenticated && !this.role) { this.current = 'roleSelection'; } } },
-      completeOnboarding() { if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Please fill in Full Name, PestiVid Email, and select a Role."); return; } if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Please enter a valid PestiVid email address."); return; } this.role = this.selectedRoleOnboarding; this.userName = this.userNameOnboarding.trim(); this.userEmail = this.userEmailOnboarding.trim(); this.userPhone = this.userPhoneOnboarding.trim() || ''; this.memberSince = new Date().toLocaleDateString(); if (this.role === 'farmer') { this.farmerLocationCity = this.farmerLocationCityOnboarding.trim() || ''; } else { this.farmerLocationCity = ''; } const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; userProfiles[this.currentUserIdentifier] = { role: this.role, name: this.userName, email: this.userEmail, phone: this.userPhone, memberSince: this.memberSince, farmerLocationCity: this.role === 'farmer' ? this.farmerLocationCity : undefined, authMethod: this.loginMethod, orangeAuthEmail: this.loginMethod === 'orangeId' && this.orangeIdUser ? this.orangeIdUser.email : null, orangeEthAddress: this.loginMethod === 'orangeId' && this.orangeIdUser ? this.orangeIdUser.ethAddress : null, }; localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); this.filterDataForCurrentUser(); this.getStarted(); this.addNotification(`Profile for ${this.userName} setup! Welcome!`, 'success'); },
+      loadOrSetupPestiVidProfile() { const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const pestividProfile = userProfiles[this.currentUserIdentifier]; if (pestividProfile && pestividProfile.role) { this.role = pestividProfile.role; this.userName = pestividProfile.name; this.userEmail = pestividProfile.email; this.userPhone = pestividProfile.phone || ''; this.memberSince = pestividProfile.memberSince || new Date().toLocaleDateString(); } else { this.userNameOnboarding = this.loginMethod === 'orangeId' && this.orangeIdUser ? (this.orangeIdUser.name || '') : ''; this.userEmailOnboarding = this.loginMethod === 'orangeId' && this.orangeIdUser ? (this.orangeIdUser.email || '') : ''; this.userPhoneOnboarding = ''; this.selectedRoleOnboarding = ''; this.current = 'roleSelection'; if (this.isUserAuthenticated) { this.addNotification(`Welcome! Please complete your PestiVid profile.`, 'info'); } } this.filterDataForCurrentUser(); this.showMobileMenu = false; if (this.current !== 'roleSelection') { if (this.isUserAuthenticated && this.role) { this.getStarted(); } else if (this.isUserAuthenticated && !this.role) { this.current = 'roleSelection'; } } },
+      completeOnboarding() { if (!this.selectedRoleOnboarding || !this.userNameOnboarding.trim() || !this.userEmailOnboarding.trim()) { alert("Please fill in Full Name, PestiVid Email, and select a Role."); return; } if (!/\S+@\S+\.\S+/.test(this.userEmailOnboarding)) { alert("Please enter a valid PestiVid email address."); return; } this.role = this.selectedRoleOnboarding; this.userName = this.userNameOnboarding.trim(); this.userEmail = this.userEmailOnboarding.trim(); this.userPhone = this.userPhoneOnboarding.trim() || ''; this.memberSince = new Date().toLocaleDateString(); const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; userProfiles[this.currentUserIdentifier] = { role: this.role, name: this.userName, email: this.userEmail, phone: this.userPhone, memberSince: this.memberSince, authMethod: this.loginMethod, orangeAuthEmail: this.loginMethod === 'orangeId' && this.orangeIdUser ? this.orangeIdUser.email : null, orangeEthAddress: this.loginMethod === 'orangeId' && this.orangeIdUser ? this.orangeIdUser.ethAddress : null, }; localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); this.filterDataForCurrentUser(); this.getStarted(); this.addNotification(`Profile for ${this.userName} setup! Welcome!`, 'success'); },
       async logoutUser(notify = true, triggerOrangeIdLogout = true) { this.showLoadingModal = true; this.loadingMessage = "Signing out..."; if (this.loginMethod === 'solana') { await this.disconnectWallet(); this.clearUserSession(notify); } else if (this.loginMethod === 'orangeId') { if (!triggerOrangeIdLogout) { this.clearUserSession(notify); } else { console.warn("Direct Orange ID logout called without UI button. Orange ID session might persist on their server. Use UI button for full logout."); this.clearUserSession(notify); } } else { this.clearUserSession(notify); } this.showLoadingModal = false; if (this.current !== 'landing') this.current = 'landing'; },
-      clearUserSession(notify = true) { this.currentUserIdentifier = null; this.walletAddress = null; this.orangeIdUser = null; this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerLocationCity = ''; this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.chatMessages = []; this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); if (this.loginMethod === 'orangeId') this.loginMethod = null; this.showMobileMenu = false; this.isAuthProcessing = false; this.isOrangeIdCallback = false; if (notify) this.addNotification("You have been signed out from PestiVid.", 'info'); },
+      clearUserSession(notify = true) { this.currentUserIdentifier = null; this.walletAddress = null; this.orangeIdUser = null; this.role = ''; this.userName = ''; this.userEmail = ''; this.userPhone = ''; this.memberSince = ''; this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.chatMessages = []; this.unmountOrangeIdSignOutButton('orange-id-signout-button-container'); this.unmountOrangeIdSignOutButton('orange-id-signout-button-container-mobile'); if (this.loginMethod === 'orangeId') this.loginMethod = null; this.showMobileMenu = false; this.isAuthProcessing = false; this.isOrangeIdCallback = false; if (notify) this.addNotification("You have been signed out from PestiVid.", 'info'); },
       getFarmerDisplayIdentifier(wallet, length = 6) { if (!wallet) return 'N/A'; const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; const profile = userProfiles[wallet]; if (profile && profile.name) return profile.name.split(' ')[0]; return `${wallet.substring(0, length)}...`; },
       getSellerDisplayIdentifier(wallet, length = 6) { return this.getFarmerDisplayIdentifier(wallet, length); },
       async simulateTransaction(description = "Processing...") { this.showLoadingModal = true; this.loadingMessage = "Confirm action (Simulated)..."; await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500)); this.loadingMessage = `${description} on PestiVid (Simulated)...`; await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2500)); const txHash = 'sim_tx_' + Date.now().toString(16) + Math.random().toString(16).substring(2, 12); this.showLoadingModal = false; return txHash; },
@@ -1307,10 +1446,6 @@
       simulateMemberSince(id) { let hash = 0; for (let i = 0; i < (id || '').length; i++) { hash = (hash << 5) - hash + id.charCodeAt(i); hash |= 0; } const daysAgo = Math.abs(hash % 730) + 30; const joinDate = new Date(); joinDate.setDate(joinDate.getDate() - daysAgo); return joinDate.toLocaleDateString(); },
       simulateFarmName(id) { return id ? `Farm ${id.substring(0, 5)}` : "The Good Farm"; },
       simulateFarmerBio(id) { const bios = ["Sustainable ag.", "Family farm & Web3.", "Organic specialist.", "Direct connections.", "Transparency focus."]; let bioHash = 0; for (let i = 0; i < (id || '').length; i++) { bioHash = (bioHash << 5) - bioHash + id.charCodeAt(i); bioHash |= 0; } return bios[Math.abs(bioHash % bios.length)]; },
-      async fetchWeather() { if (!this.farmerLocationCity) { this.weatherError = "Enter city."; return; } if (!this.weatherApiKey || this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') { this.weatherError = "Weather API key needed. Please configure in script."; alert(this.weatherError); return; } this.weatherLoading = true; this.weatherError = ''; this.currentWeather = null; this.forecastWeather = []; const city = this.farmerLocationCity; const apiKey = this.weatherApiKey; const units = 'metric'; try { const currentResponse = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.currentWeather = currentResponse.data; const forecastResponse = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=${units}`); this.forecastWeather = this.processForecastData(forecastResponse.data); } catch (error) { if (error.response) { this.weatherError = `Err ${error.response.status}: ${error.response.data.message || 'Weather error.'}`; if (error.response.status === 401) this.weatherError += " Check API key."; else if (error.response.status === 404) this.weatherError = `No weather for "${city}".`; } else if (error.request) { this.weatherError = "Network/CORS error."; } else { this.weatherError = "Unexpected weather error."; } console.error(this.weatherError); alert(this.weatherError); } finally { this.weatherLoading = false; } },
-      processForecastData(data) { if (!data || !data.list) return []; const dailyData = {}; data.list.forEach(item => { const date = new Date(item.dt * 1000); const dateString = date.toISOString().split('T')[0]; if (!dailyData[dateString]) { dailyData[dateString] = { date: date, dateString: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), temps: [], icons: [], descriptions: [] }; } dailyData[dateString].temps.push(item.main.temp); dailyData[dateString].icons.push(item.weather[0].icon); dailyData[dateString].descriptions.push(item.weather[0].description); }); return Object.values(dailyData).map(day => { let repIcon = day.icons[0]; let repDesc = day.descriptions[0]; const middayIdx = data.list.findIndex(item => new Date(item.dt * 1000).toISOString().startsWith(day.date.toISOString().split('T')[0]) && new Date(item.dt*1000).getHours() >= 11 && new Date(item.dt*1000).getHours() <= 14); if (middayIdx !== -1) { repIcon = data.list[middayIdx].weather[0].icon; repDesc = data.list[middayIdx].weather[0].description; } return { date: day.date, dateString: day.dateString, minTemp: Math.min(...day.temps), maxTemp: Math.max(...day.temps), icon: repIcon, description: repDesc }; }).slice(0, 5); },
-      getWeatherIconUrl(iconCode) { return `https://openweathermap.org/img/wn/${iconCode}@2x.png`; },
-      saveFarmerCity() { if (this.isUserAuthenticated && this.role === 'farmer') { const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; if (userProfiles[this.currentUserIdentifier]) { userProfiles[this.currentUserIdentifier].farmerLocationCity = this.farmerLocationCity; localStorage.setItem('pestiVidUserProfiles', JSON.stringify(userProfiles)); } } },
       selectConversation(convId) { this.activeConversationId = convId; this.markConversationAsRead(convId); this.$nextTick(() => this.scrollToMessageBottom()); },
       sendMessage() { if (!this.messageInputText.trim() || !this.activeConversationId || !this.isUserAuthenticated) return; const conversation = this.conversations.find(c => c.id === this.activeConversationId); if (!conversation) return; const receiverId = conversation.participants.find(p => p !== this.currentUserIdentifier); if (!receiverId) return; const newMessage = { id: 'msg' + Date.now(), conversationId: this.activeConversationId, sender: this.currentUserIdentifier, receiver: receiverId, text: this.messageInputText.trim(), timestamp: new Date().toISOString(), read: false }; this.messages.push(newMessage); conversation.lastMessageSnippet = newMessage.text.substring(0, 35) + (newMessage.text.length > 35 ? '...' : ''); conversation.lastMessageTimestamp = newMessage.timestamp; this.conversations.sort((a, b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.addNotification(`New message from ${this.getFarmerDisplayIdentifier(this.currentUserIdentifier)}`, 'info', receiverId); this.messageInputText = ''; this.$nextTick(() => this.scrollToMessageBottom()); this.saveDataToLocalStorage(); },
       startOrGoToConversation(targetIdentifier) { if (!this.isUserAuthenticated || !targetIdentifier ) { if (!this.isUserAuthenticated) { alert("Log in to message."); this.switchPage('loginChoice'); return;} if (!targetIdentifier) { alert("Target missing."); return;} } if (targetIdentifier === this.currentUserIdentifier) { alert("Cannot message self."); return; } const sortedParticipants = [this.currentUserIdentifier, targetIdentifier].sort(); let conversation = this.conversations.find(conv => conv.participants.length === 2 && conv.participants.join(',') === sortedParticipants.join(',')); if (!conversation) { const newConvId = 'conv' + Date.now(); conversation = { id: newConvId, participants: sortedParticipants, lastMessageSnippet: 'Conversation started.', lastMessageTimestamp: new Date().toISOString() }; this.conversations.unshift(conversation); this.conversations.sort((a,b) => new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp)); this.saveDataToLocalStorage(); } this.switchPage('messaging'); this.$nextTick(() => this.selectConversation(conversation.id)); },
@@ -1340,21 +1475,53 @@
       dismissNotification(id) { const index = this.recentNotifications.findIndex(n => n.id === id); if (index > -1) { if (this.recentNotifications[index].timeoutId) clearTimeout(this.recentNotifications[index].timeoutId); this.$set(this.recentNotifications[index], 'show', false); setTimeout(() => { const removeIndex = this.recentNotifications.findIndex(n => n.id === id); if (removeIndex > -1) this.recentNotifications.splice(removeIndex, 1); this.$nextTick(() => this.showNextToastNotification()); }, 400); } },
       notifyBuyersAboutListing(listing, markAsSent = false) { if (markAsSent) {const idx = this.allListings.findIndex(l=>l.id === listing.id); if(idx>-1) this.allListings[idx].notificationSent = true; if(this.role==='farmer') {const fidx = this.farmerListings.findIndex(l=>l.id === listing.id); if(fidx>-1) this.farmerListings[fidx].notificationSent=true;}} this.addNotification(`New listing: "${listing.crop}" from ${this.getFarmerDisplayIdentifier(listing.farmerWallet)}... available!`, 'info'); if (this.role === 'buyer' && this.currentUserIdentifier !== listing.farmerWallet) this.addNotification(`Check new listing for "${listing.crop}"!`, 'info'); console.log(`SIM: Notifying buyers about listing ${listing.id}`); },
       notifyInvestorsAboutFunding(request, markAsSent = false) { if (markAsSent) {/* mark notificationSent */} this.addNotification(`New funding: "${request.title}" by ${this.getFarmerDisplayIdentifier(request.farmerWallet)}... seeking investors!`, 'info'); if (this.role === 'investor' && this.currentUserIdentifier !== request.farmerWallet) this.addNotification(`New project "${request.title}" needs funding!`, 'info'); console.log(`SIM: Notifying investors about funding ${request.id}`); },
-      saveDataToLocalStorage() { localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: this.getAllFarmerVideos(), buyerPurchases: this.getAllBuyerPurchases(), investorInvestments: this.getAllInvestorInvestments(), investorTransactions: this.getAllInvestorTransactions(), messages: this.messages, conversations: this.conversations, chatMessages: this.chatMessages, })); },
+      saveDataToLocalStorage() { localStorage.setItem('pestiVidAppData', JSON.stringify({ allListings: this.allListings, allFundingRequests: this.allFundingRequests, farmerVideos: this.getAllFarmerVideos(), buyerPurchases: this.getAllBuyerPurchases(), investorInvestments: this.getAllInvestorInvestments(), investorTransactions: this.getAllInvestorTransactions(), messages: this.messages, conversations: this.conversations, chatMessages: this.chatMessages, avatarChatMessages: this.avatar.chatMessages, })); }, // Added avatarChatMessages
       getAllFarmerVideos() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.farmerVideos || []; if (this.isUserAuthenticated && this.farmerVideos.length > 0) { const userCIDs = new Set(this.farmerVideos.map(v => v.cid)); all = all.filter(v => !userCIDs.has(v.cid) || v.farmerWallet !== this.currentUserIdentifier); all.push(...this.farmerVideos); } return [...new Map(all.map(item => [item.cid + item.farmerWallet, item])).values()]; },
       getAllBuyerPurchases() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.buyerPurchases || []; if (this.isUserAuthenticated && this.buyerPurchases.length > 0) { const userIDs = new Set(this.buyerPurchases.map(p => p.id)); all = all.filter(p => !userIDs.has(p.id) || p.buyerWallet !== this.currentUserIdentifier); all.push(...this.buyerPurchases); } return [...new Map(all.map(item => [item.id, item])).values()]; },
       getAllInvestorInvestments() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorInvestments || []; if (this.isUserAuthenticated && this.investorInvestments.length > 0) { const userIDs = new Set(this.investorInvestments.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorWallet !== this.currentUserIdentifier); all.push(...this.investorInvestments); } return [...new Map(all.map(item => [item.id, item])).values()]; },
       getAllInvestorTransactions() { const data = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); let all = data.investorTransactions || []; if (this.isUserAuthenticated && this.investorTransactions.length > 0) { const userIDs = new Set(this.investorTransactions.map(i => i.id)); all = all.filter(i => !userIDs.has(i.id) || i.investorWallet !== this.currentUserIdentifier); all.push(...this.investorTransactions); } return [...new Map(all.map(item => [item.id, item])).values()]; },
-      loadDataFromLocalStorage() { const savedData = localStorage.getItem('pestiVidAppData'); if (savedData) { try { const appData = JSON.parse(savedData); this.allListings = appData.allListings || []; this.allFundingRequests = appData.allFundingRequests || []; this.messages = appData.messages || []; this.conversations = appData.conversations || []; this.chatMessages = appData.chatMessages || []; if (this.current === 'farmerChatbot') this.initializeChatbot(); if (!this.currentUserIdentifier) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; } else { this.filterDataForCurrentUser(); } } catch (e) { console.error("Error loading data from localStorage:", e); localStorage.removeItem('pestiVidAppData'); this.loadDemoDataIfNeeded(); } } else { this.loadDemoDataIfNeeded(); } const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {}; if (this.currentUserIdentifier && userProfiles[this.currentUserIdentifier]) { const profile = userProfiles[this.currentUserIdentifier]; this.role = profile.role; this.userName = profile.name; this.userEmail = profile.email; this.userPhone = profile.phone || ''; this.memberSince = profile.memberSince || new Date().toLocaleDateString(); if (this.role === 'farmer') { this.farmerLocationCity = profile.farmerLocationCity || ''; } } },
+      loadDataFromLocalStorage() {
+        const savedData = localStorage.getItem('pestiVidAppData');
+        if (savedData) {
+            try {
+                const appData = JSON.parse(savedData);
+                this.allListings = appData.allListings || [];
+                this.allFundingRequests = appData.allFundingRequests || [];
+                this.messages = appData.messages || [];
+                this.conversations = appData.conversations || [];
+                this.chatMessages = appData.chatMessages || []; // For page-based AgriBot
+                this.avatar.chatMessages = appData.avatarChatMessages || []; // NEW for Avatar Assistant
+
+                if (this.current === 'farmerChatbot') this.initializeChatbot();
+                if (!this.currentUserIdentifier) {
+                    this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = [];
+                    this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = [];
+                } else {
+                    this.filterDataForCurrentUser();
+                }
+            } catch (e) {
+                console.error("Error loading data from localStorage:", e);
+                localStorage.removeItem('pestiVidAppData');
+                this.loadDemoDataIfNeeded();
+            }
+        } else {
+            this.loadDemoDataIfNeeded();
+        }
+        const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
+        if (this.currentUserIdentifier && userProfiles[this.currentUserIdentifier]) {
+            const profile = userProfiles[this.currentUserIdentifier];
+            this.role = profile.role; this.userName = profile.name;
+            this.userEmail = profile.email; this.userPhone = profile.phone || '';
+            this.memberSince = profile.memberSince || new Date().toLocaleDateString();
+        }
+      },
       filterDataForCurrentUser() { const appData = JSON.parse(localStorage.getItem('pestiVidAppData') || '{}'); if (!this.isUserAuthenticated) { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; this.buyerPurchases = []; this.investorInvestments = []; this.investorTransactions = []; this.activeConversationId = null; this.messages = appData.messages || []; this.conversations = appData.conversations || []; return; } if (this.role === 'farmer') { this.farmerVideos = (appData.farmerVideos || []).filter(v => v.farmerWallet === this.currentUserIdentifier).map(v => ({...v, purpose: v.purpose || 'agristream'})); this.farmerListings = this.allListings.filter(l => l.farmerWallet === this.currentUserIdentifier); this.farmerFundingRequests = this.allFundingRequests.filter(r => r.farmerWallet === this.currentUserIdentifier); } else { this.farmerVideos = []; this.farmerListings = []; this.farmerFundingRequests = []; } if (this.role === 'buyer') { this.buyerPurchases = (appData.buyerPurchases || []).filter(p => p.buyerWallet === this.currentUserIdentifier); } else { this.buyerPurchases = []; } if (this.role === 'investor') { this.investorInvestments = (appData.investorInvestments || []).filter(i => i.investorWallet === this.currentUserIdentifier); this.investorTransactions = (appData.investorTransactions || []).filter(t => t.investorWallet === this.currentUserIdentifier); this.updateInvestmentProgress(); } else { this.investorInvestments = []; this.investorTransactions = []; } this.messages = (appData.messages || []).filter(msg => msg.sender === this.currentUserIdentifier || msg.receiver === this.currentUserIdentifier); this.conversations = (appData.conversations || []).filter(conv => conv.participants.includes(this.currentUserIdentifier)); if (this.activeConversationId) { const activeConv = this.conversations.find(c => c.id === this.activeConversationId); if (!activeConv || !activeConv.participants.includes(this.currentUserIdentifier)) { this.activeConversationId = null; } } },
       loadDemoDataIfNeeded() {
         let appDataString = localStorage.getItem('pestiVidAppData');
-        let loadFreshDemo = true; // Default to loading fresh demo
-  
+        let loadFreshDemo = true;
         if (appDataString) {
           try {
             const existingData = JSON.parse(appDataString);
-            // Check if existing data has the new videoFileHash field structure
             const hasHashStructure = (arr) => arr && arr.length > 0 && arr.every(item => typeof item.videoFileHash === 'string' || item.videoFileHash === undefined || item.videoFileHash === null);
   
             if (
@@ -1369,13 +1536,12 @@
               this.allFundingRequests = existingData.allFundingRequests || [];
               this.messages = existingData.messages || [];
               this.conversations = existingData.conversations || [];
-              this.chatMessages = existingData.chatMessages || [];
-              // Ensure farmerVideos from storage also get filtered
+              this.chatMessages = existingData.chatMessages || []; // AgriBot
+              this.avatar.chatMessages = existingData.avatarChatMessages || []; // Avatar
               const allFarmerVideosFromStorage = existingData.farmerVideos || [];
               this.farmerVideos = allFarmerVideosFromStorage.filter(v => this.isUserAuthenticated && v.farmerWallet === this.currentUserIdentifier);
-  
-              this.filterDataForCurrentUser(); // This will further refine based on current user
-              loadFreshDemo = false; // Data seems okay, don't reload
+              this.filterDataForCurrentUser();
+              loadFreshDemo = false;
               console.log("Existing PestiVid data with hash structure found. Loading from localStorage.");
             } else {
                console.log("Existing PestiVid data missing hash structure or incomplete. Will load fresh demo data.");
@@ -1387,76 +1553,56 @@
   
         if (loadFreshDemo) {
           console.log("Loading/Reloading PestiVid Demo Data with videoFileHash.");
-          const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u'; // Example CID for placeholder video
+          const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u';
           const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString();
           const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
   
-          const demoFarmer1 = 'oid_farmer_1_sub'; // Simulated Orange ID for Farmer 1
-          const demoFarmer2 = 'sol_farmer_2_addr'; // Simulated Solana address for Farmer 2
-          const demoInvestor1 = 'oid_investor_1_sub'; // Simulated Orange ID for Investor 1
-          const demoBuyer1 = 'sol_buyer_1_addr'; // Simulated Solana address for Buyer 1
+          const demoFarmer1 = 'oid_farmer_1_sub'; const demoFarmer2 = 'sol_farmer_2_addr';
+          const demoInvestor1 = 'oid_investor_1_sub'; const demoBuyer1 = 'sol_buyer_1_addr';
   
           const demoFarmerVideos = [
               { farmerWallet: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', crop: 'Tomatoes (Demo Video)', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell', uploadTimestamp: oneDayAgo},
               { farmerWallet: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', crop: 'Strawberries (Demo Video)', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding', uploadTimestamp: oneDayAgo},
               { farmerWallet: demoFarmer2, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', crop: 'Lettuce (Demo Video)', pesticide: 'Nutrient Solution', location: 'Hydro Unit 1', pesticideCompany: 'HydroGrow', purpose: 'agristream', uploadTimestamp: oneDayAgo},
           ];
-  
           this.allListings = [
               { id: 'lst_demo1', farmerWallet: demoFarmer1, crop: 'Tomatoes (Demo Video)', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', minPrice: 0.8, maxPrice: 1.2, status: 'active', createdAt: oneDayAgo, isNew: true, txHash: 'sim_lst_tx_1' },
               { id: 'lst_demo2', farmerWallet: demoFarmer2, crop: 'Peppers (Demo Video)', location: 'Greenhouse 3', pesticide: 'Neem Oil', pesticideCompany: 'Organics Inc.', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_peppers_placeholder_for_video4', minPrice: 1.0, maxPrice: 1.5, status: 'active', createdAt: threeDaysAgo, isNew: false, txHash: 'sim_lst_tx_2' },
           ];
-  
           this.allFundingRequests = [
               { id: 'fr_demo1', farmerWallet: demoFarmer1, title: 'Organic Strawberry Expansion (Demo)', crop: 'Strawberries (Demo Video)', acres: 2.5, amount: 25, method: 'organic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', timeline: 6, roi: 18, investorShare: 20, fundedAmount: 10, status: 'partially_funded', createdAt: oneDayAgo, investors: [{investorId: demoInvestor1, amount: 10, txHash:'sim_inv_tx_demo1'}], updates: [{id:'upd1', date: '1 week ago', text:'Initial tilling complete.'}], txHash: 'sim_fr_tx_1' },
               { id: 'fr_demo2', farmerWallet: demoFarmer2, title: 'Hydroponic Lettuce Setup (Demo)', crop: 'Lettuce (Demo Video)', acres: 0.5, amount: 40, method: 'hydroponic', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_lettuce_placeholder_for_video3', description: 'Setting up a new state-of-the-art NFT hydroponic system for year-round lettuce production. Focus on water efficiency and rapid growth cycles.', timeline: 4, roi: 25, investorShare: 30, fundedAmount: 0, status: 'pending', createdAt: oneDayAgo, investors: [], updates: [], txHash: 'sim_fr_tx_2' },
           ];
-  
-          const demoBuyerPurchases = [
-              { id: 'pur_demo1', buyerWallet: demoBuyer1, farmerWallet: demoFarmer1, crop: 'Tomatoes (Demo Video)', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', price: 0.9, date: 'March 10, 2024', txHash: 'sim_pur_tx_demo1' },
-          ];
-  
-          const demoInvestorInvestments = [
-              { id: 'inv_demo1', investorWallet: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)', farmerWallet: demoFarmer1, crop: 'Strawberries (Demo Video)', method: 'organic', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 10, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', txHash: 'sim_inv_tx_demo1' }
-          ];
-  
-          const demoInvestorTransactions = [
-              { id: 'tx_demo1', investorWallet: demoInvestor1, txHash: 'sim_inv_tx_demo1', type: 'investment', amount: 10, date: 'February 15, 2024', projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)' },
-          ];
-  
-          const now = Date.now();
-          const minToMs = (min) => 1000 * 60 * min;
-          const conv1Id = 'conv_demo_f1_i1';
-          const demoConversations = [
-              { id: conv1Id, participants: [demoFarmer1, demoInvestor1].sort(), lastMessageSnippet: 'Sounds good, will review the project terms tonight.', lastMessageTimestamp: new Date(now - minToMs(5)).toISOString() }
-          ];
+          const demoBuyerPurchases = [ { id: 'pur_demo1', buyerWallet: demoBuyer1, farmerWallet: demoFarmer1, crop: 'Tomatoes (Demo Video)', location: 'West Field', pesticide: 'Copper Spray', pesticideCompany: 'AgriSource', cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', price: 0.9, date: 'March 10, 2024', txHash: 'sim_pur_tx_demo1' }, ];
+          const demoInvestorInvestments = [ { id: 'inv_demo1', investorWallet: demoInvestor1, projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)', farmerWallet: demoFarmer1, crop: 'Strawberries (Demo Video)', method: 'organic', description: 'Expanding organic strawberry fields for higher yields and better market access. Funds will be used for new plants, organic soil amendments, and drip irrigation.', acres: 2.5, timeline: 6, roi: 18, investorShare: 20, amount: 10, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', status: 'growing', progress: 30, investmentDate: 'February 15, 2024', txHash: 'sim_inv_tx_demo1' } ];
+          const demoInvestorTransactions = [ { id: 'tx_demo1', investorWallet: demoInvestor1, txHash: 'sim_inv_tx_demo1', type: 'investment', amount: 10, date: 'February 15, 2024', projectId: 'fr_demo1', projectTitle: 'Organic Strawberry Expansion (Demo)' }, ];
+          const nowTime = Date.now(); const minToMs = (min) => 1000 * 60 * min; const conv1Id = 'conv_demo_f1_i1';
+          const demoConversations = [ { id: conv1Id, participants: [demoFarmer1, demoInvestor1].sort(), lastMessageSnippet: 'Sounds good, will review the project terms tonight.', lastMessageTimestamp: new Date(nowTime - minToMs(5)).toISOString() } ];
           const demoMessages = [
-              { id: 'msg_demo1a', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'Hi Investor, thanks for showing interest in the Strawberry Expansion project. Let me know if you have questions.', timestamp: new Date(now - minToMs(10)).toISOString(), read: true },
-              { id: 'msg_demo1b', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Hello Farmer! Yes, the project looks promising. What are the projected returns again?', timestamp: new Date(now - minToMs(8)).toISOString(), read: true },
-              { id: 'msg_demo1c', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'We are projecting an 18% ROI over 6 months, with a 20% profit share for investors.', timestamp: new Date(now - minToMs(6)).toISOString(), read: true },
-              { id: 'msg_demo1d', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Sounds good, will review the project terms tonight.', timestamp: new Date(now - minToMs(5)).toISOString(), read: false }
+              { id: 'msg_demo1a', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'Hi Investor, thanks for showing interest in the Strawberry Expansion project. Let me know if you have questions.', timestamp: new Date(nowTime - minToMs(10)).toISOString(), read: true },
+              { id: 'msg_demo1b', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Hello Farmer! Yes, the project looks promising. What are the projected returns again?', timestamp: new Date(nowTime - minToMs(8)).toISOString(), read: true },
+              { id: 'msg_demo1c', conversationId: conv1Id, sender: demoFarmer1, receiver: demoInvestor1, text: 'We are projecting an 18% ROI over 6 months, with a 20% profit share for investors.', timestamp: new Date(nowTime - minToMs(6)).toISOString(), read: true },
+              { id: 'msg_demo1d', conversationId: conv1Id, sender: demoInvestor1, receiver: demoFarmer1, text: 'Sounds good, will review the project terms tonight.', timestamp: new Date(nowTime - minToMs(5)).toISOString(), read: false }
           ];
-  
+          const demoAvatarChatMessages = [ // NEW for Avatar
+            { id: 'avatar_demo_greet_1', sender: 'bot', text: "Hi! I'm PestiVid Helper. How can I assist you today on our platform?", timestamp: new Date(nowTime - minToMs(1)).toISOString(), readByUser: true }
+          ];
+
           localStorage.setItem('pestiVidAppData', JSON.stringify({
-              allListings: this.allListings,
-              allFundingRequests: this.allFundingRequests,
-              farmerVideos: demoFarmerVideos, // Save all demo videos
-              buyerPurchases: demoBuyerPurchases,
-              investorInvestments: demoInvestorInvestments,
-              investorTransactions: demoInvestorTransactions,
-              messages: demoMessages,
-              conversations: demoConversations,
-              chatMessages: [] // Initialize empty chat messages for AgriBot
+              allListings: this.allListings, allFundingRequests: this.allFundingRequests,
+              farmerVideos: demoFarmerVideos, buyerPurchases: demoBuyerPurchases,
+              investorInvestments: demoInvestorInvestments, investorTransactions: demoInvestorTransactions,
+              messages: demoMessages, conversations: demoConversations,
+              chatMessages: [], // Initialize empty for AgriBot
+              avatarChatMessages: demoAvatarChatMessages // Initialize for Avatar
           }));
-  
           const demoProfiles = {};
-          demoProfiles[demoFarmer1] = { role: 'farmer', name: 'Alice Farmer (OID)', email: 'alice.oid@pestivid.sim', phone: '555-0101', memberSince: this.simulateMemberSince(demoFarmer1), farmerLocationCity: 'Anytown, USA', authMethod: 'orangeId'};
-          demoProfiles[demoFarmer2] = { role: 'farmer', name: 'Bob Farmer (SOL)', email: 'bob.sol@pestivid.sim', phone: '555-0102', memberSince: this.simulateMemberSince(demoFarmer2), farmerLocationCity: 'Otherville, Canada', authMethod: 'solana'};
+          demoProfiles[demoFarmer1] = { role: 'farmer', name: 'Alice Farmer (OID)', email: 'alice.oid@pestivid.sim', phone: '555-0101', memberSince: this.simulateMemberSince(demoFarmer1), authMethod: 'orangeId'};
+          demoProfiles[demoFarmer2] = { role: 'farmer', name: 'Bob Farmer (SOL)', email: 'bob.sol@pestivid.sim', phone: '555-0102', memberSince: this.simulateMemberSince(demoFarmer2), authMethod: 'solana'};
           demoProfiles[demoInvestor1] = { role: 'investor', name: 'Charlie Investor (OID)', email: 'charlie.oid@pestivid.sim', phone: '555-0103', memberSince: this.simulateMemberSince(demoInvestor1), authMethod: 'orangeId'};
           demoProfiles[demoBuyer1] = { role: 'buyer', name: 'Dana Buyer (SOL)', email: 'dana.sol@pestivid.sim', phone: '555-0104', memberSince: this.simulateMemberSince(demoBuyer1), authMethod: 'solana'};
           localStorage.setItem('pestiVidUserProfiles', JSON.stringify(demoProfiles));
-  
-          this.filterDataForCurrentUser(); // This will populate user-specific arrays like this.farmerVideos
+          this.filterDataForCurrentUser();
         }
       },
       scrollToAndHighlightAgriStreamVideo() { if (!this.targetAgriStreamVideoCid) return; this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid; this.$nextTick(() => { const videoCardRef = this.$refs[`videoCard-${this.targetAgriStreamVideoCid}`]; if (videoCardRef && videoCardRef[0]) { videoCardRef[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; }, 2500); } else { this.highlightedAgriStreamVideoCid = null; this.targetAgriStreamVideoCid = null; } }); },
@@ -1468,9 +1614,9 @@
       async analyzePlant() { if (!this.plantImageFile) { this.analysisErrorText = "Please upload an image first."; return; } if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { this.analysisErrorText = "Gemini API key is missing or invalid. Please configure it in the script."; return; } this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; try { const base64Image = await this.convertFileToBase64(this.plantImageFile); const apiKey = this.geminiApiKey; const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; const prompt = `Analyze this image of a plant. Identify the plant if possible, then detect any visible diseases. Based on your findings, provide the following information, each on a new line, formatted exactly as: Plant: [Plant Name or 'Unknown'] Disease: [Disease Name or 'Healthy' or 'Not Apparent' or 'Unknown'] Treatment: [Recommended treatment and/or types of pesticides. If healthy, state 'No treatment needed'. If disease is not apparent or unknown, state 'Cannot recommend treatment without clear disease identification.']. Be concise and focus on actionable recommendations. If the image is not clear or not a plant, state that.`; const payload = { contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: this.plantImageMimeType, data: base64Image } } ] }], generationConfig: { "temperature": 0.4, "topK": 32, "topP": 1, "maxOutputTokens": 2048, }, safetySettings: [ { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" } ] }; const response = await axios.post(url, payload); if (response.data && response.data.candidates && response.data.candidates.length > 0 && response.data.candidates[0].content && response.data.candidates[0].content.parts && response.data.candidates[0].content.parts.length > 0 && response.data.candidates[0].content.parts[0].text) { this.analysisResultText = response.data.candidates[0].content.parts[0].text; this.parseGeminiResponse(this.analysisResultText); } else if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) { this.analysisErrorText = `Analysis blocked by API: ${response.data.promptFeedback.blockReason}. The image or prompt may have violated safety guidelines.`; this.parsedAnalysis = { plantName: 'Blocked', diseaseName: 'Blocked', treatmentRecommended: 'Blocked by API' }; } else { console.error("Unexpected response structure from Gemini API:", response.data); throw new Error("Invalid or empty response structure from Gemini API."); } } catch (error) { console.error("Error analyzing plant image with Gemini:", error); if (error.response) { this.analysisErrorText = `Gemini API Error: ${error.response.status}. ${error.response.data?.error?.message || 'Failed to get details.'}`; if(error.response.status === 400 && error.response.data?.error?.message.toLowerCase().includes("api key not valid")) { this.analysisErrorText += " Please check if the API key is correct and enabled for the Generative Language API in your Google Cloud Project."; } else if (error.response.status === 429) { this.analysisErrorText += " You might have exceeded your API quota."; } } else if (error.request) { this.analysisErrorText = "Network error: Could not reach Gemini API. Check your internet connection."; } else { this.analysisErrorText = "An unexpected error occurred: " + error.message; } this.parsedAnalysis = { plantName: '-', diseaseName: '-', treatmentRecommended: '-' }; } finally { this.analysisInProgress = false; } },
       parseGeminiResponse(text) { const result = { plantName: 'Unknown', diseaseName: 'Not Apparent', treatmentRecommended: 'Could not determine specific treatment.' }; if (!text) { this.parsedAnalysis = result; return; } const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0); let currentPlant = null; let currentDisease = null; let currentTreatment = []; lines.forEach(line => { const lowerLine = line.toLowerCase(); if (lowerLine.startsWith('plant:')) { currentPlant = line.substring('plant:'.length).trim(); } else if (lowerLine.startsWith('disease:')) { currentDisease = line.substring('disease:'.length).trim(); } else if (lowerLine.startsWith('treatment:')) { currentTreatment.push(line.substring('treatment:'.length).trim()); } else if (currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentDisease && !currentTreatment.length > 0) { currentTreatment.push(line); } else if (currentPlant && !currentDisease && !currentTreatment.length > 0) { if (lowerLine.includes("healthy") || lowerLine.includes("not apparent") || lowerLine.includes("unknown disease")) { currentDisease = line; } } }); if (currentPlant) result.plantName = currentPlant; if (currentDisease) result.diseaseName = currentDisease; if (currentTreatment.length > 0) result.treatmentRecommended = currentTreatment.join('\n'); if (result.plantName === 'Unknown' && result.diseaseName === 'Not Apparent' && result.treatmentRecommended === 'Could not determine specific treatment.') { const plantMatch = text.match(/Plant:\s*(.*)/i); const diseaseMatch = text.match(/Disease:\s*(.*)/i); const treatmentMatch = text.match(/Treatment:\s*(.*?)(?:\n|$)/is); if (plantMatch && plantMatch[1]) result.plantName = plantMatch[1].trim(); if (diseaseMatch && diseaseMatch[1]) result.diseaseName = diseaseMatch[1].trim(); if (treatmentMatch && treatmentMatch[1]) result.treatmentRecommended = treatmentMatch[1].trim(); } this.parsedAnalysis = result; },
   
-      // Groq Chatbot Methods
+      // Groq Chatbot Methods (for page-based AgriBot)
       initializeChatbot() {
-        if (this.chatMessages.length === 0) {
+        if (this.chatMessages.length === 0) { // `chatMessages` is for AgriBot
             this.chatMessages.push({
                 id: Date.now(),
                 sender: 'bot',
@@ -1478,7 +1624,7 @@
             });
         }
       },
-      async sendChatMessage() {
+      async sendChatMessage() { // For page-based AgriBot
           if (!this.chatInput.trim() || this.isGroqLoading) return;
           const userInput = this.chatInput.trim();
           this.chatMessages.push({ id: Date.now(), sender: 'user', text: userInput });
@@ -1497,11 +1643,9 @@
           try {
               const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
                   messages: messagesForApi,
-                  model: 'llama3-8b-8192', // Updated model
+                  model: 'llama3-8b-8192',
                   temperature: 0.7,
                   max_tokens: 1024,
-                  // top_p: 1, // Optional, can be omitted
-                  // stream: false // Optional, default is false
               }, {
                   headers: {
                       'Authorization': `Bearer ${this.groqApiKey}`,
@@ -1516,7 +1660,7 @@
                   this.chatMessages.push({ id: Date.now(), sender: 'bot', text: "Sorry, I couldn't get a response. Please try again." });
               }
           } catch (error) {
-              console.error("Error calling Groq API:", error);
+              console.error("Error calling Groq API for AgriBot:", error);
               let errorMsg = "Sorry, I encountered an error.";
               if (error.response) {
                   errorMsg += ` (Status: ${error.response.status})`;
@@ -1527,10 +1671,10 @@
               this.chatMessages.push({ id: Date.now(), sender: 'bot', text: errorMsg });
           } finally {
               this.isGroqLoading = false;
-              this.saveDataToLocalStorage(); // Save chat messages
+              this.saveDataToLocalStorage();
           }
       },
-      scrollToChatBottom() {
+      scrollToChatBottom() { // For page-based AgriBot
           const container = this.$refs.chatbotMessagesContainer;
           if (container) {
               this.$nextTick(() => {
@@ -1540,11 +1684,254 @@
       },
       renderMarkdown(text) {
         if (window.marked && typeof window.marked.parse === 'function') {
-            return window.marked.parse(text || '');
+            return window.marked.parse(text || '', { breaks: true, gfm: true });
         }
-        // Basic fallback if marked.js is not available
         return (text || '').replace(/\n/g, '<br>');
-      }
+      },
+
+      // AVATAR ASSISTANT METHODS (NEW)
+      speakText(textToSpeak, onEndCallback = null) {
+          if (!('speechSynthesis' in window)) {
+              console.warn("Browser does not support Speech Synthesis. Avatar cannot speak.");
+              this.avatar.state = this.avatar.expanded ? 'listening' : 'idle';
+              if (onEndCallback) onEndCallback();
+              return;
+          }
+          if (speechSynthesis.speaking) { speechSynthesis.cancel(); } // Cancel any previous speech
+          const utterance = new SpeechSynthesisUtterance(textToSpeak);
+          utterance.lang = 'en-US'; utterance.rate = 1; utterance.pitch = 1;
+          // Attempt to get a good voice
+          const voices = speechSynthesis.getVoices();
+          let selectedVoice = voices.find(voice => voice.name.includes('Google US English') || voice.name.includes('Microsoft David') || voice.name.includes('Samantha'));
+          if (!selectedVoice && voices.length > 0) {
+              selectedVoice = voices.find(voice => voice.lang.startsWith('en-US')) || voices[0];
+          }
+          if (selectedVoice) utterance.voice = selectedVoice;
+
+          utterance.onstart = () => { this.avatar.state = 'talking'; };
+          utterance.onend = () => { this.avatar.state = this.avatar.expanded ? 'listening' : 'idle'; if (onEndCallback) onEndCallback(); };
+          utterance.onerror = (event) => { console.error('SpeechSynthesisUtterance.onerror', event); this.addNotification("Avatar speech error: " + event.error, "error"); this.avatar.state = this.avatar.expanded ? 'listening' : 'idle'; if (onEndCallback) onEndCallback(); };
+          speechSynthesis.speak(utterance);
+      },
+      initializeSpeechRecognition() { // NEW for Avatar
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) {
+              this.addNotification("Speech recognition not supported in this browser.", "warning");
+              console.warn("STT not supported for Avatar.");
+              return;
+          }
+          if (!this.speechRecognition) { // Initialize only once
+              this.speechRecognition = new SpeechRecognition();
+              this.speechRecognition.continuous = false; // Get a single phrase
+              this.speechRecognition.interimResults = false;
+              this.speechRecognition.lang = 'en-US';
+
+              this.speechRecognition.onstart = () => { this.avatar.isListening = true; this.avatar.state = 'listening'; console.log("Avatar STT started."); };
+              this.speechRecognition.onresult = (event) => {
+                  let transcript = '';
+                  for (let i = event.resultIndex; i < event.results.length; ++i) {
+                      if (event.results[i].isFinal) { transcript += event.results[i][0].transcript; }
+                  }
+                  if (transcript) {
+                      this.avatar.userInput = (this.avatar.userInput ? this.avatar.userInput + ' ' : '') + transcript;
+                      // Optionally auto-send if user stops talking for a bit
+                      // setTimeout(() => { if (this.avatar.isListening && this.avatar.userInput === transcript) this.sendAvatarMessage(); }, 1500);
+                  }
+                  console.log("Avatar STT result:", transcript);
+              };
+              this.speechRecognition.onerror = (event) => {
+                  console.error('SpeechRecognitionError:', event.error);
+                  let errorMsg = "Voice input error: " + event.error;
+                  if (event.error === 'not-allowed' || event.error === 'service-not-allowed') { errorMsg = "Microphone access denied. Please allow microphone access in browser settings."; }
+                  else if (event.error === 'no-speech') { errorMsg = "No speech detected. Please try again."; }
+                  this.addNotification(errorMsg, "error");
+                  this.avatar.isListening = false;
+                  this.avatar.state = this.avatar.expanded ? 'listening' : 'idle';
+              };
+              this.speechRecognition.onend = () => {
+                  this.avatar.isListening = false;
+                  if (this.avatar.state === 'listening' && !this.avatar.expanded) { // If closed while listening
+                      this.avatar.state = 'idle';
+                  } else if (this.avatar.expanded && this.avatar.state === 'listening') {
+                      // Remain in listening state UI-wise, but STT engine has stopped.
+                      // User needs to click mic again or type.
+                  }
+                  console.log("Avatar STT ended.");
+              };
+          }
+      },
+      toggleAvatarListening() { // NEW for Avatar
+        if (!this.speechRecognition) this.initializeSpeechRecognition();
+        if (this.speechRecognition) {
+            if (this.avatar.isListening) {
+                this.speechRecognition.stop(); // This will trigger onend
+            } else {
+                // Ensure avatar isn't currently speaking before starting STT
+                if ('speechSynthesis' in window && speechSynthesis.speaking) {
+                    speechSynthesis.cancel(); // Stop TTS
+                }
+                try {
+                    this.speechRecognition.start();
+                } catch (e) {
+                    console.error("Error starting STT:", e);
+                    this.addNotification("Could not start voice input. " + e.message, "error");
+                    this.avatar.isListening = false;
+                    this.avatar.state = this.avatar.expanded ? 'listening' : 'idle'; // Revert state if start fails
+                }
+            }
+        }
+      },
+      toggleAvatarExpansion(forceState = null) { // NEW for Avatar
+          this.avatar.expanded = forceState !== null ? forceState : !this.avatar.expanded;
+          if (this.avatar.expanded) {
+              this.avatar.state = 'listening'; // Default to listening when opened
+              this.updateAvatarContextAndQuickActions();
+              this.clearUnreadAvatarMessages();
+              this.$nextTick(() => this.scrollToAvatarMessagesBottom());
+              // Initial greeting if no messages or only default greeting
+              if (this.avatar.chatMessages.length === 0 || (this.avatar.chatMessages.length === 1 && this.avatar.chatMessages[0].id.startsWith('avatar-greeting-'))) {
+                  const greeting = this.getAvatarGreeting();
+                  this.avatar.chatMessages = [{ id: 'avatar-greeting-' + Date.now(), sender: 'bot', text: greeting, timestamp: new Date().toISOString(), readByUser: true }];
+                  this.speakText(greeting);
+              } else { this.avatar.state = 'listening'; }
+              this.initializeSpeechRecognition(); // Ensure STT is ready
+          } else {
+              this.avatar.state = 'idle';
+              // Stop STT and TTS if avatar is closed
+              if (this.speechRecognition && this.avatar.isListening) { this.speechRecognition.stop(); }
+              if ('speechSynthesis' in window && speechSynthesis.speaking) { speechSynthesis.cancel(); }
+          }
+      },
+      getAvatarGreeting() { // NEW for Avatar
+          let pageName = this.current.replace(/([A-Z])/g, ' $1').toLowerCase();
+          pageName = pageName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+          if (this.current === 'landing') return "Hi there! 👋 I'm the PestiVid Helper. How can I assist you today on our platform?";
+          return `Welcome to the ${pageName} page! I'm PestiVid Helper. What can I do for you here?`;
+      },
+      updateAvatarContextAndQuickActions() { // NEW for Avatar
+          this.avatar.quickActions = [];
+          this.avatar.currentContextText = `User is on the PestiVid platform's '${this.current}' page.`;
+          if (this.isUserAuthenticated) {
+              this.avatar.currentContextText += ` User is logged in as a '${this.role}'.`;
+              if (this.loginMethod) this.avatar.currentContextText += ` Authentication method: ${this.loginMethod}.`;
+          } else {
+              this.avatar.currentContextText += ` User is not logged in.`;
+          }
+
+          switch (this.current) {
+              case 'landing': this.avatar.quickActions.push({ id: 'qa_what_is', label: "What is PestiVid?", query: "Explain PestiVid briefly." }, { id: 'qa_get_started', label: "How to get started?", query: "How do I get started with PestiVid?" }); break;
+              case 'loginChoice': this.avatar.quickActions.push({ id: 'qa_login_options', label: "Login options?", query: "What are the login options?" }, { id: 'qa_why_solana', label: "Why Solana?", query: "Why do I need a Solana wallet?" }); break;
+              case 'roleSelection': this.avatar.quickActions.push({ id: 'qa_explain_roles', label: "Explain roles", query: "Explain the different user roles (farmer, buyer, investor)." }); break;
+              case 'farmerPestiVid':
+                   if (this.isUserAuthenticated && this.role === 'farmer') { this.avatar.currentContextText += " This is where farmers record crop videos."; this.avatar.quickActions.push({ id: 'qa_record_tips', label: "Recording Tips", query: "Give me tips for recording good PestiVid videos." }, { id: 'qa_ipfs_explain', label: "What is IPFS?", query: "Explain IPFS in simple terms for a farmer." });
+                   } else { this.avatar.currentContextText += " This is the video recording page, only for farmers."; this.avatar.quickActions.push({ id: 'qa_farmer_features', label: "Farmer features?", query: "What features are available only for farmers?" }); } break;
+              case 'farmerChatbot': this.avatar.currentContextText += " User is on the AgriBot (page-based chatbot) page."; this.avatar.quickActions.push({ id: 'qa_agribot_vs_helper', label: "Difference?", query: "What's the difference between AgriBot and PestiVid Helper?" }); break;
+              // ... Add more cases for other pages as needed
+              default: this.avatar.quickActions.push({ id: 'qa_general_help', label: "General Help", query: "What can you help me with?" });
+          }
+      },
+      async sendAvatarMessage() { // NEW for Avatar
+          if (!this.avatar.userInput.trim() || this.avatar.isProcessing) return;
+          if (this.avatar.isListening) { this.speechRecognition.stop(); } // Stop STT if it's running
+
+          const userInput = this.avatar.userInput.trim();
+          this.avatar.chatMessages.push({ id: 'avatar-user-' + Date.now(), sender: 'user', text: userInput, timestamp: new Date().toISOString() });
+          this.avatar.userInput = '';
+          this.avatar.isProcessing = true;
+          this.avatar.state = 'thinking';
+          this.$nextTick(() => this.scrollToAvatarMessagesBottom());
+
+          // Construct messages for Groq API
+          const messagesForApi = [{ role: 'system', content: this.avatar.systemPrompt }];
+          // Add recent chat history (e.g., last 6 messages, user+bot)
+          const recentHistory = this.avatar.chatMessages.slice(-6).map(msg => ({
+              role: msg.sender === 'user' ? 'user' : 'assistant',
+              content: msg.text
+          }));
+          messagesForApi.push(...recentHistory);
+
+          // Ensure the current user input is the last user message, potentially with added context
+          const contextualPrompt = `Current platform context: ${this.avatar.currentContextText}. User question: ${userInput}`;
+          // Check if the last message is already the user's input (it should be if just added)
+          // If not, or if we want to ensure context is always part of the *last* user message sent to API:
+          const lastUserMessageIndex = messagesForApi.map(m => m.role).lastIndexOf('user');
+          if (lastUserMessageIndex !== -1 && messagesForApi[lastUserMessageIndex].content !== contextualPrompt) {
+             // This case might happen if we decide to resend history with modified last user prompt
+             messagesForApi[lastUserMessageIndex].content = contextualPrompt;
+          } else if (lastUserMessageIndex === -1 || messagesForApi[lastUserMessageIndex].content !== contextualPrompt) {
+             // This is the more likely scenario if recentHistory didn't include the *very latest* userInput
+             // We'll ensure the last message IS the contextual one
+             if (messagesForApi[messagesForApi.length - 1].role === 'user') {
+                messagesForApi[messagesForApi.length - 1].content = contextualPrompt; // Overwrite if last was user
+             } else {
+                messagesForApi.push({role: 'user', content: contextualPrompt });
+             }
+          }
+
+
+          try {
+              const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+                  messages: messagesForApi,
+                  model: 'llama3-8b-8192',
+                  temperature: 0.6,
+                  max_tokens: 350, // Keep responses relatively short for chat
+              }, {
+                  headers: {
+                      'Authorization': `Bearer ${this.groqApiKey}`, // Using the same key as AgriBot
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (response.data.choices && response.data.choices.length > 0) {
+                  const botResponse = response.data.choices[0].message.content;
+                  this.avatar.chatMessages.push({ id: 'avatar-bot-' + Date.now(), sender: 'bot', text: botResponse, timestamp: new Date().toISOString(), readByUser: this.avatar.expanded });
+                  this.speakText(botResponse.replace(/<\/?[^>]+(>|$)/g, "")); // Speak the stripped text
+              } else {
+                   let errorText = "Sorry, I couldn't get a response. Please try again.";
+                   if(response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) {
+                       errorText = "Response blocked due to safety concerns. Please rephrase your question.";
+                   }
+                  this.avatar.chatMessages.push({ id: 'avatar-bot-' + Date.now(), sender: 'bot', text: errorText, timestamp: new Date().toISOString(), readByUser: this.avatar.expanded });
+                  this.speakText(errorText);
+              }
+          } catch (error) {
+              console.error("Error calling Groq API for Avatar:", error);
+              let errorMsg = "Sorry, I encountered an error getting a response.";
+               if (error.response) { errorMsg += ` (Status: ${error.response.status})`; if (error.response.status === 401) errorMsg += ". Check your Groq API key."; }
+               else if (error.request) { errorMsg += " (Network Error)"; } else { errorMsg += `: ${error.message}`; }
+              this.avatar.chatMessages.push({ id: 'avatar-bot-' + Date.now(), sender: 'bot', text: errorMsg, timestamp: new Date().toISOString(), readByUser: this.avatar.expanded });
+              this.speakText(errorMsg);
+          } finally {
+              this.avatar.isProcessing = false;
+              // Avatar state will be set by speakText onend, or defaults to listening if expanded
+              if (this.avatar.expanded && this.avatar.state !== 'talking') this.avatar.state = 'listening';
+              this.$nextTick(() => this.scrollToAvatarMessagesBottom());
+              this.saveDataToLocalStorage(); // Save chat with avatar messages
+          }
+      },
+      handleAvatarQuickAction(action) { // NEW for Avatar
+          this.avatar.userInput = action.query;
+          this.sendAvatarMessage();
+          this.avatar.quickActions = []; // Clear quick actions after one is used
+      },
+      scrollToAvatarMessagesBottom() { // NEW for Avatar
+          const container = this.$refs.avatarMessagesContainer;
+          if (container) {
+              this.$nextTick(() => {
+                  container.scrollTop = container.scrollHeight;
+              });
+          }
+      },
+      clearUnreadAvatarMessages() { // NEW for Avatar
+          let changed = false;
+          this.avatar.chatMessages.forEach(msg => {
+              if (msg.sender === 'bot' && !msg.readByUser) {
+                  msg.readByUser = true;
+                  changed = true;
+              }
+          });
+          if (changed) { this.saveDataToLocalStorage(); } // Persist read status
+      },
     },
     mounted() {
       console.log("PestiVid (Orange ID & Solana) App Mounted.");
@@ -1554,16 +1941,14 @@
       if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE' || !this.pinataJwt || this.pinataJwt.length < 50) {
            console.warn("CONFIG WARNING: Pinata JWT not set or is placeholder. Video uploads WILL FAIL until a valid JWT is provided.");
       }
-      if (this.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !this.weatherApiKey) { console.warn("CONFIG WARNING: OpenWeatherMap API Key not set. Weather WILL NOT WORK."); }
-      if (this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || !this.geminiApiKey || this.geminiApiKey.length < 30) { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder or invalid. Plant recommendation WILL FAIL.");
+      if (this.geminiApiKey === 'AIzaSyDK-CIafImL53t0GjL6zGWP10lA0yYcaSs' || !this.geminiApiKey || this.geminiApiKey.length < 30 || this.geminiApiKey.includes("YOUR_GEMINI")) { console.error("CONFIG ERROR: Gemini API Key is still set to placeholder or invalid. Plant recommendation WILL FAIL.");
       } else if (this.geminiApiKey && this.geminiApiKey.startsWith('AIzaSyC')) { console.warn("GEMINI API KEY: Using key starting with 'AIzaSyC'. Ensure it's active and has billing enabled for Generative Language API."); }
-      if (!this.groqApiKey || this.groqApiKey === "YOUR_GROQ_API_KEY_REPLACE_ME" || this.groqApiKey.length < 30) { console.error("CONFIG ERROR: Groq API Key is missing or invalid. AgriBot WILL FAIL."); }
+      if (!this.groqApiKey || this.groqApiKey === "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" || this.groqApiKey.length < 30 || this.groqApiKey.includes("YOUR_GROQ")) { console.error("CONFIG ERROR: Groq API Key is missing or invalid. AgriBot and Avatar Assistant WILL FAIL."); }
       // --- END API KEY WARNINGS ---
   
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access might fail."); }
-      this.loadDataFromLocalStorage(); // This will call loadDemoDataIfNeeded if necessary
-      if (this.checkOrangeIdCallback()) { return; } // If it's an Orange ID callback, let it process
-      // Attempt to auto-reconnect Solana wallet if previously connected
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') { console.warn("SECURITY WARNING: Page not HTTPS. Camera access and Speech Recognition might fail."); }
+      this.loadDataFromLocalStorage();
+      if (this.checkOrangeIdCallback()) { return; }
       const userProfiles = JSON.parse(localStorage.getItem('pestiVidUserProfiles')) || {};
       if (!this.isUserAuthenticated && !this.isAuthProcessing && window.solana && window.solana.isPhantom) {
            const lastSolanaUserId = Object.keys(userProfiles).find(id => userProfiles[id].authMethod === 'solana');
@@ -1573,10 +1958,27 @@
                   .catch(err => console.log("Solana auto-reconnect failed or not trusted:", err.message));
            }
       } else if (this.isUserAuthenticated) {
-        this.filterDataForCurrentUser(); // Ensure data is filtered for the authenticated user
+        this.filterDataForCurrentUser();
         if (this.loginMethod === 'orangeId') { this.renderOrangeIdSignOutButton('orange-id-signout-button-container'); }
       }
       setInterval(() => { if(this.isUserAuthenticated && this.role==='investor') this.updateInvestmentProgress(); }, 30000);
+
+      // NEW for Avatar Assistant
+      if (this.avatar.visible) {
+        if (!this.avatar.expanded) { this.updateAvatarContextAndQuickActions(); } // Set initial context for non-expanded avatar
+        this.initializeSpeechRecognition();
+      }
+      // Ensure voices are loaded for speech synthesis
+      if ('speechSynthesis' in window) {
+          speechSynthesis.onvoiceschanged = () => {
+              // console.log("Speech synthesis voices loaded.");
+              // Could potentially re-initialize TTS aspects if needed here
+          };
+          // Trigger loading voices if not already loaded (some browsers need this)
+          if (speechSynthesis.getVoices().length === 0) {
+              speechSynthesis.getVoices();
+          }
+      }
     }
   });
   window.vueApp = app;
