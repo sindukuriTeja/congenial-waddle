@@ -1550,16 +1550,16 @@ const app = new Vue({
             console.error("Error parsing existing demo data, loading fresh demo.", e);
           }
         }
-  
+
         if (loadFreshDemo) {
           console.log("Loading/Reloading PestiVid Demo Data with videoFileHash.");
           const validVideoCID = 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u';
           const oneDayAgo = new Date(Date.now() - (24*60*60*1000)).toISOString();
           const threeDaysAgo = new Date(Date.now() - (3*24*60*60*1000)).toISOString();
-  
+
           const demoFarmer1 = 'oid_farmer_1_sub'; const demoFarmer2 = 'sol_farmer_2_addr';
           const demoInvestor1 = 'oid_investor_1_sub'; const demoBuyer1 = 'sol_buyer_1_addr';
-  
+
           const demoFarmerVideos = [
               { farmerWallet: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_tomatoes_placeholder_for_video1', crop: 'Tomatoes (Demo Video)', pesticide: 'Copper Spray', location: 'West Field', pesticideCompany: 'AgriSource', purpose: 'sell', uploadTimestamp: oneDayAgo},
               { farmerWallet: demoFarmer1, cid: validVideoCID, videoFileHash: 'demo_sha256_hash_strawberries_placeholder_for_video2', crop: 'Strawberries (Demo Video)', pesticide: 'Ladybugs', location: 'South Plot', pesticideCompany: 'NatureFirst', purpose: 'funding', uploadTimestamp: oneDayAgo},
